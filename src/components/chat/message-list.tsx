@@ -51,7 +51,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                     {textParts.map((p, i) => (
                       <div
                         key={i}
-                        className="w-fit max-w-full ml-auto rounded-2xl bg-primary text-primary-foreground px-4 py-3 text-sm leading-relaxed break-words"
+                        className="w-fit max-w-full ml-auto rounded-2xl bg-primary text-primary-foreground px-4 py-3 text-base leading-relaxed break-words"
                       >
                         {p.text}
                       </div>
@@ -67,7 +67,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                       {textParts.map((p, i) => (
                         <div
                           key={i}
-                          className="chat-markdown prose dark:prose-invert max-w-none text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                          className="chat-markdown prose dark:prose-invert max-w-none text-base [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
                         >
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {p.text}
