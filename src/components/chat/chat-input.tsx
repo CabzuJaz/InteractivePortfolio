@@ -122,7 +122,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
                 : "Ask me anything…"
             }
             disabled={isLoading}
-            className="flex-1 rounded-full border border-border/50 bg-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+            className="flex-1 rounded-full border border-border/50 bg-card px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
             aria-label="Chat message"
           />
         </div>
