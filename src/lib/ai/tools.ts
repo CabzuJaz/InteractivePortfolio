@@ -99,9 +99,9 @@ export const getAvailability = tool({
 
 export const generateContract = tool({
   description:
-    "Generate a contract proposal with rate card and tool subscription costs. Call this when the user " +
-    "asks about hiring, rates, pricing, contract, engagement, project cost, hourly rate, " +
-    "or wants to start working together. Requires: client name and project description.",
+    "MUST CALL when user mentions: contract, hire, rates, pricing, project cost, engagement, " +
+    "or wants to work together. Generates a contract proposal PDF with rate card and tool costs. " +
+    "Use whatever info is available — do NOT ask for more details first.",
   inputSchema: z.object({
     clientName: z.string().describe("The client or company name"),
     clientEmail: z
