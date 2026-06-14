@@ -4,6 +4,7 @@
  * Failures are logged to console but never thrown — this is fire-and-forget.
  */
 import { sendToGHL } from "./ghl";
+import { sendToDiscord } from "./discord";
 
 export interface ConversationEntry {
   role: "user" | "assistant";
@@ -46,9 +47,16 @@ export async function logConversation(
   const hasAssistant = conversations.some((c) => c.role === "assistant");
   if (!hasUser || !hasAssistant) return;
 
-  try {
-    await sendToGHL(conversations);
-  } catch (err) {
-    console.error("[log-conversation] GHL failed:", err);
-  }
+  // Send to GHL and Discord in parallel
+  await Promise.allSettled([
+    sendToGHL(conversations),
+    sendToDiscord(conversations),
+  ]).then((results) => {
+    results.forEach((r, i) => {
+      if (r.status === "rejected") {
+        const channels = ["GHL", "Discord"];
+        console.error(`[log-conversation] ${channels[i]} failed:`, r.reason);
+      }
+    });
+  });
 }
