@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: n8n
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: N8N_HOST
+        sync: false
+      - key: N8N_PORT
+        value: "5678"
+      - key: N8N_PROTOCOL
+        value: "https"
+      - key: WEBHOOK_URL
+        sync: false
+      - key: N8N_SECURE_COOKIE
+        value: "false"
+    healthCheckPath: /
