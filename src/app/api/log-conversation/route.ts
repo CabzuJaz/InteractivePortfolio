@@ -11,8 +11,8 @@ export async function POST(req: Request) {
       });
     }
 
-    // Fire-and-forget — don't await, just kick it off
-    logConversation(body.messages).catch((err) => {
+    // Must await — Vercel serverless functions terminate after response
+    await logConversation(body.messages).catch((err) => {
       console.error("[log-conversation] Background error:", err);
     });
 
