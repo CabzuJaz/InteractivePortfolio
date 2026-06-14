@@ -115,9 +115,34 @@ export const generateContract = tool({
       .number()
       .optional()
       .describe("Estimated total hours for the project (default 40 if not specified)"),
+    projectComplexity: z
+      .enum(["simple", "moderate", "complex"])
+      .optional()
+      .describe("Project complexity: simple (basic automation), moderate (multi-step workflows), complex (AI/ML, custom integrations)"),
+    clientType: z
+      .enum(["startup", "small-business", "enterprise"])
+      .optional()
+      .describe("Client type: startup (budget-conscious), small-business (standard), enterprise (premium support)"),
   }),
-  execute: async ({ clientName, clientEmail, projectDescription, estimatedHours }) => {
-    const hourlyRate = 10;
+  execute: async ({ clientName, clientEmail, projectDescription, estimatedHours, projectComplexity, clientType }) => {
+    // Dynamic pricing based on complexity and client type
+    // Base rate: $10/hr, max rate: $15/hr
+    let hourlyRate = 10;
+
+    // Adjust by complexity
+    if (projectComplexity === "complex") {
+      hourlyRate = 15;
+    } else if (projectComplexity === "moderate") {
+      hourlyRate = 12;
+    }
+
+    // Adjust by client type (enterprise pays more for premium support)
+    if (clientType === "enterprise") {
+      hourlyRate = Math.min(hourlyRate + 3, 15);
+    } else if (clientType === "startup") {
+      hourlyRate = Math.max(hourlyRate - 2, 10);
+    }
+
     const hours = estimatedHours ?? 40;
     const laborCost = hourlyRate * hours;
 
@@ -146,6 +171,12 @@ export const generateContract = tool({
         projectDurationMonths,
         totalToolCost,
         totalCost,
+        pricingFactors: {
+          complexity: projectComplexity ?? "moderate",
+          clientType: clientType ?? "small-business",
+          rateRange: "$10-15/hr",
+          selectedRate: `$${hourlyRate}/hr`,
+        },
         terms: [
           "Payment: 50% upfront, 50% on delivery",
           "Revisions: 2 rounds included per milestone",

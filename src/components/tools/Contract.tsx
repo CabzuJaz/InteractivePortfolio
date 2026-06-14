@@ -23,6 +23,13 @@ interface ToolSubscription {
   period: string;
 }
 
+interface PricingFactors {
+  complexity: string;
+  clientType: string;
+  rateRange: string;
+  selectedRate: string;
+}
+
 interface ContractData {
   clientName: string;
   clientEmail?: string | null;
@@ -35,6 +42,7 @@ interface ContractData {
   projectDurationMonths: number;
   totalToolCost: number;
   totalCost: number;
+  pricingFactors?: PricingFactors;
   terms: string[];
 }
 
@@ -138,6 +146,19 @@ export function Contract({ contract }: ContractProps) {
                 <p className="text-xs text-muted-foreground">estimated</p>
               </div>
             </div>
+            {contract.pricingFactors && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <Badge variant="secondary" className="text-xs">
+                  {contract.pricingFactors.complexity} project
+                </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {contract.pricingFactors.clientType}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  Range: {contract.pricingFactors.rateRange}
+                </Badge>
+              </div>
+            )}
           </div>
 
           {/* Tool Subscriptions */}
