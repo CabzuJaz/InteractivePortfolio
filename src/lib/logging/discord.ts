@@ -37,6 +37,29 @@ function extractEmail(conversations: ConversationEntry[]): string {
   return emailMatch?.[0] ?? "Not provided";
 }
 
+/**
+ * Extracts a short topic summary from the conversation.
+ */
+function extractTopic(conversations: ConversationEntry[]): string {
+  const userText = conversations
+    .filter((c) => c.role === "user")
+    .map((c) => c.text)
+    .join(" ")
+    .toLowerCase();
+
+  if (userText.includes("contract") || userText.includes("hire") || userText.includes("rate"))
+    return "Wants a contract / pricing info";
+  if (userText.includes("project") || userText.includes("build") || userText.includes("automat"))
+    return "Interested in automation project";
+  if (userText.includes("skill") || userText.includes("experience") || userText.includes("resume"))
+    return "Asking about skills / experience";
+  if (userText.includes("ghl") || userText.includes("gohighlevel") || userText.includes("workflow"))
+    return "Needs GHL / workflow help";
+  if (userText.includes("business") || userText.includes("scale") || userText.includes("efficiency"))
+    return "Business automation inquiry";
+  return "General inquiry";
+}
+
 export async function sendToDiscord(
   conversations: ConversationEntry[],
 ): Promise<void> {
@@ -46,19 +69,11 @@ export async function sendToDiscord(
   const userMessages = conversations.filter((c) => c.role === "user");
   const clientName = extractName(conversations);
   const clientEmail = extractEmail(conversations);
-
-  // Get only the last 2 messages
-  const lastTwo = conversations.slice(-2);
-  const recentChat = lastTwo
-    .map(
-      (c) =>
-        `**${c.role === "user" ? "👤 Client" : "🤖 Jazz AI"}:** ${c.text.slice(0, 200)}`,
-    )
-    .join("\n");
+  const topic = extractTopic(conversations);
 
   const embed = {
-    title: "💬 New Chat Conversation",
-    color: 0x06b6d4, // cyan
+    title: "💬 New Chat Lead",
+    color: 0x06b6d4,
     fields: [
       {
         name: "👤 Client",
@@ -72,12 +87,12 @@ export async function sendToDiscord(
       },
       {
         name: "📊 Messages",
-        value: `${conversations.length} total (${userMessages.length} from client)`,
+        value: `${conversations.length} (${userMessages.length} from client)`,
         inline: true,
       },
       {
-        name: "💬 Latest Exchange",
-        value: recentChat.slice(0, 1024) || "No messages",
+        name: "📋 Topic",
+        value: topic,
       },
     ],
     footer: {
