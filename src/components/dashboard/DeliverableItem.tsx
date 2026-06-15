@@ -2,14 +2,7 @@
 
 import { motion } from "framer-motion";
 import { CheckCircle, Circle, Loader2 } from "lucide-react";
-
-interface Deliverable {
-  id: string;
-  title: string;
-  description: string;
-  status: "pending" | "in-progress" | "completed";
-  completedAt?: string;
-}
+import type { Deliverable } from "@/lib/types";
 
 interface DeliverableItemProps {
   deliverable: Deliverable;

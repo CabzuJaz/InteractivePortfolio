@@ -53,7 +53,7 @@ Condition: {{email}} is not empty
 ```
 Type: HTTP Request
 Method: POST
-URL: [rotated-webhook-removed]
+URL: YOUR_DISCORD_WEBHOOK_URL
 Body (JSON):
 {
   "embeds": [{
@@ -368,10 +368,10 @@ Body:
 Set these in n8n (Settings → Environment Variables):
 
 ```
-GHL_API_KEY=[rotated-key-removed]
-GHL_LOCATION_ID=XJHfIAt14bdfDuAmgZ52
-RESEND_API_KEY=[rotated-key-removed]
-DISCORD_WEBHOOK_URL=[rotated-webhook-removed]
+GHL_API_KEY=YOUR_GHL_API_KEY
+GHL_LOCATION_ID=YOUR_GHL_LOCATION_ID
+RESEND_API_KEY=YOUR_RESEND_API_KEY
+DISCORD_WEBHOOK_URL=YOUR_DISCORD_WEBHOOK_URL
 ```
 
 ---

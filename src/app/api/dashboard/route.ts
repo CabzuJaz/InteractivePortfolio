@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Deliverable, ProjectData } from "@/lib/types";
 
 const GHL_BASE = "https://services.leadconnectorhq.com";
 const GHL_HEADERS = {
@@ -6,28 +7,6 @@ const GHL_HEADERS = {
   "Content-Type": "application/json",
   Version: "2021-07-28",
 };
-
-interface Deliverable {
-  id: string;
-  title: string;
-  description: string;
-  status: "pending" | "in-progress" | "completed";
-  completedAt?: string;
-}
-
-interface ProjectData {
-  contactId: string;
-  clientName: string;
-  clientEmail: string;
-  projectName: string;
-  description: string;
-  totalCost: number;
-  downpaymentPaid: boolean;
-  finalPaymentPaid: boolean;
-  deliverables: Deliverable[];
-  createdAt: string;
-  updatedAt: string;
-}
 
 /**
  * Find contact by email and get project data from custom fields.
@@ -154,37 +133,62 @@ async function saveDeliverables(
 }
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const email = searchParams.get("email");
-  const projectId = searchParams.get("projectId");
+  try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
 
-  if (!email && !projectId) {
-    return NextResponse.json(
-      { error: "email or projectId required" },
-      { status: 400 },
-    );
+    if (!email) {
+      return NextResponse.json(
+        { error: "email parameter required" },
+        { status: 400 },
+      );
+    }
+
+    const project = await getProjectByEmail(email);
+    if (!project) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ project });
+  } catch (err) {
+    console.error("[dashboard] GET error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-
-  const project = await getProjectByEmail(email || projectId || "");
-  if (!project) {
-    return NextResponse.json({ error: "Project not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ project });
 }
 
 export async function PUT(req: NextRequest) {
-  const body = await req.json();
-  const { contactId, deliverables } = body;
-
-  if (!contactId || !deliverables) {
-    return NextResponse.json(
-      { error: "contactId and deliverables required" },
-      { status: 400 },
-    );
+  // Server-side admin auth
+  const adminKey = req.headers.get("x-admin-key");
+  if (!adminKey || adminKey !== process.env.DASHBOARD_ADMIN_KEY) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await saveDeliverables(contactId, deliverables);
+  try {
+    const body = await req.json();
+    const { contactId, deliverables } = body;
 
-  return NextResponse.json({ ok: true });
+    if (!contactId || !Array.isArray(deliverables)) {
+      return NextResponse.json(
+        { error: "contactId and deliverables array required" },
+        { status: 400 },
+      );
+    }
+
+    // Validate deliverable structure
+    for (const d of deliverables) {
+      if (!d.id || !d.title || !["pending", "in-progress", "completed"].includes(d.status)) {
+        return NextResponse.json(
+          { error: "Invalid deliverable structure" },
+          { status: 400 },
+        );
+      }
+    }
+
+    await saveDeliverables(contactId, deliverables);
+
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("[dashboard] PUT error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
 }

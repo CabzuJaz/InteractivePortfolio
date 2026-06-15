@@ -102,7 +102,7 @@ Jazzmin
 ```
 Type: Webhook
 Method: POST
-URL: [rotated-webhook-removed]
+URL: YOUR_DISCORD_WEBHOOK_URL
 
 Body:
 {
