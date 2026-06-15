@@ -2,6 +2,16 @@ import { Resend } from "resend";
 
 const OWNER_EMAIL = "jazzmincabizares@gmail.com";
 
+/** Escapes HTML special characters to prevent XSS */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /**
  * Uploads a PDF to GHL and attaches it to a contact.
  */
@@ -97,6 +107,8 @@ export async function POST(req: Request) {
     const filename = `contract-${clientName.toLowerCase().replace(/\s+/g, "-")}.pdf`;
 
     const tasks: Promise<unknown>[] = [];
+    const safeName = escapeHtml(clientName);
+    const safeEmail = clientEmail ? escapeHtml(clientEmail) : "";
 
     // 1. Send emails via Resend
     const apiKey = process.env.RESEND_API_KEY;
@@ -108,14 +120,14 @@ export async function POST(req: Request) {
         resend.emails.send({
           from: "Jazzmin <onboarding@resend.dev>",
           to: OWNER_EMAIL,
-          subject: `📄 Contract Proposal for ${clientName} — $${totalCost.toLocaleString()}`,
+          subject: `📄 Contract Proposal for ${safeName} — $${totalCost.toLocaleString()}`,
           html: `
             <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto">
               <h2 style="color:#06b6d4">New Contract Proposal Sent</h2>
-              <p>A contract proposal has been generated for <strong>${clientName}</strong>${clientEmail ? ` (${clientEmail})` : ""}.</p>
+              <p>A contract proposal has been generated for <strong>${safeName}</strong>${safeEmail ? ` (${safeEmail})` : ""}.</p>
               <table style="width:100%;border-collapse:collapse;margin:16px 0">
-                <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Client</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600">${clientName}</td></tr>
-                ${clientEmail ? `<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Email</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600">${clientEmail}</td></tr>` : ""}
+                <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Client</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600">${safeName}</td></tr>
+                ${safeEmail ? `<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Email</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600">${safeEmail}</td></tr>` : ""}
                 <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Total Cost</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600;color:#06b6d4">$${totalCost.toLocaleString()}</td></tr>
                 <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Date</td><td style="padding:8px;border-bottom:1px solid #eee">${new Date().toLocaleDateString()}</td></tr>
               </table>
@@ -136,7 +148,7 @@ export async function POST(req: Request) {
             subject: `Your Contract Proposal from Jazzmin — $${totalCost.toLocaleString()}`,
             html: `
               <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto">
-                <h2 style="color:#06b6d4">Hi ${clientName},</h2>
+                <h2 style="color:#06b6d4">Hi ${safeName},</h2>
                 <p>Thanks for your interest in working together! Please find the contract proposal attached.</p>
                 <table style="width:100%;border-collapse:collapse;margin:16px 0">
                   <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Total Project Cost</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600;color:#06b6d4">$${totalCost.toLocaleString()}</td></tr>

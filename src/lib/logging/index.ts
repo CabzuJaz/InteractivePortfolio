@@ -5,11 +5,9 @@
  */
 import { sendToGHL } from "./ghl";
 import { sendToDiscord } from "./discord";
+import type { ConversationEntry } from "../types";
 
-export interface ConversationEntry {
-  role: "user" | "assistant";
-  text: string;
-}
+export type { ConversationEntry };
 
 /**
  * Extracts plain text from UIMessage parts.
@@ -34,7 +32,7 @@ export function extractConversation(messages: any[]): ConversationEntry[] {
 }
 
 /**
- * Logs a conversation to GHL.
+ * Logs a conversation to GHL and Discord.
  * Safe to call from client-side — all channels are optional and fail silently.
  */
 export async function logConversation(

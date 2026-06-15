@@ -53,7 +53,7 @@ Condition: {{email}} is not empty
 ```
 Type: HTTP Request
 Method: POST
-URL: https://discord.com/api/webhooks/1515600055778803832/IwC-TVb4Aytg4Mo_CdQDo5zb8JUxcwnxNxqTN7bIaASDFO4U6WGQcjdg6jToo7sSMu55
+URL: YOUR_DISCORD_WEBHOOK_URL
 Body (JSON):
 {
   "embeds": [{
@@ -368,10 +368,10 @@ Body:
 Set these in n8n (Settings → Environment Variables):
 
 ```
-GHL_API_KEY=pit-79167b9d-b3ba-4877-9447-6baa033d8074
-GHL_LOCATION_ID=XJHfIAt14bdfDuAmgZ52
-RESEND_API_KEY=re_dUBN7iyF_2LLwDgiuTDXaUNC7sJTKX2EE
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1515600055778803832/IwC-TVb4Aytg4Mo_CdQDo5zb8JUxcwnxNxqTN7bIaASDFO4U6WGQcjdg6jToo7sSMu55
+GHL_API_KEY=YOUR_GHL_API_KEY
+GHL_LOCATION_ID=YOUR_GHL_LOCATION_ID
+RESEND_API_KEY=YOUR_RESEND_API_KEY
+DISCORD_WEBHOOK_URL=YOUR_DISCORD_WEBHOOK_URL
 ```
 
 ---

@@ -18,34 +18,26 @@ import { PaymentStatus } from "@/components/dashboard/PaymentStatus";
 import { ProgressBar } from "@/components/dashboard/ProgressBar";
 import { DeliverableItem } from "@/components/dashboard/DeliverableItem";
 import { AdminPanel } from "@/components/dashboard/AdminPanel";
-
-interface Deliverable {
-  id: string;
-  title: string;
-  description: string;
-  status: "pending" | "in-progress" | "completed";
-  completedAt?: string;
-}
-
-interface ProjectData {
-  contactId: string;
-  clientName: string;
-  clientEmail: string;
-  projectName: string;
-  description: string;
-  totalCost: number;
-  downpaymentPaid: boolean;
-  finalPaymentPaid: boolean;
-  deliverables: Deliverable[];
-  createdAt: string;
-  updatedAt: string;
-}
+import type { ProjectData } from "@/lib/types";
 
 function DashboardContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
   const adminKey = searchParams.get("admin");
-  const isAdmin = adminKey === process.env.NEXT_PUBLIC_DASHBOARD_ADMIN_KEY;
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Verify admin key server-side
+  useEffect(() => {
+    if (!adminKey) return;
+    fetch("/api/dashboard/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: adminKey }),
+    })
+      .then((res) => res.json())
+      .then((data) => setIsAdmin(data.valid === true))
+      .catch(() => setIsAdmin(false));
+  }, [adminKey]);
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +83,7 @@ function DashboardContent() {
   }, [email]);
 
   const handleToggleDeliverable = async (id: string) => {
-    if (!project || !isAdmin) return;
+    if (!project || !isAdmin || !adminKey) return;
 
     const updated = project.deliverables.map((d) => {
       if (d.id === id) {
@@ -109,7 +101,10 @@ function DashboardContent() {
 
     await fetch("/api/dashboard", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      },
       body: JSON.stringify({
         contactId: project.contactId,
         deliverables: updated,
@@ -285,6 +280,7 @@ function DashboardContent() {
               <AdminPanel
                 deliverables={project.deliverables}
                 contactId={project.contactId}
+                adminKey={adminKey || ""}
                 onUpdate={fetchProject}
               />
             </div>

@@ -102,7 +102,7 @@ Jazzmin
 ```
 Type: Webhook
 Method: POST
-URL: https://discord.com/api/webhooks/1515600055778803832/IwC-TVb4Aytg4Mo_CdQDo5zb8JUxcwnxNxqTN7bIaASDFO4U6WGQcjdg6jToo7sSMu55
+URL: YOUR_DISCORD_WEBHOOK_URL
 
 Body:
 {

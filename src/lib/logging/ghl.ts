@@ -4,10 +4,7 @@
  * Requires GHL_LOCATION_ID and GHL_API_KEY env vars.
  */
 
-interface ConversationEntry {
-  role: "user" | "assistant";
-  text: string;
-}
+import type { ConversationEntry } from "../types";
 
 // Common verbs/adjectives that are NOT names
 const NOT_NAMES = new Set([
@@ -43,7 +40,6 @@ function extractContactInfo(conversations: ConversationEntry[]) {
   const validPhone = phoneDigits.length >= 7 ? phone : undefined;
 
   // Extract name — ONLY from explicit "my name is X" or "I'm FirstName LastName"
-  // Requires: pattern + capitalized word that's NOT a common verb/adjective
   let firstName: string | undefined;
   let lastName: string | undefined;
 

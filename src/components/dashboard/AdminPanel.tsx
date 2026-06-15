@@ -5,22 +5,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface Deliverable {
-  id: string;
-  title: string;
-  description: string;
-  status: "pending" | "in-progress" | "completed";
-  completedAt?: string;
-}
+import type { Deliverable } from "@/lib/types";
 
 interface AdminPanelProps {
   deliverables: Deliverable[];
   contactId: string;
+  adminKey: string;
   onUpdate: () => void;
 }
 
-export function AdminPanel({ deliverables, contactId, onUpdate }: AdminPanelProps) {
+export function AdminPanel({ deliverables, contactId, adminKey, onUpdate }: AdminPanelProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -41,7 +35,10 @@ export function AdminPanel({ deliverables, contactId, onUpdate }: AdminPanelProp
 
     await fetch("/api/dashboard", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      },
       body: JSON.stringify({ contactId, deliverables: updated }),
     });
 
@@ -57,7 +54,10 @@ export function AdminPanel({ deliverables, contactId, onUpdate }: AdminPanelProp
 
     await fetch("/api/dashboard", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-admin-key": adminKey,
+      },
       body: JSON.stringify({ contactId, deliverables: updated }),
     });
 

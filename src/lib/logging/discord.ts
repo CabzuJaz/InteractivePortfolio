@@ -4,10 +4,7 @@
  * Requires DISCORD_WEBHOOK_URL env var.
  */
 
-interface ConversationEntry {
-  role: "user" | "assistant";
-  text: string;
-}
+import type { ConversationEntry } from "../types";
 
 /**
  * Extracts client name from conversation text.
