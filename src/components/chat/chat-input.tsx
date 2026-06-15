@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, useCallback, type FormEvent, type KeyboardEvent } from "react";
 import { Send, Paperclip, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -18,6 +18,22 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
   const [input, setInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea
+  const autoResize = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const scrollHeight = textarea.scrollHeight;
+    const maxHeight = 200; // max height in px
+    textarea.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY = scrollHeight > maxHeight ? "auto" : "hidden";
+  }, []);
+
+  useEffect(() => {
+    autoResize();
+  }, [input, autoResize]);
 
   // Revoke object URLs on unmount
   useEffect(() => {
@@ -39,7 +55,6 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
     }
 
     setSelectedFiles((prev) => [...prev, ...newFiles]);
-    // Reset so re-selecting the same file works
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -60,6 +75,18 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
 
     setInput("");
     setSelectedFiles([]);
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Submit on Enter (without Shift)
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e as unknown as FormEvent);
+    }
   };
 
   return (
@@ -100,30 +127,33 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
           </div>
         )}
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-end gap-1.5">
           {/* Attachment button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50"
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 mb-1"
             aria-label="Attach image"
           >
             <Paperclip className="w-4 h-4" />
           </button>
 
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={
               selectedFiles.length > 0
                 ? "Add a message about this image…"
                 : "Ask me anything…"
             }
             disabled={isLoading}
-            className="flex-1 rounded-full border border-border/50 bg-card px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50"
+            rows={1}
+            className="flex-1 resize-none rounded-2xl border border-border/50 bg-card px-4 py-3 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 min-h-[48px]"
             aria-label="Chat message"
+            style={{ maxHeight: "200px" }}
           />
         </div>
       </div>
@@ -132,7 +162,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         type="submit"
         size="icon"
         disabled={(!input.trim() && selectedFiles.length === 0) || isLoading}
-        className="rounded-full w-12 h-12 shrink-0"
+        className="rounded-full w-12 h-12 shrink-0 mb-1"
         aria-label="Send message"
       >
         <Send className="w-4 h-4" />
