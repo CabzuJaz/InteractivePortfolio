@@ -20,6 +20,16 @@ function ChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+
+  // Redirect to www version to avoid POST body loss on redirect
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      if (host === "buildwithjazz.com") {
+        window.location.replace(`https://www.buildwithjazz.com${window.location.pathname}${window.location.search}`);
+      }
+    }
+  }, []);
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { messages, sendMessage, status } = useChat({
