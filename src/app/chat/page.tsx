@@ -147,13 +147,13 @@ function ChatContent() {
           <div className="flex items-center gap-3 flex-1">
             <Image
               src="/avatars/avatar.webp"
-              alt={persona.name}
+              alt={persona.nickname}
               width={32}
               height={32}
               className="w-8 h-8 rounded-full object-cover"
             />
             <div>
-              <h1 className="text-sm font-semibold">{persona.name}</h1>
+              <h1 className="text-sm font-semibold">{persona.nickname}</h1>
               <p className="text-xs text-muted-foreground">AI Assistant</p>
             </div>
           </div>
