@@ -67,6 +67,11 @@ export const resume = {
   ] as Experience[],
   certificates: [
     {
+      name: "Zapier",
+      issuer: "Tara AI Community",
+      date: "2026",
+    },
+    {
       name: "AI Engineering Certificate",
       issuer: "30-Day AI Engineering Sprint",
       date: "2024",
