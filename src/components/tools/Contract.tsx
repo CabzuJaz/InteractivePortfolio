@@ -49,12 +49,6 @@ interface ContractProps {
   contract: ContractData;
 }
 
-// Lazy load PDF generation to avoid SSR issues
-const generateContractPDF = async (contract: ContractData) => {
-  const { generateContractPDF: generatePDF } = await import("./ContractPDF");
-  return generatePDF(contract);
-};
-
 export function Contract({ contract }: ContractProps) {
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
@@ -63,6 +57,7 @@ export function Contract({ contract }: ContractProps) {
   const handleDownload = async () => {
     setDownloading(true);
     try {
+      const { generateContractPDF } = await import("./ContractPDF");
       const blob = await generateContractPDF(contract);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -80,6 +75,7 @@ export function Contract({ contract }: ContractProps) {
   const handleSend = async () => {
     setSending(true);
     try {
+      const { generateContractPDF } = await import("./ContractPDF");
       const blob = await generateContractPDF(contract);
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve) => {
