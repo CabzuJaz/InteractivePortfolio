@@ -20,6 +20,7 @@ async function uploadToGHL(
   clientName: string,
   pdfBase64: string,
   filename: string,
+  totalCost: number,
 ): Promise<void> {
   const locationId = process.env.GHL_LOCATION_ID;
   const ghlKey = process.env.GHL_API_KEY;
@@ -64,23 +65,36 @@ async function uploadToGHL(
   const uploadData = await uploadRes.json();
   const fileUrl = uploadData.url ?? uploadData.file?.url;
 
-  // 3. Add a note to the contact with the contract link
-  const noteBody = [
-    `📄 **Contract PDF Uploaded**`,
-    `📅 ${new Date().toLocaleString()}`,
-    `👤 Client: ${clientName}`,
-    ``,
-    `Contract PDF has been generated and uploaded.`,
-    fileUrl ? `📎 File: ${fileUrl}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  // 3. Store file URL on contact as custom field
+  if (fileUrl) {
+    // Add a note with the contract link
+    const noteBody = [
+      `📄 **Contract PDF Uploaded**`,
+      `📅 ${new Date().toLocaleString()}`,
+      `👤 Client: ${clientName}`,
+      ``,
+      `📎 Download: ${fileUrl}`,
+    ].join("\n");
 
-  await fetch(`${baseUrl}/contacts/${contactId}/notes`, {
-    method: "POST",
-    headers: { ...headers, "Content-Type": "application/json" },
-    body: JSON.stringify({ body: noteBody }),
-  });
+    await fetch(`${baseUrl}/contacts/${contactId}/notes`, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ body: noteBody }),
+    });
+
+    // Store URL as custom field for email templates
+    await fetch(`${baseUrl}/contacts/${contactId}`, {
+      method: "PUT",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        customField: [
+          { id: "5KhQSkHhEvXKXJEx3NHZ", value: fileUrl },
+          { id: "XgvQOEZBcbBnXFFi4lx5", value: clientName },
+          { id: "VZWF2XTXvbK9R7vavt8S", value: `$${totalCost.toLocaleString()}` },
+        ],
+      }),
+    });
+  }
 
   // 4. Update contact tags
   await fetch(`${baseUrl}/contacts/${contactId}/tags`, {
@@ -171,7 +185,7 @@ export async function POST(req: Request) {
     // 2. Upload to GHL
     if (clientEmail) {
       tasks.push(
-        uploadToGHL(clientEmail, clientName, pdfBase64, filename).catch((err) => {
+        uploadToGHL(clientEmail, clientName, pdfBase64, filename, totalCost).catch((err) => {
           console.error("[send-contract] GHL upload failed:", err);
         }),
       );
