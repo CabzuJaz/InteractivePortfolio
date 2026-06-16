@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Download, GraduationCap, Briefcase } from "lucide-react";
+import { Download, GraduationCap, Briefcase, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { resume as ResumeType } from "@/data/resume";
@@ -89,6 +89,42 @@ export function Resume({ resume }: ResumeProps) {
           ))}
         </div>
       </div>
+
+      {resume.certificates && resume.certificates.length > 0 && (
+        <div>
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            <Award className="w-4 h-4" />
+            Certificates
+          </h3>
+          <div className="space-y-4">
+            {resume.certificates.map((cert, i) => (
+              <motion.div
+                key={cert.name}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.08, type: "spring" as const, stiffness: 260, damping: 24 }}
+                className="relative pl-6 border-l-2 border-primary/20"
+              >
+                <div className="absolute left-[-5px] top-1 w-2 h-2 rounded-full bg-primary" />
+                <h4 className="font-semibold">{cert.name}</h4>
+                <p className="text-sm text-muted-foreground">
+                  {cert.issuer} · {cert.date}
+                </p>
+                {cert.url && (
+                  <a
+                    href={cert.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline mt-1 inline-block"
+                  >
+                    View Certificate
+                  </a>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

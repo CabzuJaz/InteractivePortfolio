@@ -17,6 +17,14 @@ export interface Experience {
   tech?: string[];
 }
 
+export interface Certificate {
+  name: string;
+  issuer: string;
+  date: string;
+  url?: string;
+  image?: string;
+}
+
 export const resume = {
   pdfUrl: "/resume.pdf",
   education: [
@@ -57,4 +65,13 @@ export const resume = {
       tech: ["IT Support", "System Administration", "Networking"],
     },
   ] as Experience[],
+  certificates: [
+    {
+      name: "AI Engineering Certificate",
+      issuer: "30-Day AI Engineering Sprint",
+      date: "2024",
+      url: "/certs/certificate.pdf",
+      image: "/certs/certificate.pdf",
+    },
+  ] as Certificate[],
 };
