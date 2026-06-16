@@ -1,11 +1,11 @@
 export const persona = {
-  name: "Jazzmin Sicat-Cabizares",
-  nickname: "jazzmin",
+  name: "Minmin",
+  nickname: "minmin",
   role: "AI Automation Engineer | Backend Developer | AI Systems Builder",
   location: "Cavite, Philippines",
   phone: "+639389036717",
   status: "Open to AI & Automation Engineering Opportunities",
-  tagline: "Hey, I'm Jazzmin 👋",
+  tagline: "Hey, I'm Minmin 👋",
   positioning:
     "I build AI agents, automation systems, and backend solutions that turn ideas into working products.",
   tone: [
