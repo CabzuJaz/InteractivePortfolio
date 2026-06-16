@@ -15,7 +15,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { generateContractPDF } from "./ContractPDF";
+
+// Lazy load PDF generation to avoid SSR issues
+const generateContractPDF = async (contract: ContractData) => {
+  const { generateContractPDF: generatePDF } = await import("./ContractPDF");
+  return generatePDF(contract);
+};
 
 interface ToolSubscription {
   name: string;
