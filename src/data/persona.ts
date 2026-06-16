@@ -1,6 +1,6 @@
 export const persona = {
-  name: "Minmin",
-  nickname: "minmin",
+  name: "Jazzmin Sicat-Cabizares",
+  nickname: "Minmin",
   role: "AI Automation Engineer | Backend Developer | AI Systems Builder",
   location: "Cavite, Philippines",
   phone: "+639389036717",
