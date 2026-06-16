@@ -70,13 +70,7 @@ export const resume = {
       name: "Zapier",
       issuer: "Tara AI Community",
       date: "2026",
-    },
-    {
-      name: "AI Engineering Certificate",
-      issuer: "30-Day AI Engineering Sprint",
-      date: "2024",
       url: "/certs/certificate.pdf",
-      image: "/certs/certificate.pdf",
     },
   ] as Certificate[],
 };
