@@ -165,6 +165,7 @@ const styles = StyleSheet.create({
 
 interface ContractData {
   clientName: string;
+  clientEmail?: string | null;
   projectDescription: string;
   hourlyRate: number;
   hours: number;
@@ -174,6 +175,12 @@ interface ContractData {
   projectDurationMonths: number;
   totalToolCost: number;
   totalCost: number;
+  pricingFactors?: {
+    complexity: string;
+    clientType: string;
+    rateRange: string;
+    selectedRate: string;
+  };
   terms: string[];
 }
 
@@ -188,9 +195,17 @@ export function ContractPDFDocument({ contract }: { contract: ContractData }) {
             <Text style={styles.subtitle}>
               Prepared for {contract.clientName}
             </Text>
+            {contract.clientEmail && (
+              <Text style={styles.subtitle}>{contract.clientEmail}</Text>
+            )}
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.date}>{new Date().toLocaleDateString()}</Text>
+            {contract.pricingFactors && (
+              <Text style={styles.subtitle}>
+                {contract.pricingFactors.selectedRate} ({contract.pricingFactors.complexity})
+              </Text>
+            )}
           </View>
         </View>
 
