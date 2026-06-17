@@ -67,6 +67,7 @@ export async function sendToDiscord(
   const clientName = extractName(conversations);
   const clientEmail = extractEmail(conversations);
   const topic = extractTopic(conversations);
+  const lastUserMessage = userMessages[userMessages.length - 1]?.text ?? "No message";
 
   const embed = {
     title: "💬 New Chat Lead",
@@ -90,6 +91,10 @@ export async function sendToDiscord(
       {
         name: "📋 Topic",
         value: topic,
+      },
+      {
+        name: "💬 Last Message",
+        value: lastUserMessage.slice(0, 200) + (lastUserMessage.length > 200 ? "..." : ""),
       },
     ],
     footer: {
