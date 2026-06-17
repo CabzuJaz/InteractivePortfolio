@@ -192,10 +192,18 @@
   color: var(--muted-foreground);
 }
 .chat-markdown p {
-  margin: 0.5em 0;
-  line-height: 1.65;
+  margin: 0.75em 0;
+  line-height: 1.7;
   overflow-wrap: break-word;
   word-break: break-word;
+}
+
+.chat-markdown p:first-child {
+  margin-top: 0;
+}
+
+.chat-markdown p:last-child {
+  margin-bottom: 0;
 }
 .chat-markdown h3 {
   font-size: 1rem;
