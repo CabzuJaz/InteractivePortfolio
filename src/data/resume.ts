@@ -38,6 +38,15 @@ export const resume = {
   ] as Education[],
   experience: [
     {
+      company: "BuildWithJazz (Freelance)",
+      role: "AI Automation Engineer",
+      startDate: "2025",
+      endDate: "Present",
+      description:
+        "Building AI-powered automation systems and client portals. Integrating GoHighLevel (GHL) CRM with custom workflows for lead capture, contract generation, and project management. Developed n8n automation pipelines for client onboarding, payment tracking, and multi-channel notifications. Created an AI chatbot portfolio that generates contracts, logs leads to GHL, and sends Discord notifications in real-time.",
+      tech: ["GoHighLevel", "n8n", "Claude API", "GHL Workflows", "GHL API", "Discord Webhooks", "Resend", "Next.js"],
+    },
+    {
       company: "Xytron",
       role: "Junior Software Engineer",
       startDate: "2023",
