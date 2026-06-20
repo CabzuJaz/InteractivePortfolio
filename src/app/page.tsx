@@ -356,25 +356,26 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: i * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                  className="glass rounded-2xl p-4 flex items-start gap-3"
+                  className="glass rounded-2xl overflow-hidden"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Award className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
+                  {cert.url ? (
+                    <div className="aspect-[4/3] w-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={cert.url}
+                        alt={`${cert.name} Certificate`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] w-full bg-muted/30 flex items-center justify-center">
+                      <Award className="w-12 h-12 text-primary/30" />
+                    </div>
+                  )}
+                  <div className="p-4">
                     <h3 className="font-semibold text-sm">{cert.name}</h3>
                     <p className="text-xs text-muted-foreground">{cert.issuer}</p>
                     <p className="text-xs text-muted-foreground mt-1">{cert.date}</p>
-                    {cert.url && (
-                      <a
-                        href={cert.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary hover:underline mt-1 inline-block"
-                      >
-                        View Certificate
-                      </a>
-                    )}
                   </div>
                 </motion.div>
               ))}
