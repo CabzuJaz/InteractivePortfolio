@@ -356,23 +356,23 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: i * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                  className="glass rounded-2xl overflow-hidden"
+                  className="glass rounded-2xl overflow-hidden group hover:border-primary/30 transition-all"
                 >
                   {cert.url ? (
-                    <div className="aspect-[4/3] w-full">
+                    <div className="aspect-[4/3] w-full bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 p-3">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={cert.url}
                         alt={`${cert.name} Certificate`}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain rounded-lg shadow-sm"
                       />
                     </div>
                   ) : (
-                    <div className="aspect-[4/3] w-full bg-muted/30 flex items-center justify-center">
+                    <div className="aspect-[4/3] w-full bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 flex items-center justify-center">
                       <Award className="w-12 h-12 text-primary/30" />
                     </div>
                   )}
-                  <div className="p-4">
+                  <div className="p-4 bg-gradient-to-b from-transparent to-primary/5">
                     <h3 className="font-semibold text-sm">{cert.name}</h3>
                     <p className="text-xs text-muted-foreground">{cert.issuer}</p>
                     <p className="text-xs text-muted-foreground mt-1">{cert.date}</p>
