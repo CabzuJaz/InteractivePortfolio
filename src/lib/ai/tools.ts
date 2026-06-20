@@ -143,7 +143,8 @@ export const generateContract = tool({
       hourlyRate = Math.max(hourlyRate - 2, 10);
     }
 
-    const hours = estimatedHours ?? 40;
+    // Add 24 hours buffer for project management, testing, and handover
+    const hours = (estimatedHours ?? 40) + 24;
     const laborCost = hourlyRate * hours;
 
     const toolSubscriptions = [
