@@ -57,23 +57,17 @@ async function getProjectByEmail(email: string): Promise<ProjectData | null> {
   let totalCost = 0;
 
   try {
+    // Search for opportunity by contact email
     const oppRes = await fetch(
-      `${GHL_BASE}/opportunities/search`,
-      {
-        method: "POST",
-        headers: GHL_HEADERS,
-        body: JSON.stringify({
-          location_id: process.env.GHL_LOCATION_ID,
-          contact_id: contact.id,
-        }),
-      },
+      `${GHL_BASE}/opportunities/search?location_id=${process.env.GHL_LOCATION_ID}&q=${encodeURIComponent(email)}`,
+      { headers: GHL_HEADERS },
     );
     if (oppRes.ok) {
       const oppData = await oppRes.json();
       const opp = oppData.opportunities?.[0];
       if (opp) {
         projectName = opp.name || projectName;
-        totalCost = opp.monetary_value || totalCost;
+        totalCost = opp.monetary_value || opp.monetaryValue || totalCost;
       }
     }
   } catch {
