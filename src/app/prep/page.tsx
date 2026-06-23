@@ -215,7 +215,7 @@ function PrepContent() {
 
   const renderField = (q: (typeof SECTION_01)[0]) => {
     const base =
-      "w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50 placeholder:text-muted-foreground/40 transition-all shadow-sm";
+      "w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50 placeholder:text-muted-foreground/70 transition-all shadow-sm";
     if (q.type === "textarea") {
       return (
         <textarea
@@ -353,7 +353,7 @@ function PrepContent() {
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               placeholder="you@company.com"
-              className="w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/40 transition-all shadow-sm"
+              className="w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm"
             />
           </div>
           <div>
@@ -365,7 +365,7 @@ function PrepContent() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+63 912 345 6789"
-              className="w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/40 transition-all shadow-sm"
+              className="w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm"
             />
           </div>
         </motion.div>
