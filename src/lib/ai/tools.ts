@@ -253,3 +253,41 @@ Describe the projected business outcomes over 3-6 months.`,
     };
   },
 });
+
+export const sharePrepSheet = tool({
+  description:
+    "Generate a personalized prep sheet link for a business owner. Call this when a visitor is " +
+    "interested in automation but not sure where to start, or when you want to gather information " +
+    "about their current lead flow before recommending solutions.",
+  inputSchema: z.object({
+    clientName: z
+      .string()
+      .optional()
+      .describe("The client's name (from the conversation)"),
+    clientEmail: z
+      .string()
+      .optional()
+      .describe("The client's email (from the conversation)"),
+    clientSlug: z
+      .string()
+      .optional()
+      .describe("A URL-safe slug for the client, e.g. 'larry-bmpc'"),
+  }),
+  execute: async ({ clientName, clientEmail, clientSlug }) => {
+    const params = new URLSearchParams();
+    if (clientSlug) params.set("client", clientSlug);
+    if (clientName) params.set("name", clientName);
+    if (clientEmail) params.set("email", clientEmail);
+
+    const qs = params.toString();
+    const url = `/prep${qs ? `?${qs}` : ""}`;
+
+    return {
+      prepSheet: {
+        url,
+        clientName: clientName ?? null,
+        clientEmail: clientEmail ?? null,
+      },
+    };
+  },
+});

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Workflow, FileText } from "lucide-react";
+import { Workflow, FileText, ClipboardList } from "lucide-react";
 
 interface SuggestionChipsProps {
   onSelect: (query: string) => void;
@@ -38,6 +38,11 @@ const suggestions = [
     label: "Get a quote",
     query: "I'd like to hire you for a project. Can you send me a contract?",
     icon: FileText,
+  },
+  {
+    label: "Prep sheet",
+    query: "I'm interested in automation but not sure where to start. Can you give me a prep sheet?",
+    icon: ClipboardList,
   },
 ];
 
