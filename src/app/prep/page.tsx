@@ -82,6 +82,12 @@ const SECTION_01 = [
     placeholder: "Personal phone, business line, automated SMS, etc.",
     type: "text" as const,
   },
+  {
+    id: "tools_available",
+    label: "What tools/software do you currently use?",
+    placeholder: "GorillaDesk, Google Workspace, QuickBooks, WordPress, CallRail, Twilio, Mailchimp, etc. — list everything you pay for or use regularly",
+    type: "textarea" as const,
+  },
 ];
 
 const SECTION_02 = [
