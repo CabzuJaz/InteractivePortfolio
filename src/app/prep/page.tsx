@@ -209,7 +209,7 @@ function PrepContent() {
 
   const renderField = (q: (typeof SECTION_01)[0]) => {
     const base =
-      "w-full rounded-xl border border-border/50 bg-card px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 placeholder:text-muted-foreground/60";
+      "w-full rounded-xl border border-border/60 bg-background/80 px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 disabled:opacity-50 placeholder:text-muted-foreground/50 transition-colors";
     if (q.type === "textarea") {
       return (
         <textarea
@@ -303,18 +303,18 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-border/50 bg-card p-4"
+          className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5"
         >
-          <div className="flex items-center justify-between text-base mb-2">
-            <span className="text-muted-foreground font-medium">Foundation poured</span>
-            <span className="font-semibold text-primary">{progress}%</span>
+          <div className="flex items-center justify-between text-base mb-3">
+            <span className="text-foreground font-medium">Foundation poured</span>
+            <span className="font-bold text-primary text-lg">{progress}%</span>
           </div>
-          <div className="h-3 rounded-full bg-muted/50 overflow-hidden">
+          <div className="h-3.5 rounded-full bg-muted/40 overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              className="h-full rounded-full bg-linear-to-r from-primary to-primary/80"
+              className="h-full rounded-full bg-linear-to-r from-primary to-primary/70"
             />
           </div>
         </motion.div>
@@ -324,13 +324,13 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8"
+          className="rounded-2xl border border-border/30 bg-linear-to-b from-card to-card/80 p-6 sm:p-8 shadow-sm"
         >
           <SectionHeader number="01" title="What you've already got" />
           <div className="space-y-6">
             {SECTION_01.map((q) => (
               <div key={q.id}>
-                <label className="block text-base font-medium mb-2">
+                <label className="block text-base font-semibold text-foreground/90 mb-2">
                   {q.label}
                 </label>
                 {renderField(q)}
@@ -344,13 +344,13 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8"
+          className="rounded-2xl border border-border/30 bg-linear-to-b from-card to-card/80 p-6 sm:p-8 shadow-sm"
         >
           <SectionHeader number="02" title="Where leads might be leaking" />
           <div className="space-y-6">
             {SECTION_02.map((q) => (
               <div key={q.id}>
-                <label className="block text-base font-medium mb-2">
+                <label className="block text-base font-semibold text-foreground/90 mb-2">
                   {q.label}
                 </label>
                 {renderField(q)}
