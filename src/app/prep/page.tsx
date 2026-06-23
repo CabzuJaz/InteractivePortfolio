@@ -155,10 +155,12 @@ function PrepContent() {
   const clientEmail = searchParams.get("email") ?? "";
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
   const [errorMsg, setErrorMsg] = useState("");
+  const [dashboardUrl, setDashboardUrl] = useState("");
 
   const progress = getProgress(answers);
 
@@ -175,6 +177,7 @@ function PrepContent() {
       clientId,
       clientName,
       clientEmail,
+      clientPhone: phone.trim() || undefined,
       answers: answerList,
       pageUrl: typeof window !== "undefined" ? window.location.href : "",
       submittedAt: new Date().toISOString(),
@@ -194,6 +197,8 @@ function PrepContent() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Server error (${res.status})`);
       }
+      const data = await res.json();
+      setDashboardUrl(data.dashboardUrl || "");
       setStatus("sent");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
@@ -242,16 +247,46 @@ function PrepContent() {
         >
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
           <h1 className="text-3xl font-bold mb-3">Got it!</h1>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+          <p className="text-lg text-muted-foreground leading-relaxed mb-6">
             Your answers have been sent to Jazzmin. She&apos;ll review them and
             get back to you with a recommendation.
           </p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-          >
-            Back to Home
-          </Link>
+          {dashboardUrl && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 mb-6">
+              <p className="text-sm text-muted-foreground mb-2">
+                Your project dashboard is ready:
+              </p>
+              <a
+                href={dashboardUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-medium hover:underline break-all"
+              >
+                {dashboardUrl}
+              </a>
+              <p className="text-xs text-muted-foreground mt-2">
+                A WhatsApp message with this link has been sent to your phone.
+              </p>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {dashboardUrl && (
+              <a
+                href={dashboardUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              >
+                Open Dashboard
+              </a>
+            )}
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full glass font-medium hover:bg-primary/10 transition-colors"
+            >
+              Back to Home
+            </Link>
+          </div>
         </motion.div>
       </div>
     );
@@ -297,6 +332,27 @@ function PrepContent() {
             for you. All fields are optional.
           </p>
         </motion.div>
+
+        {/* Contact info */}
+        {!clientEmail && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5"
+          >
+            <p className="text-base font-semibold text-foreground/90 mb-2">
+              WhatsApp number (optional — for dashboard link)
+            </p>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+63 912 345 6789"
+              className="w-full rounded-xl border border-border/60 bg-background/80 px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 placeholder:text-muted-foreground/50 transition-colors"
+            />
+          </motion.div>
+        )}
 
         {/* Progress gauge */}
         <motion.div

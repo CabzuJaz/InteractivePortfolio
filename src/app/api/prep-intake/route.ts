@@ -16,6 +16,7 @@ interface PrepPayload {
   clientId: string;
   clientName: string;
   clientEmail: string;
+  clientPhone?: string;
   answers: PrepAnswer[];
   pageUrl: string;
   submittedAt: string;
@@ -32,6 +33,7 @@ function escapeHtml(str: string): string {
 async function findOrCreateContact(
   email: string,
   name: string,
+  phone?: string,
 ): Promise<string | null> {
   const locationId = process.env.GHL_LOCATION_ID;
   if (!locationId || !email) return null;
@@ -52,17 +54,20 @@ async function findOrCreateContact(
   const firstName = nameParts[0] || "Client";
   const lastName = nameParts.slice(1).join(" ") || undefined;
 
+  const contactPayload: Record<string, unknown> = {
+    locationId,
+    firstName,
+    lastName,
+    email,
+    source: "Prep Sheet",
+    tags: ["prep-sheet"],
+  };
+  if (phone) contactPayload.phone = phone;
+
   const createRes = await fetch(`${GHL_BASE}/contacts/`, {
     method: "POST",
     headers: GHL_HEADERS,
-    body: JSON.stringify({
-      locationId,
-      firstName,
-      lastName,
-      email,
-      source: "Prep Sheet",
-      tags: ["prep-sheet"],
-    }),
+    body: JSON.stringify(contactPayload),
   });
 
   if (!createRes.ok) return null;
@@ -102,7 +107,41 @@ async function addTag(contactId: string, tag: string): Promise<void> {
   });
 }
 
-async function notifyDiscord(payload: PrepPayload): Promise<void> {
+async function sendWhatsApp(
+  contactId: string,
+  clientName: string,
+  dashboardUrl: string,
+): Promise<void> {
+  const locationId = process.env.GHL_LOCATION_ID;
+  if (!locationId) return;
+
+  // Get contact to find phone number
+  const contactRes = await fetch(
+    `${GHL_BASE}/contacts/${contactId}`,
+    { headers: GHL_HEADERS },
+  );
+  if (!contactRes.ok) return;
+
+  const contactData = await contactRes.json();
+  const phone = contactData.contact?.phone;
+  if (!phone) return;
+
+  // Send WhatsApp message via GHL
+  const message = `Hi ${clientName}! 👋\n\nThank you for filling out the prep sheet. I've created a project dashboard for you where you can track progress and see deliverables.\n\n📊 Your Dashboard: ${dashboardUrl}\n\nI'll review your answers and get back to you with a recommendation soon.\n\n— Jazzmin\nBuildWithJazz.com`;
+
+  await fetch(`${GHL_BASE}/conversations/messages`, {
+    method: "POST",
+    headers: GHL_HEADERS,
+    body: JSON.stringify({
+      type: "SMS",
+      contactId,
+      message,
+      phone,
+    }),
+  }).catch(() => {});
+}
+
+async function notifyDiscord(payload: PrepPayload, dashboardUrl: string): Promise<void> {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) return;
 
@@ -129,6 +168,11 @@ async function notifyDiscord(payload: PrepPayload): Promise<void> {
             {
               name: "Email",
               value: payload.clientEmail || "Not provided",
+              inline: true,
+            },
+            {
+              name: "Dashboard",
+              value: `[View Dashboard](${dashboardUrl})`,
               inline: true,
             },
             {
@@ -160,21 +204,36 @@ export async function POST(req: NextRequest) {
     const email = body.clientEmail?.trim();
     const name = body.clientName?.trim() || "Client";
 
+    // Generate dashboard URL
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://clients.buildwithjazz.com";
+    const dashboardUrl = email
+      ? `${baseUrl}/dashboard?email=${encodeURIComponent(email)}`
+      : `${baseUrl}/dashboard`;
+
     // GHL integration
+    let contactId: string | null = null;
     if (email) {
-      const contactId = await findOrCreateContact(email, name);
+      contactId = await findOrCreateContact(email, name, body.clientPhone);
       if (contactId) {
         await Promise.allSettled([
           addNote(contactId, body),
           addTag(contactId, "prep-sheet-submitted"),
         ]);
+
+        // Send WhatsApp with dashboard link
+        await sendWhatsApp(contactId, name, dashboardUrl).catch(() => {});
       }
     }
 
-    // Discord notification (fire-and-forget)
-    notifyDiscord(body).catch(() => {});
+    // Discord notification
+    notifyDiscord(body, dashboardUrl).catch(() => {});
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      dashboardUrl,
+    });
   } catch (err) {
     console.error("[prep-intake] Error:", err);
     return NextResponse.json(
