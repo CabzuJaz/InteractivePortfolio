@@ -131,11 +131,11 @@ const SECTION_02 = [
 
 function SectionHeader({ number, title }: { number: string; title: string }) {
   return (
-    <div className="mb-6">
-      <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+    <div className="mb-8">
+      <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">
         Section {number}
       </p>
-      <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold">{title}</h2>
     </div>
   );
 }
@@ -209,14 +209,14 @@ function PrepContent() {
 
   const renderField = (q: (typeof SECTION_01)[0]) => {
     const base =
-      "w-full rounded-xl border border-border/50 bg-card px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50";
+      "w-full rounded-xl border border-border/50 bg-card px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 placeholder:text-muted-foreground/60";
     if (q.type === "textarea") {
       return (
         <textarea
           value={answers[q.id] ?? ""}
           onChange={(e) => setAnswer(q.id, e.target.value)}
           placeholder={q.placeholder}
-          rows={3}
+          rows={4}
           className={`${base} resize-none`}
         />
       );
@@ -240,9 +240,9 @@ function PrepContent() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md"
         >
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Got it!</h1>
-          <p className="text-muted-foreground mb-6">
+          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
+          <h1 className="text-3xl font-bold mb-3">Got it!</h1>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-8">
             Your answers have been sent to Jazzmin. She&apos;ll review them and
             get back to you with a recommendation.
           </p>
@@ -287,12 +287,12 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
             {clientName
               ? `Hi ${clientName}, let's map your lead flow`
               : "Let's map your lead flow"}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-lg text-muted-foreground leading-relaxed">
             Fill out what you can — every answer helps me design a better system
             for you. All fields are optional.
           </p>
@@ -305,8 +305,8 @@ function PrepContent() {
           transition={{ delay: 0.1 }}
           className="rounded-2xl border border-border/50 bg-card p-4"
         >
-          <div className="flex items-center justify-between text-sm mb-2">
-            <span className="text-muted-foreground">Foundation poured</span>
+          <div className="flex items-center justify-between text-base mb-2">
+            <span className="text-muted-foreground font-medium">Foundation poured</span>
             <span className="font-semibold text-primary">{progress}%</span>
           </div>
           <div className="h-3 rounded-full bg-muted/50 overflow-hidden">
@@ -324,13 +324,13 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-border/50 bg-card p-6 space-y-5"
+          className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8"
         >
           <SectionHeader number="01" title="What you've already got" />
-          <div className="space-y-4">
+          <div className="space-y-6">
             {SECTION_01.map((q) => (
               <div key={q.id}>
-                <label className="block text-sm font-medium mb-1.5">
+                <label className="block text-base font-medium mb-2">
                   {q.label}
                 </label>
                 {renderField(q)}
@@ -344,13 +344,13 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-border/50 bg-card p-6 space-y-5"
+          className="rounded-2xl border border-border/50 bg-card p-6 sm:p-8"
         >
           <SectionHeader number="02" title="Where leads might be leaking" />
-          <div className="space-y-4">
+          <div className="space-y-6">
             {SECTION_02.map((q) => (
               <div key={q.id}>
-                <label className="block text-sm font-medium mb-1.5">
+                <label className="block text-base font-medium mb-2">
                   {q.label}
                 </label>
                 {renderField(q)}
