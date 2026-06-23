@@ -155,6 +155,7 @@ function PrepContent() {
   const clientEmail = searchParams.get("email") ?? "";
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [emailInput, setEmailInput] = useState(clientEmail);
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
@@ -176,7 +177,7 @@ function PrepContent() {
     return {
       clientId,
       clientName,
-      clientEmail,
+      clientEmail: emailInput.trim() || clientEmail,
       clientPhone: phone.trim() || undefined,
       answers: answerList,
       pageUrl: typeof window !== "undefined" ? window.location.href : "",
@@ -334,16 +335,31 @@ function PrepContent() {
         </motion.div>
 
         {/* Contact info */}
-        {!clientEmail && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5"
-          >
-            <p className="text-base font-semibold text-foreground/90 mb-2">
-              WhatsApp number (optional — for dashboard link)
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5 space-y-4"
+        >
+          <p className="text-base font-semibold text-foreground/90">
+            Contact Info (for your dashboard link)
+          </p>
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="you@company.com"
+              className="w-full rounded-xl border border-border/60 bg-background/80 px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 placeholder:text-muted-foreground/50 transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-muted-foreground mb-1.5">
+              WhatsApp number (optional)
+            </label>
             <input
               type="tel"
               value={phone}
@@ -351,8 +367,8 @@ function PrepContent() {
               placeholder="+63 912 345 6789"
               className="w-full rounded-xl border border-border/60 bg-background/80 px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 placeholder:text-muted-foreground/50 transition-colors"
             />
-          </motion.div>
-        )}
+          </div>
+        </motion.div>
 
         {/* Progress gauge */}
         <motion.div
