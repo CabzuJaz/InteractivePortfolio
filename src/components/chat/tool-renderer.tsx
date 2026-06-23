@@ -10,6 +10,7 @@ import { Fun } from "@/components/tools/Fun";
 import { Availability } from "@/components/tools/Availability";
 import { BusinessAnalysis } from "@/components/tools/BusinessAnalysis";
 import { Contract } from "@/components/tools/Contract";
+import { PrepSheet } from "@/components/tools/PrepSheet";
 import { ToolSkeleton } from "@/components/tools/tool-skeleton";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,6 +26,7 @@ const toolSkeletonLabels: Record<string, string> = {
   getAvailability: "Checking availability…",
   analyzeBusiness: "Analyzing your business for automation opportunities…",
   generateContract: "Preparing your contract proposal…",
+  sharePrepSheet: "Generating your prep sheet…",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +56,8 @@ function renderToolOutput(toolName: string, data: any) {
       );
     case "analyzeBusiness":
       return <BusinessAnalysis analysis={data.analysis} />;
+    case "sharePrepSheet":
+      return <PrepSheet prepSheet={data.prepSheet} />;
     case "generateContract":
       return <Contract contract={data.contract} />;
     default:
