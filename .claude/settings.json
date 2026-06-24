@@ -11,7 +11,8 @@
       "Bash(git commit -m 'fix: add 24-hour buffer to contract estimates *)",
       "Bash(curl -s https://services.leadconnectorhq.com/locations/XJHfIAt14bdfDuAmgZ52/custom-fields -H 'Authorization: Bearer pit-79167b9d-b3ba-4877-9447-6baa033d8074' -H 'Version: 2021-07-28')",
       "Bash(python3 -c ' *)",
-      "Bash(curl -s -X POST https://services.leadconnectorhq.com/contacts/ -H 'Authorization: Bearer pit-79167b9d-b3ba-4877-9447-6baa033d8074' -H 'Content-Type: application/json' -H 'Version: 2021-07-28' -d '{ *)"
+      "Bash(curl -s -X POST https://services.leadconnectorhq.com/contacts/ -H 'Authorization: Bearer pit-79167b9d-b3ba-4877-9447-6baa033d8074' -H 'Content-Type: application/json' -H 'Version: 2021-07-28' -d '{ *)",
+      "Bash(git commit -m 'feat: improve suggestion chips with larger size and color coding *)"
     ]
   }
 }
