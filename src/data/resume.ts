@@ -76,7 +76,7 @@ export const resume = {
   ] as Experience[],
   certificates: [
     {
-      name: "Make.co",
+      name: "Make.com",
       issuer: "Make",
       date: "2026",
       url: "/certs/make-certificate.pdf",
