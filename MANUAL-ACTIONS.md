@@ -58,12 +58,14 @@ The following secrets were committed to git history in `docs/PROJECT-SETUP.md` a
 
 Render's free tier has ephemeral storage — n8n workflows are lost on every restart.
 
-### 2.1 Create Free Postgres (Neon)
+### 2.1 Create Free Postgres (Supabase)
 
-- [ ] Go to **neon.tech** → Sign up (free)
-- [ ] Create a project → name: `n8n-production`
-- [ ] Copy the connection string
-- [ ] Note: host, database, user, password
+- [ ] Go to **supabase.com** → Sign up (free)
+- [ ] Create a new project → name: `n8n-production`
+- [ ] Set a strong database password (save it)
+- [ ] Go to **Project Settings** → **Database** → **Connection string**
+- [ ] Copy the **URI** format connection string
+- [ ] Note: host (`db.<ref>.supabase.co`), database (`postgres`), user (`postgres`), password
 
 ### 2.2 Generate Encryption Key
 
