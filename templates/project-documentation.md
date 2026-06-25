@@ -196,7 +196,7 @@ pytest tests/test_[name].py
 ## 11. Support
 
 **Engineer:** Jazzmin Sicat-Cabizares
-**Email:** jazzmincabizares@gmail.com
+**Email:** <OWNER_EMAIL>
 **Support Period:** 2 weeks post-delivery
 
 ---

@@ -163,7 +163,7 @@ Congratulations — your project is complete! This manual will help you understa
 - **Response time:** 24-48 hours
 
 ### 9.2 Contact Information
-- **Email:** jazzmincabizares@gmail.com
+- **Email:** <OWNER_EMAIL>
 - **Calendly:** calendly.com/jazzmincabizares/15-minutes-discovery-call
 - **Response time:** Within 24 hours
 

@@ -83,17 +83,23 @@ async function uploadToGHL(
     });
 
     // Store URL as custom field for email templates
-    await fetch(`${baseUrl}/contacts/${contactId}`, {
-      method: "PUT",
-      headers: { ...headers, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        customField: [
-          { id: "5KhQSkHhEvXKXJEx3NHZ", value: fileUrl },
-          { id: "XgvQOEZBcbBnXFFi4lx5", value: clientName },
-          { id: "VZWF2XTXvbK9R7vavt8S", value: `$${totalCost.toLocaleString()}` },
-        ],
-      }),
-    });
+    const fieldPdfUrl = process.env.GHL_FIELD_PDF_URL;
+    const fieldName = process.env.GHL_FIELD_CLIENT_NAME;
+    const fieldCost = process.env.GHL_FIELD_TOTAL_COST;
+
+    if (fieldPdfUrl && fieldName && fieldCost) {
+      await fetch(`${baseUrl}/contacts/${contactId}`, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customField: [
+            { id: fieldPdfUrl, value: fileUrl },
+            { id: fieldName, value: clientName },
+            { id: fieldCost, value: `$${totalCost.toLocaleString()}` },
+          ],
+        }),
+      });
+    }
   }
 
   // 4. Update contact tags

@@ -2,9 +2,30 @@
 
 Complete setup guide for the AI Portfolio with chat, GHL integration, n8n automation, and client dashboards.
 
-**Last Updated:** June 2026
-**Owner:** Jazzmin Sicat-Cabizares
-**Domain:** buildwithjazz.com
+---
+
+## Document Control
+
+| Field | Value |
+|-------|-------|
+| **Document ID** | BwJ-SETUP-001 |
+| **Version** | 1.1 |
+| **Status** | Approved |
+| **Author** | Jazzmin Sicat-Cabizares |
+| **Approved by** | Jazzmin Sicat-Cabizares |
+| **Review cycle** | Quarterly |
+| **Next review** | 2026-09-24 |
+
+### Change History
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0 | 2026-06-17 | Jazzmin | Initial documentation |
+| 1.1 | 2026-06-24 | Jazzmin | Security remediation: scrubbed secrets, moved GHL field IDs to env vars, added n8n resilience config, added runbook sections, de-duplicated issues |
+
+---
+
+**Note:** Documentation references env var names, never values. See `.env.example` for the canonical variable list and `MANUAL-ACTIONS.md` for credential rotation steps.
 
 ---
 
@@ -189,7 +210,7 @@ if (process.env.GROQ_API_KEY) {
 }
 ```
 
-### 9 AI Tools
+### 10 AI Tools
 
 | Tool | Purpose |
 |------|---------|
@@ -214,10 +235,7 @@ The AI switches between 3 personas based on the conversation:
 
 ### Dynamic Pricing
 
-Contract rates range from $10-15/hr based on:
-- **Complexity:** Simple ($10), Moderate ($12), Complex ($15)
-- **Client type:** Startup (-$2), Small Business (base), Enterprise (+$3)
-- **Buffer:** 24 hours added to all estimates
+Contract rates are dynamically calculated based on project complexity and client type. See `docs/internal/pricing.md` for the full rate table and pricing logic (confidential — do not share with clients).
 
 ---
 
@@ -248,9 +266,11 @@ When a conversation is logged:
 | `proposal-sent` | Contract PDF uploaded |
 | `downpayment-paid` | Payment received |
 | `in-progress` | Project started |
-| `done` | Project completed |
-| `final-payment-paid` | Final payment received |
-| `completed` | Project closed |
+| `done` | All deliverables completed — triggers n8n "project-done" webhook |
+| `final-payment-paid` | Final payment received — triggers n8n "final-payment-paid" webhook |
+| `completed` | Project fully closed (after final payment + docs sent) |
+
+`TODO(jazz):` Clarify whether `done` and `completed` should be merged into one tag, or if `done` = "deliverables done" and `completed` = "fully paid and closed" is the intended distinction.
 | `prep-sheet` | Prep sheet submitted |
 | `prep-sheet-submitted` | Prep sheet answers saved |
 
@@ -267,11 +287,10 @@ When a conversation is logged:
 
 ### Custom Fields (for contract data)
 
-| Field | ID |
-|-------|----|
-| Contract PDF URL | `5KhQSkHhEvXKXJEx3NHZ` |
-| Contract Client Name | `XgvQOEZBcbBnXFFi4lx5` |
-| Contract Total Cost | `VZWF2XTXvbK9R7vavt8S` |
+Set these as env vars in `.env` (see `.env.example` for format):
+- `GHL_FIELD_PDF_URL`
+- `GHL_FIELD_CLIENT_NAME`
+- `GHL_FIELD_TOTAL_COST`
 
 ---
 
@@ -355,9 +374,7 @@ return [{ json: payload }];
 
 ### Webhook URL
 
-```
-https://discord.com/api/webhooks/1515600055778803832/IwC-TVb4Aytg4Mo_CdQDo5zb8JUxcwnxNxqTN7bIaASDFO4U6WGQcjdg6jToo7sSMu55
-```
+Set `DISCORD_WEBHOOK_URL` in `.env` (format: `https://discord.com/api/webhooks/<id>/<token>`).
 
 ### What Gets Sent
 
@@ -404,11 +421,13 @@ When "Send to Client" is clicked:
 5. Adds note to GHL contact
 6. Sends Discord notification
 
-### Issue: Resend Free Tier Limitation
+### Known Limitation: Resend Free Tier
 
-**Problem:** Resend free tier only allows sending to your own email address.
+**Status:** Unresolved — owner-only sending is the current state.
 
-**Solution:** Emails go to owner (`jazzmincabizares@gmail.com`). To send to clients, verify a domain at [resend.com/domains](https://resend.com/domains).
+**Problem:** Resend free tier only allows sending to the owner's email address. Client emails are not delivered.
+
+**Remediation:** Verify a sending domain at [resend.com/domains](https://resend.com/domains), then update the `from` address in `send-contract/route.ts` to use the verified domain (e.g., `noreply@buildwithjazz.com`). See `MANUAL-ACTIONS.md` for steps.
 
 ### Issue: Blank PDF
 
@@ -439,7 +458,7 @@ https://clients.buildwithjazz.com/dashboard?email=client@email.com
 ### Admin Access
 
 ```
-https://clients.buildwithjazz.com/dashboard?email=...&admin=jazz-admin-2026
+https://clients.buildwithjazz.com/dashboard?email=...&admin=<DASHBOARD_ADMIN_KEY>
 ```
 
 ### Issue: Client-Side Admin Auth
@@ -600,16 +619,80 @@ if (nameMatch && !NOT_NAMES.has(nameMatch[1].toLowerCase())) {
    ```
 3. Build, push, deploy
 
-### Emergency Contacts
+### Escalation Path
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| Vercel | vercel.com | Hosting |
-| GHL | app.gohighlevel.com | CRM |
-| Render | render.com | n8n hosting |
-| UptimeRobot | uptimerobot.com | Uptime monitoring |
-| Discord | discord.com | Notifications |
-| Resend | resend.com | Email |
+| Service | Human Owner | Contact Method | Account Recovery |
+|---------|-------------|----------------|------------------|
+| Vercel | Jazzmin Sicat-Cabizares | vercel.com dashboard | GitHub SSO + email recovery |
+| GHL | Jazzmin Sicat-Cabizares | app.gohighlevel.com | Email + password (2FA enabled) |
+| Render | Jazzmin Sicat-Cabizares | render.com dashboard | GitHub SSO |
+| n8n | Jazzmin Sicat-Cabizares | eightn-render.onrender.com | n8n account credentials |
+| Discord | Jazzmin Sicat-Cabizares | Discord app | Discord account (2FA enabled) |
+| Resend | Jazzmin Sicat-Cabizares | resend.com | GitHub SSO |
+| MiMo | Jazzmin Sicat-Cabizares | MiMo platform | API key rotation |
+| Groq | Jazzmin Sicat-Cabizares | console.groq.com | API key rotation |
+
+**Backup operator:** None designated. `TODO(jazz):` designate a backup operator.
+
+**2FA recovery codes:** Stored in password manager (not in this document).
+
+---
+
+## Runbook
+
+### Rollback
+
+**Vercel:**
+1. Go to vercel.com → your project → Deployments
+2. Find the last working deployment
+3. Click ⋯ → **Promote to Production**
+
+**n8n:**
+1. Import `n8n-workflows.json` from repo
+2. Re-enter credentials manually (they're encrypted in the export)
+3. Activate workflows
+
+### Verification
+
+After any deployment, verify:
+1. `buildwithjazz.com` loads
+2. Chat works: send "hello" → AI responds
+3. Contract works: ask for a contract → card appears with Download PDF
+4. GHL check: new contact appears after chat
+5. Discord check: notification received
+6. Dashboard check: `clients.buildwithjazz.com` loads
+
+### Staging
+
+Use Vercel preview deployments before promoting to production:
+1. Push to a branch → Vercel creates a preview URL
+2. Test on the preview URL
+3. Merge to `main` → auto-deploys to production
+
+### Incident Response
+
+| Scenario | Action |
+|----------|--------|
+| Chat not responding | Check Vercel function logs, verify API keys |
+| GHL contacts not created | Check GHL API key, verify webhook endpoint |
+| Discord not receiving | Check webhook URL in env vars |
+| n8n workflows not firing | Check UptimeRobot, verify n8n is awake |
+| Dashboard not loading | Check `DASHBOARD_ADMIN_KEY` in Vercel |
+| Contract PDF blank | Check `@react-pdf/renderer` import, clear browser cache |
+
+### Data Retention & Privacy
+
+| Data | Storage | Retention | Consent Basis |
+|------|---------|-----------|---------------|
+| Chat conversations | GHL contacts + notes | Indefinite (owner manages) | Legitimate interest (business inquiry) |
+| Client PII (name, email, phone) | GHL contacts | Indefinite | Legitimate interest |
+| Prep sheet answers | GHL contact notes | Indefinite | Explicit submission |
+| Contract PDFs | GHL media library | Indefinite | Contractual |
+| Discord notifications | Discord channel | Indefinite | Internal use only |
+
+**Client rights:** Clients can request data deletion by contacting the owner. GHL contacts can be deleted manually.
+
+`TODO(jazz):` Add a privacy policy page if collecting data from EU residents (GDPR).
 
 ---
 

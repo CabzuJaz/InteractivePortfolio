@@ -190,7 +190,7 @@ Body:
   "from": "Jazzmin <onboarding@resend.dev>",
   "to": "{{email}}",
   "subject": "Let's get started, {{firstName}}! 🚀",
-  "html": "<div style='font-family:system-ui'>Hi {{firstName}},<br><br>Thank you for the downpayment — I'm excited to get started!<br><br>Here's what happens next:<br>1. I'll begin work within 24 hours<br>2. You'll receive daily progress updates<br>3. I'll reach out if I need anything<br><br>Communication:<br>• Email: jazzmincabizares@gmail.com<br>• WhatsApp: +639389036717<br>• Book a call: <a href='https://calendly.com/jazzmincabizares/15-minutes-discovery-call'>calendly.com</a><br><br>Let's build something great!<br><br>Best,<br>Jazzmin</div>"
+  "html": "<div style='font-family:system-ui'>Hi {{firstName}},<br><br>Thank you for the downpayment — I'm excited to get started!<br><br>Here's what happens next:<br>1. I'll begin work within 24 hours<br>2. You'll receive daily progress updates<br>3. I'll reach out if I need anything<br><br>Communication:<br>• Email: <OWNER_EMAIL><br>• WhatsApp: <OWNER_PHONE><br>• Book a call: <a href='https://calendly.com/jazzmincabizares/15-minutes-discovery-call'>calendly.com</a><br><br>Let's build something great!<br><br>Best,<br>Jazzmin</div>"
 }
 ```
 

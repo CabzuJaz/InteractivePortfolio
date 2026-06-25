@@ -158,7 +158,7 @@ Here's what happens next:
 
 Communication:
 • Primary: Email (async updates)
-• Urgent: WhatsApp (+639389036717)
+• Urgent: WhatsApp (<OWNER_PHONE>)
 • Meetings: https://calendly.com/jazzmincabizares/15-minutes-discovery-call
 
 Let's build something great!
