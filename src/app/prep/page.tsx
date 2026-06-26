@@ -21,119 +21,171 @@ interface Answer {
   value: string;
 }
 
-const SECTION_01 = [
+interface Question {
+  id: string;
+  label: string;
+  placeholder: string;
+  type: "text" | "textarea";
+  required?: boolean;
+}
+
+const SECTION_0: Question[] = [
+  {
+    id: "email",
+    label: "Email",
+    placeholder: "you@company.com",
+    type: "text",
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp number (optional)",
+    placeholder: "+63 912 345 6789",
+    type: "text",
+  },
+];
+
+const SECTION_1: Question[] = [
   {
     id: "lead_sources",
     label: "Where do your leads come from today?",
     placeholder: "Website forms, phone calls, referrals, Google Ads, etc.",
-    type: "textarea" as const,
+    type: "textarea",
   },
   {
     id: "form_plugin",
     label: "What form plugin are you using on your website?",
     placeholder: "Elementor Forms, WPForms, Gravity Forms, Contact Form 7, etc.",
-    type: "text" as const,
+    type: "text",
+  },
+  {
+    id: "form_inbox",
+    label: "Which email inbox receives your website form notifications?",
+    placeholder: "e.g. larry@bmpcconcrete.com — exact address please",
+    type: "text",
+    required: true,
   },
   {
     id: "phone_routing",
     label: "How are phone calls routed?",
     placeholder: "Direct line, IVR, forwarding to mobile, etc.",
-    type: "textarea" as const,
+    type: "textarea",
   },
   {
     id: "answering_service",
     label: "Do you use an answering service?",
     placeholder: "Yes/No, which one, how do they forward leads to you?",
-    type: "textarea" as const,
+    type: "textarea",
   },
   {
     id: "leads_land",
     label: "Where do leads land after they come in?",
     placeholder: "Email inbox, GorillaDesk, spreadsheet, nowhere, etc.",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "gorilladesk_usage",
     label: "How are you using GorillaDesk today?",
     placeholder: "Scheduling, invoicing, CRM, not using it much, etc.",
-    type: "textarea" as const,
+    type: "textarea",
+    required: true,
   },
   {
     id: "single_source",
     label: "Do you have a single source of truth for all leads?",
     placeholder: "One CRM, spreadsheet, or system where everything lives?",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "response_speed",
     label: "How fast do you respond to new leads?",
     placeholder: "Within 5 minutes, same day, when I remember, etc.",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "email_sending",
     label: "How are you sending emails to leads/customers?",
     placeholder: "Personal Gmail, business email, GorillaDesk, Mailchimp, etc.",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "texting_setup",
     label: "Do you text customers? If so, how?",
     placeholder: "Personal phone, business line, automated SMS, etc.",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "tools_available",
     label: "What tools/software do you currently use?",
     placeholder: "GorillaDesk, Google Workspace, QuickBooks, WordPress, CallRail, Twilio, Mailchimp, etc. — list everything you pay for or use regularly",
-    type: "textarea" as const,
+    type: "textarea",
+    required: true,
   },
 ];
 
-const SECTION_02 = [
+const SECTION_2: Question[] = [
   {
     id: "leads_per_week",
     label: "How many leads do you get per week right now?",
     placeholder: "Approximate number",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "leads_after_ads",
     label: "How many leads do you expect after increasing ad spend?",
     placeholder: "Your target or estimate",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "lost_lead",
     label: "Describe a time you lost a lead. What happened?",
     placeholder: "Tell me the story — what went wrong?",
-    type: "textarea" as const,
+    type: "textarea",
   },
   {
     id: "who_watches",
     label: "Who is responsible for watching and responding to leads?",
-    placeholder: "You, a team member, nobody specifically, etc.",
-    type: "text" as const,
+    placeholder: "Name + phone number for text alerts",
+    type: "textarea",
+    required: true,
   },
   {
     id: "avg_job_value",
     label: "What's the average job value for a concrete lead?",
     placeholder: "$500, $2,000, depends on the job, etc.",
-    type: "text" as const,
+    type: "text",
   },
   {
     id: "cost_reflection",
     label: "If you lose just 2 leads per week, what does that cost you?",
     placeholder: "Think about your average job value × 2 leads × 4 weeks",
-    type: "textarea" as const,
+    type: "textarea",
+  },
+  {
+    id: "confirmation_preference",
+    label: "Confirmation message preference: should customers get an email, a text, or both?",
+    placeholder: "Email only, text only, both — and any wording you prefer?",
+    type: "textarea",
   },
   {
     id: "anything_else",
     label: "Anything else you want me to know before we start?",
     placeholder: "Pain points, goals, concerns, things that have failed before...",
-    type: "textarea" as const,
+    type: "textarea",
   },
 ];
+
+const ALL_QUESTIONS = [...SECTION_0, ...SECTION_1, ...SECTION_2];
+
+function getProgress(answers: Record<string, string>) {
+  const answered = ALL_QUESTIONS.filter((q) => answers[q.id]?.trim()).length;
+  return Math.round((answered / ALL_QUESTIONS.length) * 100);
+}
+
+function getRequiredMissing(answers: Record<string, string>): string[] {
+  return ALL_QUESTIONS.filter((q) => q.required && !answers[q.id]?.trim()).map(
+    (q) => q.label,
+  );
+}
 
 function SectionHeader({ number, title }: { number: string; title: string }) {
   return (
@@ -146,23 +198,15 @@ function SectionHeader({ number, title }: { number: string; title: string }) {
   );
 }
 
-function getProgress(answers: Record<string, string>) {
-  const allQuestions = [...SECTION_01, ...SECTION_02];
-  const answered = allQuestions.filter(
-    (q) => answers[q.id]?.trim(),
-  ).length;
-  return Math.round((answered / allQuestions.length) * 100);
-}
-
 function PrepContent() {
   const searchParams = useSearchParams();
   const clientId = searchParams.get("client") ?? "";
   const clientName = searchParams.get("name") ?? "";
   const clientEmail = searchParams.get("email") ?? "";
 
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [emailInput, setEmailInput] = useState(clientEmail);
-  const [phone, setPhone] = useState("");
+  const [answers, setAnswers] = useState<Record<string, string>>({
+    email: clientEmail,
+  });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
@@ -170,21 +214,21 @@ function PrepContent() {
   const [dashboardUrl, setDashboardUrl] = useState("");
 
   const progress = getProgress(answers);
+  const requiredMissing = getRequiredMissing(answers);
 
   const setAnswer = (id: string, value: string) =>
     setAnswers((prev) => ({ ...prev, [id]: value }));
 
   const buildPayload = () => {
-    const allQuestions = [...SECTION_01, ...SECTION_02];
-    const answerList: Answer[] = allQuestions
-      .filter((q) => answers[q.id]?.trim())
-      .map((q) => ({ label: q.label, value: answers[q.id].trim() }));
+    const answerList: Answer[] = ALL_QUESTIONS.filter(
+      (q) => answers[q.id]?.trim(),
+    ).map((q) => ({ label: q.label, value: answers[q.id].trim() }));
 
     return {
       clientId,
       clientName,
-      clientEmail: emailInput.trim() || clientEmail,
-      clientPhone: phone.trim() || undefined,
+      clientEmail: answers.email?.trim() || clientEmail,
+      clientPhone: answers.whatsapp?.trim() || undefined,
       answers: answerList,
       pageUrl: typeof window !== "undefined" ? window.location.href : "",
       submittedAt: new Date().toISOString(),
@@ -192,6 +236,14 @@ function PrepContent() {
   };
 
   const handleSend = async () => {
+    if (requiredMissing.length > 0) {
+      setErrorMsg(
+        `Please fill in required fields: ${requiredMissing.join(", ")}`,
+      );
+      setStatus("error");
+      return;
+    }
+
     setStatus("sending");
     setErrorMsg("");
     try {
@@ -219,15 +271,18 @@ function PrepContent() {
     navigator.clipboard.writeText(text).catch(() => {});
   };
 
-  const renderField = (q: (typeof SECTION_01)[0]) => {
+  const renderField = (q: Question) => {
+    const isRequired = q.required;
     const base =
-      "w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50 placeholder:text-muted-foreground/70 transition-all shadow-sm";
+      "w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm";
+
     if (q.type === "textarea") {
       return (
         <textarea
           value={answers[q.id] ?? ""}
           onChange={(e) => setAnswer(q.id, e.target.value)}
           placeholder={q.placeholder}
+          required={isRequired}
           rows={4}
           className={`${base} resize-none`}
         />
@@ -239,6 +294,7 @@ function PrepContent() {
         value={answers[q.id] ?? ""}
         onChange={(e) => setAnswer(q.id, e.target.value)}
         placeholder={q.placeholder}
+        required={isRequired}
         className={base}
       />
     );
@@ -256,7 +312,7 @@ function PrepContent() {
           <h1 className="text-3xl font-bold mb-3">Got it!</h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-6">
             Your answers have been sent to Jazzmin. She&apos;ll review them and
-            get back to you with a recommendation.
+            get back to you with a recommendation for BMPC.
           </p>
           {dashboardUrl && (
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 mb-6">
@@ -332,48 +388,15 @@ function PrepContent() {
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">
             {clientName
               ? `Hi ${clientName}, let's map your lead flow`
-              : "Let's map your lead flow"}
+              : "Hi Larry, let's map your lead flow"}
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Fill out what you can — every answer helps me design a better system
-            for you. All fields are optional.
+            for you. Fields marked with <span className="text-primary font-semibold">*</span> are required.
           </p>
-        </motion.div>
-
-        {/* Contact info */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5 space-y-4"
-        >
-          <p className="text-base font-semibold text-foreground/90">
-            Contact Info (for your dashboard link)
+          <p className="text-sm text-muted-foreground mt-2">
+            This form is for <strong>BMPC Concrete</strong> only.
           </p>
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              placeholder="you@company.com"
-              className="w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-muted-foreground mb-1.5">
-              WhatsApp number (optional)
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+63 912 345 6789"
-              className="w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm"
-            />
-          </div>
         </motion.div>
 
         {/* Progress gauge */}
@@ -397,7 +420,27 @@ function PrepContent() {
           </div>
         </motion.div>
 
-        {/* Section 01 */}
+        {/* Section 0 — Contact Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5 space-y-4"
+        >
+          <p className="text-base font-semibold text-foreground/90">
+            Contact Info (for your dashboard link)
+          </p>
+          {SECTION_0.map((q) => (
+            <div key={q.id}>
+              <label className="block text-base font-semibold text-foreground/90 mb-2">
+                {q.label}
+              </label>
+              {renderField(q)}
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Section 1 */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -406,10 +449,11 @@ function PrepContent() {
         >
           <SectionHeader number="01" title="What you've already got" />
           <div className="space-y-6">
-            {SECTION_01.map((q) => (
+            {SECTION_1.map((q) => (
               <div key={q.id}>
                 <label className="block text-base font-semibold text-foreground/90 mb-2">
                   {q.label}
+                  {q.required && <span className="text-primary ml-1">*</span>}
                 </label>
                 {renderField(q)}
               </div>
@@ -417,7 +461,7 @@ function PrepContent() {
           </div>
         </motion.div>
 
-        {/* Section 02 */}
+        {/* Section 2 */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -426,10 +470,11 @@ function PrepContent() {
         >
           <SectionHeader number="02" title="Where leads might be leaking" />
           <div className="space-y-6">
-            {SECTION_02.map((q) => (
+            {SECTION_2.map((q) => (
               <div key={q.id}>
                 <label className="block text-base font-semibold text-foreground/90 mb-2">
                   {q.label}
+                  {q.required && <span className="text-primary ml-1">*</span>}
                 </label>
                 {renderField(q)}
               </div>
