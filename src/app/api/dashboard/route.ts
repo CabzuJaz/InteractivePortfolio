@@ -10,82 +10,115 @@ const GHL_HEADERS = {
 
 /**
  * Find contact by email and get project data from custom fields.
+ * Returns a fallback project if GHL is unavailable.
  */
 async function getProjectByEmail(email: string): Promise<ProjectData | null> {
   const locationId = process.env.GHL_LOCATION_ID;
-  if (!locationId) return null;
+  if (!locationId) return createFallbackProject(email);
 
-  const res = await fetch(
-    `${GHL_BASE}/contacts/?locationId=${locationId}&query=${encodeURIComponent(email)}&limit=1`,
-    { headers: GHL_HEADERS },
-  );
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  const contact = data.contacts?.[0];
-  if (!contact) return null;
-
-  // Check for project data in custom fields or tags
-  const tags: string[] = contact.tags || [];
-  const downpaymentPaid = tags.includes("downpayment-paid");
-  const finalPaymentPaid = tags.includes("final-payment-paid");
-
-  // Get deliverables from contact notes (latest note with "DELIVERABLES:" prefix)
-  let deliverables: Deliverable[] = [];
   try {
-    const notesRes = await fetch(
-      `${GHL_BASE}/contacts/${contact.id}/notes`,
+    const res = await fetch(
+      `${GHL_BASE}/contacts/?locationId=${locationId}&query=${encodeURIComponent(email)}&limit=1`,
       { headers: GHL_HEADERS },
     );
-    if (notesRes.ok) {
-      const notesData = await notesRes.json();
-      const deliverableNote = notesData.notes?.find((n: { body: string }) =>
-        n.body?.startsWith("DELIVERABLES:"),
+    if (!res.ok) return createFallbackProject(email);
+
+    const data = await res.json();
+    const contact = data.contacts?.[0];
+    if (!contact) return null;
+
+    // Check for project data in custom fields or tags
+    const tags: string[] = contact.tags || [];
+    const downpaymentPaid = tags.includes("downpayment-paid");
+    const finalPaymentPaid = tags.includes("final-payment-paid");
+
+    // Get deliverables from contact notes (latest note with "DELIVERABLES:" prefix)
+    let deliverables: Deliverable[] = [];
+    try {
+      const notesRes = await fetch(
+        `${GHL_BASE}/contacts/${contact.id}/notes`,
+        { headers: GHL_HEADERS },
       );
-      if (deliverableNote) {
-        const jsonStr = deliverableNote.body.replace("DELIVERABLES:", "");
-        deliverables = JSON.parse(jsonStr);
+      if (notesRes.ok) {
+        const notesData = await notesRes.json();
+        const deliverableNote = notesData.notes?.find((n: { body: string }) =>
+          n.body?.startsWith("DELIVERABLES:"),
+        );
+        if (deliverableNote) {
+          const jsonStr = deliverableNote.body.replace("DELIVERABLES:", "");
+          deliverables = JSON.parse(jsonStr);
+        }
       }
+    } catch {
+      // No deliverables set yet
     }
-  } catch {
-    // No deliverables set yet
-  }
 
-  // Get project name from opportunity or use default
-  let projectName = "Automation Project";
-  const description = "";
-  let totalCost = 0;
+    // Get project name from opportunity or use default
+    let projectName = "Automation Project";
+    const description = "";
+    let totalCost = 0;
 
-  try {
-    // Search for opportunity by contact email
-    const oppRes = await fetch(
-      `${GHL_BASE}/opportunities/search?location_id=${process.env.GHL_LOCATION_ID}&q=${encodeURIComponent(email)}`,
-      { headers: GHL_HEADERS },
-    );
-    if (oppRes.ok) {
-      const oppData = await oppRes.json();
-      const opp = oppData.opportunities?.[0];
-      if (opp) {
-        projectName = opp.name || projectName;
-        totalCost = opp.monetary_value || opp.monetaryValue || totalCost;
+    try {
+      const oppRes = await fetch(
+        `${GHL_BASE}/opportunities/search?location_id=${locationId}&q=${encodeURIComponent(email)}`,
+        { headers: GHL_HEADERS },
+      );
+      if (oppRes.ok) {
+        const oppData = await oppRes.json();
+        const opp = oppData.opportunities?.[0];
+        if (opp) {
+          projectName = opp.name || projectName;
+          totalCost = opp.monetary_value || opp.monetaryValue || totalCost;
+        }
       }
+    } catch {
+      // Use defaults
     }
-  } catch {
-    // Use defaults
-  }
 
+    return {
+      contactId: contact.id,
+      clientName: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || "Client",
+      clientEmail: contact.email || email,
+      projectName,
+      description,
+      totalCost,
+      downpaymentPaid,
+      finalPaymentPaid,
+      deliverables,
+      createdAt: contact.dateAdded || new Date().toISOString(),
+      updatedAt: contact.dateUpdated || new Date().toISOString(),
+    };
+  } catch (err) {
+    // GHL is down — return fallback
+    console.error("[dashboard] GHL error, returning fallback:", err);
+    return createFallbackProject(email);
+  }
+}
+
+/**
+ * Creates a fallback project when GHL is unavailable.
+ * Shows a basic dashboard so the client doesn't see an error.
+ */
+function createFallbackProject(email: string): ProjectData {
   return {
-    contactId: contact.id,
-    clientName: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || "Client",
-    clientEmail: contact.email || email,
-    projectName,
-    description,
-    totalCost,
-    downpaymentPaid,
-    finalPaymentPaid,
-    deliverables,
-    createdAt: contact.dateAdded || new Date().toISOString(),
-    updatedAt: contact.dateUpdated || new Date().toISOString(),
+    contactId: "",
+    clientName: email.split("@")[0] || "Client",
+    clientEmail: email,
+    projectName: "Project Dashboard",
+    description: "Your project details will appear here once the system syncs.",
+    totalCost: 0,
+    downpaymentPaid: false,
+    finalPaymentPaid: false,
+    deliverables: [
+      {
+        id: "pending",
+        title: "Project setup in progress",
+        description: "Your deliverables will appear here soon.",
+        status: "pending",
+      },
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 }
 
