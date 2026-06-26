@@ -212,6 +212,7 @@ function PrepContent() {
   );
   const [errorMsg, setErrorMsg] = useState("");
   const [dashboardUrl, setDashboardUrl] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
 
   const progress = getProgress(answers);
   const requiredMissing = getRequiredMissing(answers);
@@ -241,6 +242,12 @@ function PrepContent() {
         `Please fill in required fields: ${requiredMissing.join(", ")}`,
       );
       setStatus("error");
+      setShowErrors(true);
+      // Scroll to first missing field
+      const firstMissing = ALL_QUESTIONS.find((q) => q.required && !answers[q.id]?.trim());
+      if (firstMissing) {
+        document.getElementById(`field-${firstMissing.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
       return;
     }
 
@@ -273,29 +280,43 @@ function PrepContent() {
 
   const renderField = (q: Question) => {
     const isRequired = q.required;
+    const isMissing = showErrors && isRequired && !answers[q.id]?.trim();
+    const borderColor = isMissing ? "border-destructive" : "border-border";
     const base =
-      "w-full rounded-xl border-2 border-border bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm";
+      "w-full rounded-xl border-2 bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm";
 
     if (q.type === "textarea") {
       return (
         <textarea
+          id={`field-${q.id}`}
           value={answers[q.id] ?? ""}
-          onChange={(e) => setAnswer(q.id, e.target.value)}
+          onChange={(e) => {
+            setAnswer(q.id, e.target.value);
+            if (showErrors && isRequired && e.target.value.trim()) {
+              setShowErrors(false);
+            }
+          }}
           placeholder={q.placeholder}
           required={isRequired}
           rows={4}
-          className={`${base} resize-none`}
+          className={`${base} ${borderColor} resize-none`}
         />
       );
     }
     return (
       <input
+        id={`field-${q.id}`}
         type="text"
         value={answers[q.id] ?? ""}
-        onChange={(e) => setAnswer(q.id, e.target.value)}
+        onChange={(e) => {
+          setAnswer(q.id, e.target.value);
+          if (showErrors && isRequired && e.target.value.trim()) {
+            setShowErrors(false);
+          }
+        }}
         placeholder={q.placeholder}
         required={isRequired}
-        className={base}
+        className={`${base} ${borderColor}`}
       />
     );
   };
