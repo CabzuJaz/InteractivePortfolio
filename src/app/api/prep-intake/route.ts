@@ -274,13 +274,10 @@ export async function POST(req: NextRequest) {
     const email = body.clientEmail?.trim();
     const name = body.clientName?.trim() || "Client";
 
-    // Generate dashboard URL
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "https://clients.buildwithjazz.com";
+    // Generate dashboard URL — always use the client portal domain
     const dashboardUrl = email
-      ? `${baseUrl}/dashboard?email=${encodeURIComponent(email)}`
-      : `${baseUrl}/dashboard`;
+      ? `https://clients.buildwithjazz.com/dashboard?email=${encodeURIComponent(email)}`
+      : "https://clients.buildwithjazz.com/dashboard";
 
     // GHL integration
     let contactId: string | null = null;
