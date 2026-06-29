@@ -211,9 +211,10 @@ export default function HomePage() {
             </ul>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
               {[
-                { label: "Years Experience", value: "3+", icon: Calendar },
+                { label: "Yrs in Engineering", value: "3+", icon: Calendar },
+                { label: "Yrs in AI Systems", value: "1+", icon: Brain },
                 { label: "AI Projects Built", value: String(projects.length), icon: Cpu },
                 { label: "Based In", value: "Cavite, PH", icon: MapPin },
               ].map((stat) => (
