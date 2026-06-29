@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO -->
+  <title>App Description for Meta Review | Build with Jazz</title>
+  <meta
+    name="description"
+    content="Application description, user flow, requested permissions, webhook usage, and reviewer testing steps for Build with Jazz's Meta platform integration."
+  />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://buildwithjazz.com/legal/ai-agent-meta.html" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
+  <a
+    href="#main"
+    class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-slate-900 focus:px-4 focus:py-2 focus:text-white"
+  >
+    Skip to main content
+  </a>
+
+  <!-- ============================================================= -->
+  <!-- HEADER — mirrors shared/header.html. Keep markup in sync.     -->
+  <!-- ============================================================= -->
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
+      <a href="/" class="text-lg font-semibold text-slate-900">Build with Jazz</a>
+      <nav aria-label="Legal" class="hidden gap-4 text-sm sm:flex">
+        <a class="text-slate-600 hover:text-slate-900" href="/legal/privacy.html">Privacy</a>
+        <a class="text-slate-600 hover:text-slate-900" href="/legal/terms.html">Terms</a>
+        <a class="text-slate-600 hover:text-slate-900" href="/legal/data-deletion.html">Data Deletion</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============================================================= -->
+  <!-- MAIN                                                          -->
+  <!-- ============================================================= -->
+  <main id="main" class="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <article class="prose-slate">
+
+      <header class="mb-10">
+        <!-- Reviewer-facing notice -->
+        <div class="mb-6 rounded-md border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700">
+          This page is intended for Meta App Review. It describes the application, user flow,
+          requested permissions, webhook setup, Messenger integration, and step-by-step testing
+          instructions for reviewers.
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          App Description for Meta Review
+        </h1>
+        <p class="mt-3 text-sm text-slate-500">
+          Application: <strong>Build with Jazz</strong> &mdash;
+          Operated by Jazzmin Sicat-Cabizares &mdash;
+          Last updated: <time datetime="2026-06-27">June 27, 2026</time>
+        </p>
+      </header>
+
+      <!-- 1. Application Overview -->
+      <section class="space-y-4" aria-labelledby="overview-heading">
+        <h2 id="overview-heading" class="text-xl font-semibold text-slate-900">
+          1. Application overview
+        </h2>
+        <p>
+          <strong>Build with Jazz</strong> is an AI-powered portfolio and developer showcase
+          operated by an independent software developer. The application allows visitors to
+          interact with an AI assistant that answers questions about the developer's work,
+          skills, and services in a conversational interface.
+        </p>
+        <p>
+          The Meta platform integration enables the AI assistant to receive and respond to
+          messages sent via <strong>Facebook Messenger</strong>, and allows users to authenticate
+          using <strong>Facebook Login</strong> to access personalized features. The application
+          uses the <strong>Graph API</strong> only to read data explicitly authorized by the
+          user during the login flow.
+        </p>
+        <p>
+          The application does not publish content on behalf of users, does not access friends'
+          data, and does not engage in advertising, data brokering, or any commercial use of
+          Meta user data beyond operating the Services described here.
+        </p>
+      </section>
+
+      <!-- 2. User Flow -->
+      <section class="mt-8 space-y-4" aria-labelledby="flow-heading">
+        <h2 id="flow-heading" class="text-xl font-semibold text-slate-900">
+          2. User flow
+        </h2>
+
+        <h3 class="mt-4 text-base font-semibold text-slate-900">2a. Facebook Login flow</h3>
+        <ol class="list-decimal space-y-2 pl-6">
+          <li>
+            The user visits <strong>buildwithjazz.com</strong> and selects "Continue with
+            Facebook."
+          </li>
+          <li>
+            The user is redirected to the standard Facebook OAuth dialog, where they review and
+            approve the requested permissions.
+          </li>
+          <li>
+            On approval, the user is redirected back to the application. The application receives
+            an access token scoped to the approved permissions.
+          </li>
+          <li>
+            The application reads only the data covered by the granted permissions (e.g., name,
+            email) and uses it to personalize the experience. No data is stored beyond what is
+            necessary for the session or the stated purpose.
+          </li>
+          <li>
+            The user may revoke access at any time via Facebook Settings &rarr; Apps and Websites,
+            or by submitting a data deletion request as described on the
+            <a class="font-medium text-slate-900 underline" href="/legal/data-deletion.html"
+              >Data Deletion</a
+            >
+            page.
+          </li>
+        </ol>
+
+        <h3 class="mt-6 text-base font-semibold text-slate-900">2b. Messenger flow</h3>
+        <ol class="list-decimal space-y-2 pl-6">
+          <li>
+            A user sends a message to the Build with Jazz Facebook Page via Messenger.
+          </li>
+          <li>
+            Meta delivers the message to the application's registered webhook endpoint over HTTPS.
+          </li>
+          <li>
+            The application validates the
+            <code class="rounded bg-slate-100 px-1 py-0.5 text-sm">X-Hub-Signature-256</code>
+            header to confirm the payload originated from Meta.
+          </li>
+          <li>
+            The AI assistant processes the message and sends a reply back to the user via the
+            Messenger Send API.
+          </li>
+          <li>
+            The conversation is used only to generate the response. Message content is not stored
+            long-term, sold, or used to target advertising.
+          </li>
+        </ol>
+      </section>
+
+      <!-- 3. Requested Permissions -->
+      <section class="mt-8 space-y-4" aria-labelledby="permissions-heading">
+        <h2 id="permissions-heading" class="text-xl font-semibold text-slate-900">
+          3. Requested permissions
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-300">
+                <th scope="col" class="py-2 pr-4 font-semibold text-slate-900">Permission</th>
+                <th scope="col" class="py-2 pr-4 font-semibold text-slate-900">Reason requested</th>
+                <th scope="col" class="py-2 font-semibold text-slate-900">Data used</th>
+              </tr>
+            </thead>
+            <tbody class="align-top text-slate-700">
+              <tr class="border-b border-slate-200">
+                <td class="py-3 pr-4">
+                  <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">public_profile</code>
+                </td>
+                <td class="py-3 pr-4">
+                  Authenticate the user and display their name in the personalized chat interface.
+                </td>
+                <td class="py-3">Name, profile picture</td>
+              </tr>
+              <tr class="border-b border-slate-200">
+                <td class="py-3 pr-4">
+                  <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">email</code>
+                </td>
+                <td class="py-3 pr-4">
+                  Associate the account with a contact email for support and data deletion
+                  requests.
+                </td>
+                <td class="py-3">Email address</td>
+              </tr>
+              <tr class="border-b border-slate-200">
+                <td class="py-3 pr-4">
+                  <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">pages_messaging</code>
+                </td>
+                <td class="py-3 pr-4">
+                  Send and receive messages on behalf of the Facebook Page via the Messenger
+                  Send API so the AI assistant can reply to users.
+                </td>
+                <td class="py-3">Messenger message content</td>
+              </tr>
+              <tr>
+                <td class="py-3 pr-4">
+                  <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">pages_show_list</code>
+                </td>
+                <td class="py-3 pr-4">
+                  Identify the connected Facebook Page in order to configure the Messenger webhook
+                  subscription.
+                </td>
+                <td class="py-3">Page ID, Page name</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-sm text-slate-600">
+          No additional permissions are requested. All data is used solely for the purposes listed
+          above and is handled in accordance with the
+          <a class="font-medium text-slate-900 underline" href="/legal/privacy.html">Privacy Policy</a>.
+        </p>
+      </section>
+
+      <!-- 4. Webhook Usage -->
+      <section class="mt-8 space-y-4" aria-labelledby="webhook-heading">
+        <h2 id="webhook-heading" class="text-xl font-semibold text-slate-900">
+          4. Webhook usage
+        </h2>
+        <p>
+          The application subscribes to the following Messenger webhook fields on the connected
+          Facebook Page:
+        </p>
+        <ul class="list-disc space-y-2 pl-6">
+          <li>
+            <strong>messages</strong> — to receive inbound messages from users so the AI assistant
+            can process and respond to them.
+          </li>
+          <li>
+            <strong>messaging_postbacks</strong> — to receive button and quick-reply postbacks
+            triggered by interactive message elements.
+          </li>
+        </ul>
+        <p>
+          All webhook events are delivered to a single HTTPS endpoint. The application verifies
+          every incoming payload using HMAC-SHA256 against the app secret before processing.
+          Events not matching the expected signature are rejected with a
+          <code class="rounded bg-slate-100 px-1 py-0.5 text-sm">403</code> response. No other
+          webhook fields are subscribed to.
+        </p>
+      </section>
+
+      <!-- 5. Messenger Usage -->
+      <section class="mt-8 space-y-4" aria-labelledby="messenger-heading">
+        <h2 id="messenger-heading" class="text-xl font-semibold text-slate-900">
+          5. Messenger usage
+        </h2>
+        <p>
+          The application uses Messenger solely to operate a user-initiated AI assistant
+          conversation on the Build with Jazz Facebook Page. Specifically:
+        </p>
+        <ul class="list-disc space-y-2 pl-6">
+          <li>
+            Responses are sent only to users who have initiated a conversation with the Page.
+            The application does not send unsolicited messages.
+          </li>
+          <li>
+            Message content is used only to generate the AI response within the same session.
+            It is not used for profiling, advertising, or any secondary purpose.
+          </li>
+          <li>
+            The application complies with the
+            <a
+              class="font-medium text-slate-900 underline"
+              href="https://developers.facebook.com/docs/messenger-platform/policy/"
+              rel="noopener noreferrer"
+              target="_blank"
+              >Messenger Platform Policy</a
+            >, including the 24-hour messaging window for standard messages.
+          </li>
+        </ul>
+      </section>
+
+      <!-- 6. Reviewer Testing Steps -->
+      <section class="mt-8 space-y-4" aria-labelledby="testing-heading">
+        <h2 id="testing-heading" class="text-xl font-semibold text-slate-900">
+          6. Reviewer testing steps
+        </h2>
+        <p>
+          The following credentials and steps are provided to allow the Meta App Review team to
+          verify each permission and feature in the application.
+        </p>
+
+        <h3 class="mt-4 text-base font-semibold text-slate-900">Test account credentials</h3>
+        <div class="rounded-md border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-700">
+          <p>A dedicated test account has been provided in the App Review submission form.</p>
+          <p class="mt-1">
+            If credentials were not included there, please contact
+            <a class="font-medium text-slate-900 underline" href="mailto:jazzmincabizares@gmail.com">jazzmincabizares@gmail.com</a>
+            and they will be provided within one business day.
+          </p>
+        </div>
+
+        <h3 class="mt-6 text-base font-semibold text-slate-900">
+          Testing Facebook Login (<code class="text-sm font-normal">public_profile</code>,
+          <code class="text-sm font-normal">email</code>)
+        </h3>
+        <ol class="list-decimal space-y-2 pl-6">
+          <li>Navigate to <strong>https://buildwithjazz.com</strong>.</li>
+          <li>Select <strong>"Continue with Facebook"</strong>.</li>
+          <li>
+            Log in using the provided test account and approve the requested permissions in the
+            Facebook OAuth dialog.
+          </li>
+          <li>
+            Confirm that you are redirected back to the site and that the personalized greeting
+            (name from <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">public_profile</code>)
+            appears in the chat interface.
+          </li>
+          <li>
+            Confirm that no data beyond name, profile picture, and email is accessed or displayed.
+          </li>
+        </ol>
+
+        <h3 class="mt-6 text-base font-semibold text-slate-900">
+          Testing Messenger (<code class="text-sm font-normal">pages_messaging</code>)
+        </h3>
+        <ol class="list-decimal space-y-2 pl-6">
+          <li>
+            Using the provided test account, open
+            <strong>Messenger</strong> and search for the <strong>Build with Jazz</strong> Page,
+            or navigate directly to the Page and select <strong>"Send Message."</strong>
+          </li>
+          <li>
+            Send any message, for example: <em>"Hi, what services do you offer?"</em>
+          </li>
+          <li>
+            Confirm that the AI assistant replies within a few seconds with a relevant response.
+          </li>
+          <li>
+            Confirm that no content is sent by the application unless you initiate the
+            conversation (no unsolicited messages).
+          </li>
+        </ol>
+
+        <h3 class="mt-6 text-base font-semibold text-slate-900">
+          Testing Page access (<code class="text-sm font-normal">pages_show_list</code>)
+        </h3>
+        <ol class="list-decimal space-y-2 pl-6">
+          <li>
+            Log in using the provided test account (which has a Page role on the Build with Jazz
+            Page).
+          </li>
+          <li>
+            The application uses <code class="rounded bg-slate-100 px-1 py-0.5 text-xs">pages_show_list</code>
+            only to identify the connected Page during initial setup. There is no user-facing
+            feature that displays Page list data.
+          </li>
+          <li>
+            Confirm that the Messenger webhook subscription is active by sending a Messenger
+            message as described in the Messenger test steps above.
+          </li>
+        </ol>
+
+        <h3 class="mt-6 text-base font-semibold text-slate-900">Data deletion verification</h3>
+        <ol class="list-decimal space-y-2 pl-6">
+          <li>
+            Navigate to
+            <a class="font-medium text-slate-900 underline" href="/legal/data-deletion.html"
+              >https://buildwithjazz.com/legal/data-deletion.html</a
+            >.
+          </li>
+          <li>
+            Confirm that clear instructions for requesting data deletion are present, including
+            an email contact and the Facebook Apps and Websites removal path.
+          </li>
+        </ol>
+      </section>
+
+      <!-- 7. Contact -->
+      <section class="mt-8 space-y-4" aria-labelledby="contact-heading">
+        <h2 id="contact-heading" class="text-xl font-semibold text-slate-900">7. Contact</h2>
+        <p>
+          For questions about this review document or to request test credentials, contact
+          <a class="font-medium text-slate-900 underline" href="mailto:jazzmincabizares@gmail.com">jazzmincabizares@gmail.com</a>.
+          Responses are provided within one business day.
+        </p>
+      </section>
+
+    </article>
+  </main>
+
+  <!-- ============================================================= -->
+  <!-- FOOTER — mirrors shared/footer.html. Keep markup in sync.     -->
+  <!-- ============================================================= -->
+  <footer class="border-t border-slate-200 bg-white">
+    <div
+      class="mx-auto flex max-w-3xl flex-col items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:flex-row sm:px-6"
+    >
+      <p>&copy; <span>2026</span> Build with Jazz. All rights reserved.</p>
+      <nav aria-label="Footer" class="flex gap-4">
+        <a class="hover:text-slate-900" href="/legal/privacy.html">Privacy</a>
+        <a class="hover:text-slate-900" href="/legal/terms.html">Terms</a>
+        <a class="hover:text-slate-900" href="/legal/cookies.html">Cookies</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

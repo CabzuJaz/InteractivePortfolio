@@ -1,0 +1,32 @@
+<!-- shared/header.html
+     Copy this block verbatim into each legal page <body>, immediately after the skip link.
+     Keep all legal pages in sync with this file when making changes.
+-->
+<header class="border-b border-slate-200 bg-white">
+  <div class="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
+    <a href="/" class="text-lg font-semibold text-slate-900">Build with Jazz</a>
+    <nav aria-label="Legal" class="hidden gap-4 text-sm sm:flex">
+      <a class="text-slate-600 hover:text-slate-900" href="/legal/privacy.html">Privacy Policy</a>
+      <a class="text-slate-600 hover:text-slate-900" href="/legal/terms.html">Terms of Service</a>
+      <a class="text-slate-600 hover:text-slate-900" href="/legal/cookies.html">Cookie Policy</a>
+      <a class="text-slate-600 hover:text-slate-900" href="/legal/data-deletion.html">Data Deletion</a>
+      <a class="text-slate-600 hover:text-slate-900" href="/legal/security.html">Security</a>
+    </nav>
+    <!-- Mobile nav -->
+    <details class="relative sm:hidden">
+      <summary class="cursor-pointer list-none rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
+        Legal ▾
+      </summary>
+      <nav
+        aria-label="Legal mobile"
+        class="absolute right-0 top-full z-10 mt-1 flex min-w-45 flex-col rounded-md border border-slate-200 bg-white py-1 shadow-md"
+      >
+        <a class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" href="/legal/privacy.html">Privacy Policy</a>
+        <a class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" href="/legal/terms.html">Terms of Service</a>
+        <a class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" href="/legal/cookies.html">Cookie Policy</a>
+        <a class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" href="/legal/data-deletion.html">Data Deletion</a>
+        <a class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900" href="/legal/security.html">Security</a>
+      </nav>
+    </details>
+  </div>
+</header>
