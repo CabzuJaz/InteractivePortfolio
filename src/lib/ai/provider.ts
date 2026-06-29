@@ -4,32 +4,25 @@ import { createGroq } from "@ai-sdk/groq";
 
 /**
  * Returns the AI model based on environment variables.
- * Priority: MIMO_API_KEY > GROQ_API_KEY > ANTHROPIC_API_KEY > OPENAI_API_KEY.
+ * Priority: GROQ_API_KEY > ANTHROPIC_API_KEY > OPENAI_API_KEY > MIMO_API_KEY.
  *
- * For MiMo (default, supports images):
- *   MIMO_API_KEY=tp-...
- *   MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/anthropic  (optional)
- *   MIMO_TEXT_MODEL=mimo-vl-7b  (optional, this is the default)
- *
- * For Groq:
+ * For Groq (default):
  *   GROQ_API_KEY=gsk_...
  *   AI_MODEL=llama-3.3-70b-versatile  (optional, this is the default)
+ *
+ * For Anthropic:
+ *   ANTHROPIC_API_KEY=sk-ant-...
+ *   AI_MODEL=claude-sonnet-4-20250514  (optional)
+ *
+ * For MiMo (legacy, kept as last resort):
+ *   MIMO_API_KEY=tp-...
+ *   MIMO_BASE_URL=https://token-plan-sgp.xiaomimimo.com/anthropic/v1  (optional)
+ *   MIMO_TEXT_MODEL=mimo-v2.5-pro  (optional)
  */
 export function getModel() {
   const modelId = process.env.AI_MODEL;
 
-  // MiMo (primary — supports text + images, no separate vision model needed)
-  if (process.env.MIMO_API_KEY) {
-    const mimo = createAnthropic({
-      apiKey: process.env.MIMO_API_KEY,
-      baseURL:
-        process.env.MIMO_BASE_URL ??
-        "https://token-plan-sgp.xiaomimimo.com/anthropic/v1",
-    });
-    return mimo(process.env.MIMO_TEXT_MODEL ?? process.env.MIMO_MODEL ?? "mimo-v2.5-pro");
-  }
-
-  // Groq
+  // Groq (primary)
   if (process.env.GROQ_API_KEY) {
     const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
     return groq(modelId ?? "llama-3.3-70b-versatile");
@@ -44,10 +37,21 @@ export function getModel() {
     return anthropic(modelId ?? "claude-sonnet-4-20250514");
   }
 
-  // OpenAI fallback
+  // OpenAI
   if (process.env.OPENAI_API_KEY) {
     const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
     return openai(modelId ?? "gpt-4o");
+  }
+
+  // MiMo (legacy fallback)
+  if (process.env.MIMO_API_KEY) {
+    const mimo = createAnthropic({
+      apiKey: process.env.MIMO_API_KEY,
+      baseURL:
+        process.env.MIMO_BASE_URL ??
+        "https://token-plan-sgp.xiaomimimo.com/anthropic/v1",
+    });
+    return mimo(process.env.MIMO_TEXT_MODEL ?? "mimo-v2.5-pro");
   }
 
   // Default (will fail at runtime without a key, but keeps types happy)
