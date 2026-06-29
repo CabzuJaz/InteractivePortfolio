@@ -31,10 +31,18 @@ interface Question {
 
 const SECTION_0: Question[] = [
   {
+    id: "name",
+    label: "Your name",
+    placeholder: "Full name",
+    type: "text",
+    required: true,
+  },
+  {
     id: "email",
-    label: "Email",
+    label: "Your email",
     placeholder: "you@company.com",
     type: "text",
+    required: true,
   },
   {
     id: "whatsapp",
@@ -201,17 +209,15 @@ function SectionHeader({ number, title }: { number: string; title: string }) {
 function PrepContent() {
   const searchParams = useSearchParams();
   const clientId = searchParams.get("client") ?? "";
-  const clientName = searchParams.get("name") ?? "";
-  const clientEmail = searchParams.get("email") ?? "";
+  const prefillName = searchParams.get("name") ?? "";
 
   const [answers, setAnswers] = useState<Record<string, string>>({
-    email: clientEmail,
+    name: prefillName,
   });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",
   );
   const [errorMsg, setErrorMsg] = useState("");
-  const [dashboardUrl, setDashboardUrl] = useState("");
   const [showErrors, setShowErrors] = useState(false);
 
   const progress = getProgress(answers);
@@ -227,8 +233,8 @@ function PrepContent() {
 
     return {
       clientId,
-      clientName,
-      clientEmail: answers.email?.trim() || clientEmail,
+      clientName: answers.name?.trim() || prefillName || "Client",
+      clientEmail: answers.email?.trim() || "",
       clientPhone: answers.whatsapp?.trim() || undefined,
       answers: answerList,
       pageUrl: typeof window !== "undefined" ? window.location.href : "",
@@ -263,8 +269,7 @@ function PrepContent() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Server error (${res.status})`);
       }
-      const data = await res.json();
-      setDashboardUrl(data.dashboardUrl || "");
+      await res.json();
       setStatus("sent");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
@@ -333,44 +338,15 @@ function PrepContent() {
           <h1 className="text-3xl font-bold mb-3">Got it!</h1>
           <p className="text-lg text-muted-foreground leading-relaxed mb-6">
             Your answers have been sent to Jazzmin. She&apos;ll review them and
-            get back to you with a recommendation for BMPC.
+            reach out with a recommendation soon. A copy of your answers has
+            been sent to your email.
           </p>
-          {dashboardUrl && (
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 mb-6">
-              <p className="text-sm text-muted-foreground mb-2">
-                Your project dashboard is ready:
-              </p>
-              <a
-                href={dashboardUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary font-medium hover:underline break-all"
-              >
-                {dashboardUrl}
-              </a>
-              <p className="text-xs text-muted-foreground mt-2">
-                A WhatsApp message with this link has been sent to your phone.
-              </p>
-            </div>
-          )}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {dashboardUrl && (
-              <a
-                href={dashboardUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
-              >
-                Open Dashboard
-              </a>
-            )}
-            <Link
-              href="/"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full glass font-medium hover:bg-primary/10 transition-colors"
-            >
-              Back to Home
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+          >
+            Back to Home
+          </Link>
         </motion.div>
       </div>
     );
@@ -407,16 +383,13 @@ function PrepContent() {
           animate={{ opacity: 1, y: 0 }}
         >
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">
-            {clientName
-              ? `Hi ${clientName}, let's map your lead flow`
-              : "Hi Larry, let's map your lead flow"}
+            {prefillName
+              ? `Hi ${prefillName}, let's map your lead flow`
+              : "Let's map your lead flow"}
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Fill out what you can — every answer helps me design a better system
             for you. Fields marked with <span className="text-primary font-semibold">*</span> are required.
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            This form is for <strong>BMPC Concrete</strong> only.
           </p>
         </motion.div>
 
@@ -449,7 +422,7 @@ function PrepContent() {
           className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5 space-y-4"
         >
           <p className="text-base font-semibold text-foreground/90">
-            Contact Info (for your dashboard link)
+            Contact Info (we&apos;ll email you a copy of your answers)
           </p>
           {SECTION_0.map((q) => (
             <div key={q.id}>

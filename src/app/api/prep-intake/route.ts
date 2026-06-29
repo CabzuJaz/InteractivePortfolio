@@ -109,47 +109,9 @@ async function addTag(contactId: string, tag: string): Promise<void> {
   });
 }
 
-async function sendWhatsApp(
-  contactId: string,
-  clientName: string,
-  dashboardUrl: string,
-): Promise<void> {
-  const locationId = process.env.GHL_LOCATION_ID;
-  if (!locationId) return;
 
-  // Get contact to find phone number
-  const contactRes = await fetch(
-    `${GHL_BASE}/contacts/${contactId}`,
-    { headers: GHL_HEADERS },
-  );
-  if (!contactRes.ok) return;
-
-  const contactData = await contactRes.json();
-  const phone = contactData.contact?.phone;
-  if (!phone) return;
-
-  // Send WhatsApp message via GHL
-  const message = `Hi ${clientName}! 👋\n\nThank you for filling out the prep sheet. I've created a project dashboard for you where you can track progress and see deliverables.\n\n📊 Your Dashboard: ${dashboardUrl}\n\nI'll review your answers and get back to you with a recommendation soon.\n\n— Jazzmin\nBuildWithJazz.com`;
-
-  await fetch(`${GHL_BASE}/conversations/messages`, {
-    method: "POST",
-    headers: GHL_HEADERS,
-    body: JSON.stringify({
-      type: "SMS",
-      contactId,
-      message,
-      phone,
-    }),
-  }).catch(() => {});
-}
-
-async function sendEmailToOwner(payload: PrepPayload, dashboardUrl: string): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return;
-
-  const resend = new Resend(apiKey);
-
-  const answersHtml = payload.answers
+function buildAnswersHtml(answers: PrepAnswer[]): string {
+  return answers
     .map(
       (a) => `
       <tr>
@@ -162,6 +124,13 @@ async function sendEmailToOwner(payload: PrepPayload, dashboardUrl: string): Pro
       </tr>`,
     )
     .join("");
+}
+
+async function sendEmailToOwner(payload: PrepPayload): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const resend = new Resend(apiKey);
 
   const html = `
     <div style="font-family:system-ui,sans-serif;max-width:700px;margin:0 auto">
@@ -175,26 +144,16 @@ async function sendEmailToOwner(payload: PrepPayload, dashboardUrl: string): Pro
           <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Email</td>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:600">${escapeHtml(payload.clientEmail || "Not provided")}</td>
         </tr>
-        ${
-          payload.clientPhone
-            ? `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Phone</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:600">${escapeHtml(payload.clientPhone)}</td></tr>`
-            : ""
-        }
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Dashboard</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee"><a href="${dashboardUrl}" style="color:#06b6d4">${dashboardUrl}</a></td>
-        </tr>
+        ${payload.clientPhone ? `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Phone</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:600">${escapeHtml(payload.clientPhone)}</td></tr>` : ""}
         <tr>
           <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Submitted</td>
           <td style="padding:8px 12px;border-bottom:1px solid #eee">${new Date(payload.submittedAt).toLocaleString()}</td>
         </tr>
       </table>
-
       <h3 style="color:#374151;margin-top:24px">Answers</h3>
       <table style="width:100%;border-collapse:collapse;margin:16px 0">
-        ${answersHtml}
+        ${buildAnswersHtml(payload.answers)}
       </table>
-
       <p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:12px">
         Sent from BuildWithJazz.com — Prep Sheet
       </p>
@@ -206,19 +165,46 @@ async function sendEmailToOwner(payload: PrepPayload, dashboardUrl: string): Pro
     to: OWNER_EMAIL,
     subject: `📋 Prep Sheet: ${payload.clientName || "Unknown Client"}`,
     html,
-  }).catch((err) => {
-    console.error("[prep-intake] Email failed:", err);
-  });
+  }).catch((err) => console.error("[prep-intake] Owner email failed:", err));
 }
 
-async function notifyDiscord(payload: PrepPayload, dashboardUrl: string): Promise<void> {
+async function sendEmailToClient(payload: PrepPayload): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey || !payload.clientEmail) return;
+
+  const resend = new Resend(apiKey);
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;max-width:700px;margin:0 auto">
+      <h2 style="color:#06b6d4">Your Lead Automation Prep Sheet</h2>
+      <p style="color:#374151">Hi ${escapeHtml(payload.clientName || "there")},</p>
+      <p style="color:#374151">Here's a copy of your answers. Jazzmin will review them and reach out with a recommendation soon.</p>
+      <table style="width:100%;border-collapse:collapse;margin:24px 0">
+        ${buildAnswersHtml(payload.answers)}
+      </table>
+      <p style="color:#374151">Questions? Reply to this email or reach out at <a href="mailto:${OWNER_EMAIL}" style="color:#06b6d4">${OWNER_EMAIL}</a>.</p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:12px">
+        BuildWithJazz.com
+      </p>
+    </div>
+  `;
+
+  await resend.emails.send({
+    from: "Jazzmin <onboarding@resend.dev>",
+    to: payload.clientEmail,
+    subject: "Your prep sheet answers — Build with Jazz",
+    html,
+  }).catch((err) => console.error("[prep-intake] Client email failed:", err));
+}
+
+async function notifyDiscord(payload: PrepPayload): Promise<void> {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) return;
 
   const topAnswers = payload.answers.slice(0, 3).map((a) => ({
     name: a.label.slice(0, 25),
     value: a.value.slice(0, 100),
-    inline: true,
+    inline: false,
   }));
 
   await fetch(webhookUrl, {
@@ -230,26 +216,11 @@ async function notifyDiscord(payload: PrepPayload, dashboardUrl: string): Promis
           title: "📋 Prep Sheet Submitted",
           color: 0x06b6d4,
           fields: [
-            {
-              name: "Client",
-              value: payload.clientName || "Unknown",
-              inline: true,
-            },
-            {
-              name: "Email",
-              value: payload.clientEmail || "Not provided",
-              inline: true,
-            },
-            {
-              name: "Dashboard",
-              value: `[View Dashboard](${dashboardUrl})`,
-              inline: true,
-            },
-            {
-              name: "Answers",
-              value: `${payload.answers.length} questions answered`,
-              inline: true,
-            },
+            { name: "Client", value: payload.clientName || "Unknown", inline: true },
+            { name: "Email", value: payload.clientEmail || "Not provided", inline: true },
+            { name: "Phone", value: payload.clientPhone || "Not provided", inline: true },
+            { name: "Answers", value: `${payload.answers.length} questions answered`, inline: true },
+            { name: "Submitted", value: new Date(payload.submittedAt).toLocaleString(), inline: true },
             ...topAnswers,
           ],
           footer: { text: "BuildWithJazz.com" },
@@ -274,11 +245,6 @@ export async function POST(req: NextRequest) {
     const email = body.clientEmail?.trim();
     const name = body.clientName?.trim() || "Client";
 
-    // Generate dashboard URL — always use the client portal domain
-    const dashboardUrl = email
-      ? `https://clients.buildwithjazz.com/dashboard?email=${encodeURIComponent(email)}`
-      : "https://clients.buildwithjazz.com/dashboard";
-
     // GHL integration
     let contactId: string | null = null;
     if (email) {
@@ -288,22 +254,17 @@ export async function POST(req: NextRequest) {
           addNote(contactId, body),
           addTag(contactId, "prep-sheet-submitted"),
         ]);
-
-        // Send WhatsApp with dashboard link
-        await sendWhatsApp(contactId, name, dashboardUrl).catch(() => {});
       }
     }
 
-    // Email to owner + Discord notification
+    // Email owner, email client copy, Discord notification — all fire-and-forget
     Promise.allSettled([
-      sendEmailToOwner(body, dashboardUrl),
-      notifyDiscord(body, dashboardUrl),
+      sendEmailToOwner(body),
+      sendEmailToClient(body),
+      notifyDiscord(body),
     ]).catch(() => {});
 
-    return NextResponse.json({
-      ok: true,
-      dashboardUrl,
-    });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[prep-intake] Error:", err);
     return NextResponse.json(
