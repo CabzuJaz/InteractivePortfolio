@@ -128,13 +128,17 @@ export default function HomePage() {
             <span className="text-gradient">{persona.name}</span>
           </motion.h1>
 
-          {/* Role */}
-          <motion.p
-            variants={fadeUp}
-            className="text-lg sm:text-xl text-muted-foreground mb-6 max-w-xl"
-          >
-            {persona.role}
-          </motion.p>
+          {/* Role chips */}
+          <motion.div variants={fadeUp} className="flex flex-wrap justify-center gap-2 mb-6">
+            {persona.role.split(" | ").map((r) => (
+              <span
+                key={r}
+                className="px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
+              >
+                {r}
+              </span>
+            ))}
+          </motion.div>
 
           {/* Positioning */}
           <motion.p
@@ -192,26 +196,26 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-6">
               I build systems that <span className="text-gradient">work</span>
             </h2>
-            <div className="space-y-4 text-muted-foreground leading-relaxed max-w-2xl">
-              <p>{persona.bio}</p>
-              <p>
-                From banking document processing with C# to multi-agent AI pipelines with Claude API —
-                I&apos;ve worked across the full spectrum of enterprise software and cutting-edge AI.
-                I completed a self-directed 30-day AI Engineering sprint where I built production-grade
-                systems with MCP, FastMCP, and multi-agent architectures.
-              </p>
-              <p>
-                I&apos;m not just a developer who uses AI — I build the systems that make AI work:
-                orchestrators, tool-use pipelines, automated workflows, and intelligent integrations.
-              </p>
-            </div>
+            <p className="text-muted-foreground leading-relaxed max-w-2xl">{persona.bio}</p>
 
-            {/* Highlights */}
+            {/* Highlights list */}
+            <ul className="mt-6 space-y-2 max-w-2xl">
+              {persona.highlights.map((h) => (
+                <li key={h} className="flex items-start gap-3 text-sm text-muted-foreground">
+                  <span className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  </span>
+                  {h}
+                </li>
+              ))}
+            </ul>
+
+            {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-8">
               {[
                 { label: "Years Experience", value: "2+", icon: Calendar },
                 { label: "AI Projects Built", value: String(projects.length), icon: Cpu },
-                { label: "Based In", value: "Cavite, Philippines", icon: MapPin },
+                { label: "Based In", value: "Cavite, PH", icon: MapPin },
               ].map((stat) => (
                 <div key={stat.label} className="glass rounded-xl p-4 text-center">
                   <stat.icon className="w-5 h-5 text-primary mx-auto mb-2" />
