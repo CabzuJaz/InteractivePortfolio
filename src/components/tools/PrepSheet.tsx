@@ -6,7 +6,6 @@ import { ClipboardList, ExternalLink } from "lucide-react";
 interface PrepSheetData {
   url: string;
   clientName?: string | null;
-  clientEmail?: string | null;
 }
 
 interface PrepSheetProps {
