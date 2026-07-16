@@ -1,10 +1,12 @@
 /**
  * Conversation logging dispatcher.
- * Sends conversation summaries to GoHighLevel (GHL) CRM.
- * Failures are logged to console but never thrown — this is fire-and-forget.
+ * Sends conversation transcripts to GoHighLevel (GHL) CRM, Discord, and
+ * Google Sheets. Failures are logged to console but never thrown — this is
+ * fire-and-forget. Each channel is optional and no-ops if unconfigured.
  */
 import { sendToGHL } from "./ghl";
 import { sendToDiscord } from "./discord";
+import { sendToGoogleSheets } from "./google-sheets";
 import type { ConversationEntry } from "../types";
 
 export type { ConversationEntry };
@@ -32,7 +34,7 @@ export function extractConversation(messages: any[]): ConversationEntry[] {
 }
 
 /**
- * Logs a conversation to GHL and Discord.
+ * Logs a conversation to GHL, Discord, and Google Sheets.
  * Safe to call from client-side — all channels are optional and fail silently.
  */
 export async function logConversation(
@@ -45,14 +47,15 @@ export async function logConversation(
   const hasAssistant = conversations.some((c) => c.role === "assistant");
   if (!hasUser || !hasAssistant) return;
 
-  // Send to GHL and Discord in parallel
+  // Send to GHL, Discord, and Google Sheets in parallel
   await Promise.allSettled([
     sendToGHL(conversations),
     sendToDiscord(conversations),
+    sendToGoogleSheets(conversations),
   ]).then((results) => {
     results.forEach((r, i) => {
       if (r.status === "rejected") {
-        const channels = ["GHL", "Discord"];
+        const channels = ["GHL", "Discord", "Google Sheets"];
         console.error(`[log-conversation] ${channels[i]} failed:`, r.reason);
       }
     });

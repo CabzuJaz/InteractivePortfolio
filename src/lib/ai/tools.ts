@@ -29,8 +29,8 @@ export const getSkills = tool({
 export const getResume = tool({
   description:
     "Show my resume with experience timeline. Call this whenever the user asks about " +
-    "my resume, work experience, background, career history, Junior Software Engineer, " +
-    "Kitchen Team Leader, IT Admin, or qualifications.",
+    "my resume, work experience, background, career history, past jobs, education, " +
+    "certificates, or qualifications.",
   inputSchema: z.object({}),
   execute: async () => ({ resume }),
 });
@@ -86,7 +86,7 @@ export const getAvailability = tool({
       "ML/AI Engineer",
     ],
     whyHireMe: [
-      "2+ years building production-grade AI automation systems",
+      "3+ years in engineering, 1+ year building production-grade AI automation systems",
       "Deep expertise in Claude API, MCP, and multi-agent architectures",
       "Proven track record of shipping systems that reduce manual effort",
       "Comfortable in both legacy enterprise systems and cutting-edge AI",
@@ -99,9 +99,16 @@ export const getAvailability = tool({
 
 export const generateContract = tool({
   description:
-    "MUST CALL when user mentions: contract, hire, rates, pricing, project cost, engagement, " +
-    "or wants to work together. Generates a contract proposal PDF with rate card and tool costs. " +
-    "Use whatever info is available — do NOT ask for more details first.",
+    "Generates a contract proposal PDF with rate card and tool costs. " +
+    "REQUIRED precondition, no exceptions: at some point in this conversation the VISITOR must have " +
+    "either (a) explicitly mentioned price, cost, rate, quote, contract, or hiring, or (b) explicitly " +
+    "said yes after being asked whether they want a proposal/implementation plan. " +
+    "Having enough scope/requirements to build something is NOT sufficient on its own — thorough " +
+    "discovery does not imply the visitor wants a contract yet. " +
+    "Do NOT call this on a visitor's first description of a new problem, even if they ask about price in " +
+    "the same message — scope it first. Do NOT call this in the same turn as asking scoping questions the " +
+    "visitor hasn't answered yet. Once pricing intent AND scope both exist, call this immediately — do not " +
+    "just say in text that you'll make a proposal.",
   inputSchema: z.object({
     clientName: z.string().describe("The client or company name"),
     clientEmail: z
@@ -114,7 +121,13 @@ export const generateContract = tool({
     estimatedHours: z
       .number()
       .optional()
-      .describe("Estimated total hours for the project (default 40 if not specified)"),
+      .describe(
+        "Estimated total hours for the project, as a single plain number (e.g. 30) — " +
+          "NEVER a string, NEVER a range like '20-30'. If you don't have an exact figure from the " +
+          "visitor, pick one reasonable number yourself based on complexity (e.g. 20 for a simple " +
+          "single integration, 40 for a moderate multi-step workflow, 80 for a complex build) rather " +
+          "than omitting this or expressing a range. Default 40 if truly unclear.",
+      ),
     projectComplexity: z
       .enum(["simple", "moderate", "complex"])
       .optional()
@@ -213,6 +226,8 @@ Business Industry: ${industry}
 Business Goal: ${goal}
 Current Tools: ${currentTools}
 
+CRITICAL: Do not invent specific numbers — no "X hours saved per week," no percentage conversion-rate lifts, no dollar figures — unless the business owner actually provided data to calculate them from. You were only given industry, goal, and current tools; there is no usage data here. Use qualitative, directional language instead (e.g. "meaningfully reduces manual data entry" rather than "saves 10 hours per week"). A specific-sounding number you made up is worse than an honest qualitative claim — it damages credibility if it's wrong.
+
 Generate a practical automation analysis with these exact sections. Use markdown formatting. Be specific and actionable.
 
 ## Business Summary
@@ -236,11 +251,8 @@ Describe how this would be built in n8n — triggers, nodes, integrations.
 ## Implementation Difficulty
 Rate as Easy / Medium / Hard with explanation of what makes it that level.
 
-## Estimated Time Savings
-Quantify expected time savings (hours per week/month).
-
-## Expected Business Impact
-Describe the projected business outcomes over 3-6 months.`,
+## Expected Impact
+Describe the directional impact qualitatively (e.g. "fewer missed leads," "faster response times," "less manual reconciliation work") — no invented numbers.`,
     });
 
     return {
@@ -256,9 +268,12 @@ Describe the projected business outcomes over 3-6 months.`,
 
 export const sharePrepSheet = tool({
   description:
-    "Generate a prep sheet link for a business owner. Call this when a visitor is " +
-    "interested in automation but not sure where to start, or when you want to gather information " +
-    "about their current lead flow before recommending solutions.",
+    "Generates a prep sheet link for a business owner. Call this ONLY when the visitor EXPLICITLY " +
+    "asks for a prep sheet, says something like 'I don't know where to start', or asks you to 'assess my " +
+    "business' / 'send me the form'. Do NOT call this just because a visitor describes an automation need " +
+    "or seems interested — answer their question directly first (see Response Structure). " +
+    "NEVER write a /prep URL, or any placeholder/example version of one, directly in your text response — " +
+    "the ONLY valid way to give the visitor this link is calling this tool, which renders a clickable card.",
   inputSchema: z.object({
     clientName: z
       .string()
@@ -275,7 +290,10 @@ export const sharePrepSheet = tool({
     if (clientName) params.set("name", clientName);
 
     const qs = params.toString();
-    const url = `/prep${qs ? `?${qs}` : ""}`;
+    const base =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+      "https://www.buildwithjazz.com";
+    const url = `${base}/prep${qs ? `?${qs}` : ""}`;
 
     return {
       prepSheet: {

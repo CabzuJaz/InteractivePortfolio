@@ -17,7 +17,6 @@ import {
   Shield,
   Calendar,
   MapPin,
-  Briefcase,
   Phone,
   Cpu,
   Lightbulb,
@@ -286,56 +285,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── EXPERIENCE ─── */}
-      <section className="py-24 px-6 border-t border-border/50">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-          >
-            <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-3">Experience</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-10">
-              Where I&apos;ve <span className="text-gradient">worked</span>
-            </h2>
-          </motion.div>
-
-          <div className="space-y-8">
-            {resume.experience.map((exp, i) => (
-              <motion.div
-                key={exp.company + exp.role}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: i * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                className="relative pl-8 border-l-2 border-primary/20"
-              >
-                <div className="absolute left-[-9px] top-1 w-4 h-4 rounded-full bg-primary glow-cyan" />
-                <div className="glass rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Briefcase className="w-4 h-4 text-primary" />
-                    <h3 className="font-semibold text-lg">{exp.role}</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {exp.company} · {exp.startDate}–{exp.endDate}
-                  </p>
-                  <p className="text-sm leading-relaxed">{exp.description}</p>
-                  {exp.tech && exp.tech.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {exp.tech.map((t) => (
-                        <Badge key={t} variant="secondary" className="text-xs">
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ─── EXPERIENCE — hidden ─── */}
 
       {/* ─── CERTIFICATES ─── */}
       {resume.certificates && resume.certificates.length > 0 && (

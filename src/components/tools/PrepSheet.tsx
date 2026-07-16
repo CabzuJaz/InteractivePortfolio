@@ -13,10 +13,7 @@ interface PrepSheetProps {
 }
 
 export function PrepSheet({ prepSheet }: PrepSheetProps) {
-  const fullUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${prepSheet.url}`
-      : `https://www.buildwithjazz.com${prepSheet.url}`;
+  const fullUrl = prepSheet.url;
 
   return (
     <div className="w-full max-w-md">
@@ -32,11 +29,11 @@ export function PrepSheet({ prepSheet }: PrepSheetProps) {
               <ClipboardList className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Lead Automation Prep Sheet</h3>
+              <h3 className="font-semibold text-lg">Automation Prep Sheet</h3>
               <p className="text-sm text-muted-foreground">
                 {prepSheet.clientName
                   ? `Personalized for ${prepSheet.clientName}`
-                  : "Map your lead flow before we build"}
+                  : "Map your process before we build"}
               </p>
             </div>
           </div>
@@ -51,19 +48,15 @@ export function PrepSheet({ prepSheet }: PrepSheetProps) {
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-primary">✓</span>
-              <span>Where leads come from today</span>
+              <span>Your current lead flow and tools</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-primary">✓</span>
-              <span>How fast you respond</span>
+              <span>Where time and leads are slipping</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-primary">✓</span>
-              <span>Where leads might be leaking</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-primary">✓</span>
-              <span>Your tools and current setup</span>
+              <span>What successful automation looks like for you</span>
             </div>
           </div>
 
