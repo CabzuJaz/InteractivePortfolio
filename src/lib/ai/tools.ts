@@ -110,7 +110,14 @@ export const generateContract = tool({
     "visitor hasn't answered yet. Once pricing intent AND scope both exist, call this immediately — do not " +
     "just say in text that you'll make a proposal.",
   inputSchema: z.object({
-    clientName: z.string().describe("The client or company name"),
+    clientName: z
+      .string()
+      .optional()
+      .describe(
+        "The client or company name, if given. If the visitor hasn't shared a name, " +
+          "do NOT omit this field or abort the call — pass \"Client\" as a placeholder instead. " +
+          "A tool call must always succeed; never let a missing name block generating the proposal.",
+      ),
     clientEmail: z
       .string()
       .optional()
@@ -174,7 +181,7 @@ export const generateContract = tool({
 
     return {
       contract: {
-        clientName,
+        clientName: clientName ?? "Client",
         clientEmail: clientEmail ?? null,
         projectDescription,
         hourlyRate,
