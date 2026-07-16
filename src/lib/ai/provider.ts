@@ -1,12 +1,19 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createGroq } from "@ai-sdk/groq";
+import { createVertex } from "@ai-sdk/google-vertex";
 
 /**
  * Returns the AI model based on environment variables.
- * Priority: GROQ_API_KEY > ANTHROPIC_API_KEY > OPENAI_API_KEY > OPENROUTER_API_KEY.
+ * Priority: GOOGLE_VERTEX_PROJECT > GROQ_API_KEY > ANTHROPIC_API_KEY > OPENAI_API_KEY > OPENROUTER_API_KEY.
  *
- * For Groq (default):
+ * For Vertex AI / Gemini (primary — paid, billed to your GCP project):
+ *   GOOGLE_VERTEX_PROJECT=your-gcp-project-id
+ *   GOOGLE_VERTEX_LOCATION=us-central1  (optional, this is the default)
+ *   GOOGLE_VERTEX_CREDENTIALS={"type":"service_account",...}  (full service account JSON key, one line)
+ *   AI_MODEL=gemini-2.5-flash  (optional, this is the default)
+ *
+ * For Groq (fallback — free tier, low daily token limit):
  *   GROQ_API_KEY=gsk_...
  *   AI_MODEL=llama-3.3-70b-versatile  (optional, this is the default)
  *
@@ -21,7 +28,19 @@ import { createGroq } from "@ai-sdk/groq";
 export function getModel() {
   const modelId = process.env.AI_MODEL;
 
-  // Groq (primary)
+  // Vertex AI / Gemini (primary — paid GCP project, no free-tier rate-limit risk)
+  if (process.env.GOOGLE_VERTEX_PROJECT) {
+    const vertex = createVertex({
+      project: process.env.GOOGLE_VERTEX_PROJECT,
+      location: process.env.GOOGLE_VERTEX_LOCATION ?? "us-central1",
+      googleAuthOptions: process.env.GOOGLE_VERTEX_CREDENTIALS
+        ? { credentials: JSON.parse(process.env.GOOGLE_VERTEX_CREDENTIALS) }
+        : undefined,
+    });
+    return vertex(modelId ?? "gemini-2.5-flash");
+  }
+
+  // Groq (fallback)
   if (process.env.GROQ_API_KEY) {
     const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
     return groq(modelId ?? "llama-3.3-70b-versatile");
