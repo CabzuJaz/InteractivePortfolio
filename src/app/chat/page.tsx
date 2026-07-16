@@ -32,7 +32,7 @@ function ChatContent() {
   }, []);
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, regenerate, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
     onFinish: () => {
       setAutoScroll(true);
@@ -166,8 +166,14 @@ function ChatContent() {
         <MessageList messages={messages} isLoading={isLoading} />
         {isError && (
           <div className="max-w-3xl mx-auto px-4 py-2">
-            <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive flex items-center gap-2">
-              <span>Something went wrong. Please try again.</span>
+            <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive flex items-center justify-between gap-2">
+              <span>That reply hit a temporary error — nothing you shared was lost. Try again, or just keep chatting.</span>
+              <button
+                onClick={() => regenerate()}
+                className="shrink-0 text-xs font-medium underline underline-offset-2 hover:opacity-70 transition-opacity"
+              >
+                Retry
+              </button>
             </div>
           </div>
         )}

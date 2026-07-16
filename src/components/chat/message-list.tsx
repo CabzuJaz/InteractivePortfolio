@@ -63,7 +63,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                 <div className="space-y-3">
                   {/* Text bubble */}
                   {textParts.length > 0 && (
-                    <div className="rounded-2xl bg-muted/50 border border-border/30 px-4 py-3 break-words overflow-hidden">
+                    <div className="rounded-2xl bg-muted/50 border border-border/30 px-4 py-4 sm:px-5 break-words overflow-hidden">
                       {textParts.map((p, i) => (
                         <div
                           key={i}
