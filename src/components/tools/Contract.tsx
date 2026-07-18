@@ -45,11 +45,19 @@ interface ContractData {
   terms: string[];
 }
 
-interface ContractProps {
-  contract: ContractData;
+interface DeliveryData {
+  sent: boolean;
+  method: "ghl-email" | "resend" | "none";
+  sentTo: string | null;
+  pdfUrl: string | null;
 }
 
-export function Contract({ contract }: ContractProps) {
+interface ContractProps {
+  contract: ContractData;
+  delivery?: DeliveryData;
+}
+
+export function Contract({ contract, delivery }: ContractProps) {
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -247,6 +255,16 @@ export function Contract({ contract }: ContractProps) {
             </ul>
           </div>
 
+          {/* Delivery status — contract was already emailed server-side */}
+          {delivery?.sent && delivery.sentTo && (
+            <div className="flex items-center gap-2 rounded-xl bg-green-500/10 border border-green-500/20 px-4 py-2.5 text-sm text-green-600 dark:text-green-400">
+              <Check className="w-4 h-4 shrink-0" />
+              <span>
+                PDF emailed to <span className="font-medium">{delivery.sentTo}</span>
+              </span>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
             <button
@@ -261,25 +279,27 @@ export function Contract({ contract }: ContractProps) {
               )}
               Download PDF
             </button>
-            <button
-              onClick={handleSend}
-              disabled={sending || sent}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full glass text-sm font-medium hover:bg-primary/10 transition-colors disabled:opacity-50"
-            >
-              {sent ? (
-                <>
-                  <Check className="w-4 h-4 text-green-500" />
-                  Sent
-                </>
-              ) : sending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Send to Client
-                </>
-              )}
-            </button>
+            {!delivery?.sent && (
+              <button
+                onClick={handleSend}
+                disabled={sending || sent}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full glass text-sm font-medium hover:bg-primary/10 transition-colors disabled:opacity-50"
+              >
+                {sent ? (
+                  <>
+                    <Check className="w-4 h-4 text-green-500" />
+                    Sent
+                  </>
+                ) : sending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Send to Client
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </motion.div>

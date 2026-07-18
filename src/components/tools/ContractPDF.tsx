@@ -1,4 +1,7 @@
-"use client";
+// NOTE: intentionally NOT "use client" — this module contains no hooks or
+// browser APIs, and the server (generateContract tool) imports it to render
+// the PDF for GHL/email delivery. The client (Contract.tsx) dynamic-imports
+// it for the Download button. It must stay usable from both sides.
 
 import {
   Document,

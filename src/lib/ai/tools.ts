@@ -121,7 +121,12 @@ export const generateContract = tool({
     clientEmail: z
       .string()
       .optional()
-      .describe("The client's email address (ask for it if not already provided)"),
+      .describe(
+        "The client's email address. IMPORTANT: when this is provided, the contract PDF is " +
+          "automatically emailed to it server-side (via GHL/CRM) — so collect it during scoping " +
+          "whenever possible. If the visitor declined to share an email or only wants to see " +
+          "numbers, omit it — the proposal card still shows everything, it just won't be emailed.",
+      ),
     projectDescription: z
       .string()
       .describe("Brief description of the project or engagement scope"),
@@ -179,35 +184,58 @@ export const generateContract = tool({
     const totalToolCost = monthlyToolCost * projectDurationMonths;
     const totalCost = laborCost + totalToolCost;
 
-    return {
-      contract: {
-        clientName: clientName ?? "Client",
-        clientEmail: clientEmail ?? null,
-        projectDescription,
-        hourlyRate,
-        hours,
-        laborCost,
-        toolSubscriptions,
-        monthlyToolCost,
-        projectDurationMonths,
-        totalToolCost,
-        totalCost,
-        pricingFactors: {
-          complexity: projectComplexity ?? "moderate",
-          clientType: clientType ?? "small-business",
-          rateRange: "$10-15/hr",
-          selectedRate: `$${hourlyRate}/hr`,
-        },
-        terms: [
-          "Payment: 50% upfront, 50% on delivery",
-          "Revisions: 2 rounds included per milestone",
-          "Communication: Daily async updates via preferred channel",
-          "Timeline: Estimated based on scope; adjustments discussed upfront",
-          "Tool subscriptions are billed at cost — no markup",
-          "Cancellation: 1-week notice required",
-        ],
+    const contract = {
+      clientName: clientName ?? "Client",
+      clientEmail: clientEmail ?? null,
+      projectDescription,
+      hourlyRate,
+      hours,
+      laborCost,
+      toolSubscriptions,
+      monthlyToolCost,
+      projectDurationMonths,
+      totalToolCost,
+      totalCost,
+      pricingFactors: {
+        complexity: projectComplexity ?? "moderate",
+        clientType: clientType ?? "small-business",
+        rateRange: "$10-15/hr",
+        selectedRate: `$${hourlyRate}/hr`,
       },
+      terms: [
+        "Payment: 50% upfront, 50% on delivery",
+        "Revisions: 2 rounds included per milestone",
+        "Communication: Daily async updates via preferred channel",
+        "Timeline: Estimated based on scope; adjustments discussed upfront",
+        "Tool subscriptions are billed at cost — no markup",
+        "Cancellation: 1-week notice required",
+      ],
     };
+
+    // Server-side delivery: generate the PDF here and route it via GHL
+    // (hosted PDF + CRM contact + proposal-sent tag + GHL-sent email, with
+    // Resend fallback) so nothing depends on client-side buttons.
+    let delivery: import("../contract-delivery").DeliveryResult = {
+      sent: false,
+      method: "none",
+      sentTo: clientEmail ?? null,
+      pdfUrl: null,
+    };
+    if (clientEmail) {
+      try {
+        const { generateContractPDF } = await import(
+          "@/components/tools/ContractPDF"
+        );
+        const blob = await generateContractPDF(contract);
+        const pdfBuffer = Buffer.from(await blob.arrayBuffer());
+        const { deliverContract } = await import("../contract-delivery");
+        delivery = await deliverContract(contract, pdfBuffer);
+      } catch (err) {
+        console.error("[generateContract] delivery failed:", err);
+      }
+    }
+
+    return { contract, delivery };
   },
 });
 
