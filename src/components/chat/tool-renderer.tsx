@@ -59,7 +59,7 @@ function renderToolOutput(toolName: string, data: any) {
     case "sharePrepSheet":
       return <PrepSheet prepSheet={data.prepSheet} />;
     case "generateContract":
-      return <Contract contract={data.contract} />;
+      return <Contract contract={data.contract} delivery={data.delivery} />;
     default:
       return null;
   }
