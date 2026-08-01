@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   MessageCircle,
@@ -67,6 +67,9 @@ export default function HomePage() {
   const router = useRouter();
   const [expandedProject, setExpandedProject] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Framer Motion animates via JS, so the prefers-reduced-motion CSS block in
+  // globals.css cannot stop the looping avatar float — it has to be gated here.
+  const prefersReducedMotion = useReducedMotion();
 
   const handleChatClick = () => {
     router.push("/chat");
@@ -201,8 +204,12 @@ export default function HomePage() {
           {/* Animated Avatar */}
           <motion.div variants={fadeUp} className="mb-[clamp(0.875rem,2vh,1.25rem)]">
             <motion.div
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              animate={prefersReducedMotion ? undefined : { y: [0, -8, 0] }}
+              transition={
+                prefersReducedMotion
+                  ? undefined
+                  : { duration: 3, repeat: Infinity, ease: "easeInOut" }
+              }
               className="relative"
             >
               <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-110" />
@@ -758,7 +765,7 @@ export default function HomePage() {
           {/* Footer */}
           <div className="mt-16 pt-8 border-t border-border/50">
             <p className="text-sm text-muted-foreground">
-              © 2026 BuildWithJazz.com
+              © {new Date().getFullYear()} BuildWithJazz.com
             </p>
           </div>
         </div>
