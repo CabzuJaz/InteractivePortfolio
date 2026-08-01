@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, ChevronDown, ChevronUp, Cpu, Lightbulb, Layers, Zap, Target, AlertTriangle } from "lucide-react";
 import { GithubIcon } from "@/components/icons";
+import { ArchitectureFlow } from "@/components/tools/ArchitectureFlow";
 import { Badge } from "@/components/ui/badge";
 import type { Project } from "@/data/projects";
 
@@ -43,12 +45,31 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                   Featured
                 </Badge>
               )}
-              <span className="text-xs text-muted-foreground">{project.year}</span>
+              {project.industry && (
+                <Badge variant="secondary" className="text-xs">
+                  {project.industry}
+                </Badge>
+              )}
+              {project.year && <span className="text-xs text-muted-foreground">{project.year}</span>}
             </div>
             <h3 className="font-semibold text-lg">{project.title}</h3>
             <p className="text-sm text-muted-foreground mt-1">{project.oneLiner}</p>
           </div>
         </div>
+
+        {project.images[0] ? (
+          <div className="mt-4 overflow-hidden rounded-xl border border-border/50 bg-muted/30">
+            <Image
+              src={project.images[0]}
+              alt={`${project.title} workflow preview`}
+              width={1000}
+              height={707}
+              className="h-auto w-full object-contain"
+            />
+          </div>
+        ) : (
+          <ArchitectureFlow architecture={project.architecture} className="mt-4" />
+        )}
 
         <p className="text-sm mt-3 leading-relaxed">{project.description}</p>
 

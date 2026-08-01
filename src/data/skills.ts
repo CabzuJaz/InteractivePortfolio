@@ -16,7 +16,7 @@ export const skills: SkillCategory[] = [
       { name: "Prompt Engineering", level: 3 },
       { name: "MCP", level: 3 },
       { name: "FastMCP", level: 2 },
-      { name: "n8n", level: 2 },
+      { name: "n8n", level: 3 },
       { name: "GoHighLevel (GHL)", level: 3 },
       { name: "GHL Workflows", level: 3 },
       { name: "GHL API", level: 2 },
@@ -40,12 +40,17 @@ export const skills: SkillCategory[] = [
   {
     category: "APIs & Integrations",
     items: [
-      { name: "Google Sheets API", level: 2 },
+      { name: "Google Sheets API", level: 3 },
       { name: "Google Drive API", level: 2 },
       { name: "Microsoft Graph API", level: 2 },
       { name: "Anthropic API", level: 3 },
       { name: "REST APIs", level: 3 },
       { name: "OpenAI API", level: 2 },
+      { name: "GorillaDesk CRM", level: 2 },
+      { name: "Twilio SMS", level: 2 },
+      { name: "Gmail API", level: 2 },
+      { name: "Google Maps / Geocoding", level: 2 },
+      { name: "Webhooks", level: 3 },
     ],
   },
   {
@@ -66,6 +71,9 @@ export const skills: SkillCategory[] = [
       { name: "GitHub", level: 2 },
       { name: "Google Workspace", level: 2 },
       { name: "MS Office", level: 2 },
+      { name: "WordPress", level: 2 },
+      { name: "WPForms", level: 2 },
+      { name: "Elementor", level: 1 },
     ],
   },
 ];

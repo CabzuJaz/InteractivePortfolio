@@ -1,13 +1,14 @@
 export interface Project {
   slug: string;
   title: string;
+  industry?: string;
   oneLiner: string;
   description: string;
   problem: string;
   solution: string;
   architecture: string;
   tech: string[];
-  year: number;
+  year?: number;
   keyFeatures: string[];
   challenges: string[];
   results: string[];
@@ -20,6 +21,60 @@ export interface Project {
 }
 
 export const projects: Project[] = [
+  {
+    slug: "automated-lead-intake-estimating-system",
+    title: "Automated Lead Intake & Estimating System",
+    industry: "Home Services",
+    oneLiner:
+      "Multi-workflow lead pipeline unifying WordPress intake, CRM sync, estimate automation, and an auditable override trail",
+    description:
+      "Designed and built a single lead pipeline for a US-based home-services company, replacing scattered tools with five coordinated n8n workflows. Leads from three WordPress form paths are normalized, duplicate-checked, and synced to both GorillaDesk and a Google Sheets CRM with a concise summary of what the customer needs. An estimating layer applies configurable service-area and pricing rules, routing anything uncertain to manual review instead of guessing. Staff notifications run over Gmail and Twilio SMS with an acknowledgement reminder loop, and every estimate override is captured in an append-only audit trail that syncs idempotently back to the CRM.",
+    problem:
+      "Lead inquiries, project photos, CRM records, spreadsheet tracking, and estimating rules lived in separate tools. Leads arrived through multiple form paths with no shared normalization, producing duplicate records, inconsistent field mapping, and manual handoffs before any estimate could be reviewed — with no audit trail when a price was overridden.",
+    solution:
+      "Built one pipeline across five n8n workflows: contact form, quick intake, instant estimate, internal notification/acknowledgement, and estimate override audit. Submissions are normalized against an explicit field contract, matched for duplicates, geocoded for service-area rules, then written to GorillaDesk and Google Sheets. Pricing runs on configurable rules with explicit manual-review fallbacks, and human approval gates anything customer-facing.",
+    architecture:
+      "WordPress + WPForms (3 intake paths) → n8n normalization & field-contract validation → Duplicate matching → Google Maps geocoding + service-area rules → GorillaDesk + Google Sheets CRM sync → Rules-based estimate engine (manual-review fallback) → Gmail + Twilio staff notification & acknowledgement loop → Append-only override audit sync",
+    tech: [
+      "n8n",
+      "WordPress",
+      "WPForms",
+      "GorillaDesk CRM",
+      "Google Sheets API",
+      "Google Maps Geocoding",
+      "Twilio SMS",
+      "Gmail API",
+      "Elementor",
+      "jq",
+    ],
+    keyFeatures: [
+      "Five coordinated n8n workflows behind one lead pipeline",
+      "Three WordPress intake paths normalized to a shared field contract",
+      "Duplicate matching before any CRM write",
+      "Dual sync to GorillaDesk and a Google Sheets CRM with concise lead summaries",
+      "Geocoding-driven service-area and configurable pricing rules",
+      "Manual-review routing when pricing inputs are missing or ambiguous",
+      "Append-only estimate override audit with idempotent CRM sync",
+      "Staff SMS/email notifications with an acknowledgement reminder loop",
+      "Consent gating, opt-out suppression, and Do-Not-Text handling for A2P SMS compliance",
+    ],
+    challenges: [
+      "Reconciling business requirements against technical field keys so an exported workflow key was never mistaken for an approved form contract",
+      "Making override sync idempotent — already-synced rows are skipped so a retry can never double-post a CRM note",
+      "Designing pricing to withhold an automatic quote and route to manual review rather than invent a charge on ambiguous input",
+      "Gating customer SMS behind consent and suppression rules to stay within A2P requirements",
+      "Preventing silent lead loss by surfacing workflow failures instead of dropping records",
+    ],
+    results: [
+      "Delivered five workflows covering intake, estimating, notification, and override auditing",
+      "Unified three previously separate form paths into one normalized lead pipeline",
+      "Established an append-only override audit trail as the authoritative record for estimate changes",
+      "Staff notification and acknowledgement path verified live; broader rollout still gated on client-side controlled testing and release approval",
+    ],
+    links: {},
+    images: ["/projects/lead-intake-estimating-system.png"],
+    highlight: true,
+  },
   {
     slug: "str-lead-research-agent",
     title: "STR Lead Research Agent",
@@ -51,7 +106,7 @@ export const projects: Project[] = [
       "Results automatically organized in Google Sheets",
     ],
     links: {},
-    images: ["/projects/str-lead.svg"],
+    images: [],
     highlight: true,
   },
   {
@@ -85,7 +140,7 @@ export const projects: Project[] = [
       "Consistent classification across all emails",
     ],
     links: {},
-    images: ["/projects/email-triage.svg"],
+    images: [],
     highlight: true,
   },
   {
@@ -119,7 +174,7 @@ export const projects: Project[] = [
       "Structured, consistent output format",
     ],
     links: {},
-    images: ["/projects/orchestrator.svg"],
+    images: [],
     highlight: true,
   },
   {
@@ -153,7 +208,7 @@ export const projects: Project[] = [
       "Clean REST API for external integrations",
     ],
     links: {},
-    images: ["/projects/mcp-server.svg"],
+    images: [],
   },
   {
     slug: "ai-lead-qualification",
@@ -188,7 +243,7 @@ export const projects: Project[] = [
       "Consistent, personalized follow-ups at scale",
     ],
     links: {},
-    images: ["/projects/lead-qualification.svg"],
+    images: [],
     highlight: true,
   },
 ];
