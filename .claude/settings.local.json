@@ -3,7 +3,13 @@
     "allow": [
       "Read(//private/tmp/**)",
       "Bash(rm -rf portfolio-scaffold)",
-      "Bash(pnpm create *)"
+      "Bash(pnpm create *)",
+      "Bash(perl -pi -e 's/\\\\{\\\\{DOMAIN\\\\}\\\\}/buildwithjazz.com/g; s/\\\\{\\\\{LEGAL_NAME\\\\}\\\\}/Jazzmin Sicat-Cabizares/g; s/\\\\{\\\\{CONTACT_EMAIL\\\\}\\\\}/jazzmincabizares\\\\@gmail.com/g; s/\\\\{\\\\{EFFECTIVE_DATE_ISO\\\\}\\\\}/2026-06-27/g; s/\\\\{\\\\{EFFECTIVE_DATE\\\\}\\\\}/June 27, 2026/g; s/\\\\{\\\\{YEAR\\\\}\\\\}/2026/g;' legal/privacy.html)",
+      "Bash(pnpm list *)",
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s -X POST http://localhost:3000/api/chat -H 'Content-Type: application/json' -d '{\"messages\":[{\"role\":\"user\",\"content\":\"hi\",\"parts\":[{\"type\":\"text\",\"text\":\"hi\"}]}]}' --max-time 10)",
+      "Bash(pnpm build)",
+      "Bash(pnpm lint)"
     ]
   }
 }

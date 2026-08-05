@@ -20,11 +20,13 @@ import { DeliverableItem } from "@/components/dashboard/DeliverableItem";
 import { AdminPanel } from "@/components/dashboard/AdminPanel";
 import type { ProjectData } from "@/lib/types";
 
-function DashboardContent() {
+export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
+  const slug = projectSlug ?? searchParams.get("slug");
   const adminKey = searchParams.get("admin");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [expandedDeliverableId, setExpandedDeliverableId] = useState<string | null>(null);
 
   // Verify admin key server-side
   useEffect(() => {
@@ -42,11 +44,15 @@ function DashboardContent() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [adminError, setAdminError] = useState("");
 
   const fetchProject = useCallback(async () => {
-    if (!email) return;
+    if (!email && !slug) return;
     try {
-      const res = await fetch(`/api/dashboard?email=${encodeURIComponent(email)}`);
+      const query = slug
+        ? `slug=${encodeURIComponent(slug)}`
+        : `email=${encodeURIComponent(email ?? "")}`;
+      const res = await fetch(`/api/dashboard?${query}`);
       if (res.ok) {
         const data = await res.json();
         setProject(data.project);
@@ -54,18 +60,21 @@ function DashboardContent() {
     } catch {
       // silent
     }
-  }, [email]);
+  }, [email, slug]);
 
   useEffect(() => {
-    if (!email) return;
+    if (!email && !slug) return;
 
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(`/api/dashboard?email=${encodeURIComponent(email)}`);
+        const query = slug
+          ? `slug=${encodeURIComponent(slug)}`
+          : `email=${encodeURIComponent(email ?? "")}`;
+        const res = await fetch(`/api/dashboard?${query}`);
         if (cancelled) return;
         if (!res.ok) {
-          setError("Project not found. Check the email address.");
+          setError("Project not found. Check the dashboard link.");
           setLoading(false);
           return;
         }
@@ -80,7 +89,7 @@ function DashboardContent() {
 
     load();
     return () => { cancelled = true; };
-  }, [email]);
+  }, [email, slug]);
 
   const handleToggleDeliverable = async (id: string) => {
     if (!project || !isAdmin || !adminKey) return;
@@ -99,7 +108,8 @@ function DashboardContent() {
       return d;
     });
 
-    await fetch("/api/dashboard", {
+    setAdminError("");
+    const res = await fetch("/api/dashboard", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -110,8 +120,17 @@ function DashboardContent() {
         deliverables: updated,
       }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setAdminError(data.error || "Failed to update task status.");
+      return;
+    }
 
     fetchProject();
+  };
+
+  const handleExpandDeliverable = (id: string) => {
+    setExpandedDeliverableId((current) => (current === id ? null : id));
   };
 
   if (loading) {
@@ -268,6 +287,8 @@ function DashboardContent() {
                   deliverable={d}
                   index={i}
                   isAdmin={isAdmin}
+                  isExpanded={expandedDeliverableId === d.id}
+                  onExpand={handleExpandDeliverable}
                   onToggle={handleToggleDeliverable}
                 />
               ))}
@@ -277,10 +298,16 @@ function DashboardContent() {
           {/* Admin Panel */}
           {isAdmin && (
             <div className="pt-4 border-t border-border/50">
+              {adminError && (
+                <p className="mb-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {adminError}
+                </p>
+              )}
               <AdminPanel
                 deliverables={project.deliverables}
                 contactId={project.contactId}
                 adminKey={adminKey || ""}
+                onError={setAdminError}
                 onUpdate={fetchProject}
               />
             </div>

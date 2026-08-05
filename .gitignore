@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local IDE / agent config (machine-specific paths)
+.claude/launch.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

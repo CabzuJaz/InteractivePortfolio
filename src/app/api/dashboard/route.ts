@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Deliverable, ProjectData } from "@/lib/types";
+import {
+  dashboardProjectMetadata,
+  dashboardProjectSlugs,
+  localDashboardProjects,
+} from "@/data/dashboard-projects";
 
 const GHL_BASE = "https://services.leadconnectorhq.com";
 const GHL_HEADERS = {
@@ -13,8 +18,13 @@ const GHL_HEADERS = {
  * Returns a fallback project if GHL is unavailable.
  */
 async function getProjectByEmail(email: string): Promise<ProjectData | null> {
+  const normalizedEmail = email.toLowerCase();
+  const localProject = localDashboardProjects[normalizedEmail];
+  if (localProject) return localProject;
+  const metadata = dashboardProjectMetadata[normalizedEmail];
+
   const locationId = process.env.GHL_LOCATION_ID;
-  if (!locationId) return createFallbackProject(email);
+  if (!locationId) return metadata ? createMetadataProject(email, metadata) : createFallbackProject(email);
 
   try {
     const res = await fetch(
@@ -53,10 +63,10 @@ async function getProjectByEmail(email: string): Promise<ProjectData | null> {
       // No deliverables set yet
     }
 
-    // Get project name from opportunity or use default
-    let projectName = "Automation Project";
-    const description = "";
-    let totalCost = 0;
+    // Get project name from opportunity or use defaults/metadata
+    let projectName = metadata?.projectName ?? "Automation Project";
+    const description = metadata?.description ?? "";
+    let totalCost = metadata?.totalCost ?? 0;
 
     try {
       const oppRes = await fetch(
@@ -77,22 +87,44 @@ async function getProjectByEmail(email: string): Promise<ProjectData | null> {
 
     return {
       contactId: contact.id,
-      clientName: `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || "Client",
+      clientName:
+        metadata?.clientName ||
+        `${contact.firstName || ""} ${contact.lastName || ""}`.trim() ||
+        "Client",
       clientEmail: contact.email || email,
       projectName,
       description,
       totalCost,
-      downpaymentPaid,
-      finalPaymentPaid,
-      deliverables,
+      downpaymentPaid: metadata?.downpaymentPaid ?? downpaymentPaid,
+      finalPaymentPaid: metadata?.finalPaymentPaid ?? finalPaymentPaid,
+      deliverables: deliverables.length > 0 ? deliverables : metadata?.deliverables ?? [],
       createdAt: contact.dateAdded || new Date().toISOString(),
       updatedAt: contact.dateUpdated || new Date().toISOString(),
     };
   } catch (err) {
     // GHL is down — return fallback
     console.error("[dashboard] GHL error, returning fallback:", err);
-    return createFallbackProject(email);
+    return metadata ? createMetadataProject(email, metadata) : createFallbackProject(email);
   }
+}
+
+function createMetadataProject(
+  email: string,
+  metadata: NonNullable<(typeof dashboardProjectMetadata)[string]>,
+): ProjectData {
+  return {
+    contactId: "",
+    clientName: metadata.clientName,
+    clientEmail: email,
+    projectName: metadata.projectName,
+    description: metadata.description,
+    totalCost: metadata.totalCost,
+    downpaymentPaid: metadata.downpaymentPaid,
+    finalPaymentPaid: metadata.finalPaymentPaid,
+    deliverables: metadata.deliverables,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 /**
@@ -133,7 +165,9 @@ async function saveDeliverables(
   const notesRes = await fetch(`${GHL_BASE}/contacts/${contactId}/notes`, {
     headers: GHL_HEADERS,
   });
-  if (!notesRes.ok) return;
+  if (!notesRes.ok) {
+    throw new Error(`Failed to fetch contact notes (${notesRes.status})`);
+  }
 
   const notesData = await notesRes.json();
   const existingNote = notesData.notes?.find((n: { body: string }) =>
@@ -144,29 +178,36 @@ async function saveDeliverables(
 
   if (existingNote) {
     // Update existing note
-    await fetch(`${GHL_BASE}/contacts/${contactId}/notes/${existingNote.id}`, {
+    const updateRes = await fetch(`${GHL_BASE}/contacts/${contactId}/notes/${existingNote.id}`, {
       method: "PUT",
       headers: GHL_HEADERS,
       body: JSON.stringify({ body: noteBody }),
     });
+    if (!updateRes.ok) {
+      throw new Error(`Failed to update deliverables note (${updateRes.status})`);
+    }
   } else {
     // Create new note
-    await fetch(`${GHL_BASE}/contacts/${contactId}/notes`, {
+    const createRes = await fetch(`${GHL_BASE}/contacts/${contactId}/notes`, {
       method: "POST",
       headers: GHL_HEADERS,
       body: JSON.stringify({ body: noteBody }),
     });
+    if (!createRes.ok) {
+      throw new Error(`Failed to create deliverables note (${createRes.status})`);
+    }
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const email = searchParams.get("email");
+    const slug = searchParams.get("slug")?.toLowerCase();
+    const email = searchParams.get("email") ?? (slug ? dashboardProjectSlugs[slug] : null);
 
     if (!email) {
       return NextResponse.json(
-        { error: "email parameter required" },
+        { error: "email or slug parameter required" },
         { status: 400 },
       );
     }
