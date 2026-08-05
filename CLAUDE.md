@@ -64,6 +64,29 @@ public/                   # avatar images, project screenshots
 - `pnpm build` — must pass with zero type errors before any task is "done"
 - `pnpm lint` — ESLint + Prettier; fix, don't suppress
 
+## Git: commit and push approved changes automatically
+
+Once a change is approved, commit and push it without asking again. "Approved" means
+the user asked for the change and it is working — not merely that code was written.
+Do not wait for a separate "commit this" or "push it".
+
+**This repository is public** (`github.com/CabzuJaz/InteractivePortfolio`). A push is
+irreversible: anything committed is public the moment it lands, and deleting it later
+does not un-publish it. So every auto-commit runs this gate first, and a failure at any
+step stops the commit and is reported instead:
+
+1. `pnpm build` and `pnpm lint` pass.
+2. Scan the **staged** diff — not the working tree — for secrets and personal data:
+   API keys (`gsk_`, `sk-`, `re_`, `AIza`, `eyJ`, `Bearer …`), `.env` values, absolute
+   `/Users/…` paths, and client names, emails, phone numbers, or addresses.
+3. Confirm no client-confidential content is being committed. Client dashboard content
+   belongs in `DASHBOARD_PROJECTS_JSON`, never in `src/data/`.
+4. If a secret is found, check `git log -S '<secret>'` before assuming it is new — a key
+   already in history needs rotation, not just deletion.
+
+Never auto-commit a merge, rebase, force-push, history rewrite, or a branch other than
+the one in play. Never auto-push work the user called experimental or in-progress.
+
 ## Skills in this repo
 
 Consult these in `.claude/skills/` — they are authoritative for their domains:
