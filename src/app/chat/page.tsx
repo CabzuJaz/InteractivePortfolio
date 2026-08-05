@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
@@ -11,7 +11,132 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { MessageList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { SuggestionChips } from "@/components/chat/suggestion-chips";
+import { PrepSheet } from "@/components/tools/PrepSheet";
 import { persona } from "@/data/persona";
+import {
+  buildPrepSheetResult,
+  isLikelyClientName,
+  isSpecificProcessDescription,
+  type PrepSheetResult,
+} from "@/lib/prep-sheet";
+
+interface LocalPrepSheetCard {
+  id: string;
+  prepSheet: PrepSheetResult;
+}
+
+const prepSheetRequestPattern =
+  /\b(prep\s*-?\s*sheet|prep\s*form|send\s+me\s+the\s+form|assess\s+my\s+business|where\s+to\s+start|don'?t\s+know\s+where\s+to\s+start)\b/i;
+
+const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+const automationScopePattern =
+  /\b(automate|automation|workflow|process|task|lead|estimate|intake|crm|form|email|follow[-\s]?up|manual|repetitive|approval|sync)\b/i;
+const namePatterns = [
+  /\b(?:my name is|this is)\s+([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,3})/i,
+  /\bname\s*(?:is|:)\s*([A-Za-z][A-Za-z.'-]*(?:\s+[A-Za-z][A-Za-z.'-]*){0,3})/i,
+];
+const businessPatterns = [
+  /\b(?:business|company|company name|business name)\s*(?:is|:)\s*([^.,\n]+)/i,
+  /\b(?:at|from)\s+([A-Z][A-Za-z0-9&.' -]{2,40})(?:,|\.|\n|$)/i,
+];
+
+function isPrepSheetRequest(content: string) {
+  return prepSheetRequestPattern.test(content);
+}
+
+function messageToText(message: UIMessage) {
+  return (
+    message.parts
+      ?.filter((part) => part.type === "text" && "text" in part)
+      .map((part) => part.text)
+      .join("\n") ?? ""
+  );
+}
+
+function cleanCapturedValue(value: string) {
+  return value
+    .replace(emailPattern, "")
+    .split(/\b(?:and|for|because|about|to automate|i need|we need)\b/i)[0]
+    .replace(/[.,;:!?]+$/g, "")
+    .trim();
+}
+
+function extractByPatterns(text: string, patterns: RegExp[]) {
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    const value = match?.[1] ? cleanCapturedValue(match[1]) : "";
+    if (value) return value;
+  }
+
+  return undefined;
+}
+
+function extractClientName(text: string) {
+  const name = extractByPatterns(text, namePatterns);
+  return name && isLikelyClientName(name) ? name : undefined;
+}
+
+function extractProcessDescription(currentText: string, previousTexts: string[]) {
+  const candidates = [currentText, ...previousTexts.slice().reverse()];
+
+  for (const candidate of candidates) {
+    const cleaned = candidate
+      .replace(emailPattern, "")
+      .replace(prepSheetRequestPattern, "")
+      .replace(/\b(?:please|can you|could you|send me|generate|create|make)\b/gi, "")
+      .trim();
+
+    if (automationScopePattern.test(cleaned) && isSpecificProcessDescription(cleaned)) {
+      return cleaned;
+    }
+  }
+
+  return undefined;
+}
+
+function hasSharePrepSheetTool(messages: UIMessage[]) {
+  return messages.some((message) =>
+    message.parts?.some((part) => {
+      if (!part.type.startsWith("tool-")) return false;
+      return "toolName" in part && part.toolName === "sharePrepSheet";
+    }),
+  );
+}
+
+function hasQualificationSignal(content: string) {
+  return (
+    emailPattern.test(content) ||
+    automationScopePattern.test(content) ||
+    namePatterns.some((pattern) => pattern.test(content))
+  );
+}
+
+function buildLocalPrepSheet(content: string, messages: UIMessage[]) {
+  const previousUserTexts = messages
+    .filter((message) => message.role === "user")
+    .map(messageToText)
+    .filter(Boolean);
+  const conversationText = [...previousUserTexts, content].join("\n");
+
+  return buildPrepSheetResult(
+    {
+      clientName: extractClientName(conversationText),
+      clientEmail: conversationText.match(emailPattern)?.[0],
+      businessName: extractByPatterns(conversationText, businessPatterns),
+      processDescription: extractProcessDescription(content, previousUserTexts),
+    },
+    typeof window === "undefined" ? "https://www.buildwithjazz.com" : window.location.origin,
+  );
+}
+
+function createPrepSheetCard(prepSheet: PrepSheetResult): LocalPrepSheetCard {
+  const randomId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}`;
+
+  return { id: randomId, prepSheet };
+}
 
 function ChatContent() {
   const searchParams = useSearchParams();
@@ -20,6 +145,12 @@ function ChatContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [localPrepSheets, setLocalPrepSheets] = useState<LocalPrepSheetCard[]>(
+    () =>
+      initialQuery && isPrepSheetRequest(initialQuery)
+        ? [{ id: "initial-prep-sheet", prepSheet: buildLocalPrepSheet(initialQuery, []) }]
+        : [],
+  );
 
   // Redirect to www version to avoid POST body loss on redirect
   useEffect(() => {
@@ -103,6 +234,14 @@ function ChatContent() {
 
   const handleSendMessage = (content: string, files?: File[]) => {
     setAutoScroll(true);
+    const latestPrepSheet = localPrepSheets[localPrepSheets.length - 1]?.prepSheet;
+    const shouldHandlePrepSheet =
+      isPrepSheetRequest(content) ||
+      (latestPrepSheet?.status === "needs_info" && hasQualificationSignal(content));
+
+    if (shouldHandlePrepSheet) {
+      setLocalPrepSheets([createPrepSheetCard(buildLocalPrepSheet(content, messages))]);
+    }
 
     if (files && files.length > 0) {
       // Convert File[] to data-URL FileUIPart[] for the AI SDK
@@ -131,6 +270,10 @@ function ChatContent() {
       sendMessage({ text: content });
     }
   };
+
+  const showLocalPrepSheets =
+    localPrepSheets.length > 0 && !hasSharePrepSheetTool(messages);
+  const visibleLocalPrepSheets = showLocalPrepSheets ? localPrepSheets.slice(-1) : [];
 
   return (
     <div className="flex flex-col h-dvh bg-background">
@@ -164,6 +307,13 @@ function ChatContent() {
       {/* Messages */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <MessageList messages={messages} isLoading={isLoading} />
+        {visibleLocalPrepSheets.length > 0 && (
+          <div className="max-w-3xl mx-auto px-4 pb-3 space-y-3">
+            {visibleLocalPrepSheets.map((card) => (
+              <PrepSheet key={card.id} prepSheet={card.prepSheet} />
+            ))}
+          </div>
+        )}
         {isError && (
           <div className="max-w-3xl mx-auto px-4 py-2">
             <div className="rounded-2xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive flex items-center justify-between gap-2">

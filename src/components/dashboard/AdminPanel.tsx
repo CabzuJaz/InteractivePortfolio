@@ -11,10 +11,11 @@ interface AdminPanelProps {
   deliverables: Deliverable[];
   contactId: string;
   adminKey: string;
+  onError: (message: string) => void;
   onUpdate: () => void;
 }
 
-export function AdminPanel({ deliverables, contactId, adminKey, onUpdate }: AdminPanelProps) {
+export function AdminPanel({ deliverables, contactId, adminKey, onError, onUpdate }: AdminPanelProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [newDescription, setNewDescription] = useState("");
@@ -33,26 +34,37 @@ export function AdminPanel({ deliverables, contactId, adminKey, onUpdate }: Admi
 
     const updated = [...deliverables, newDeliverable];
 
-    await fetch("/api/dashboard", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": adminKey,
-      },
-      body: JSON.stringify({ contactId, deliverables: updated }),
-    });
+    onError("");
+    try {
+      const res = await fetch("/api/dashboard", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey,
+        },
+        body: JSON.stringify({ contactId, deliverables: updated }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to add task.");
+      }
 
-    setNewTitle("");
-    setNewDescription("");
-    setIsAdding(false);
-    setSaving(false);
-    onUpdate();
+      setNewTitle("");
+      setNewDescription("");
+      setIsAdding(false);
+      onUpdate();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Failed to add task.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     const updated = deliverables.filter((d) => d.id !== id);
 
-    await fetch("/api/dashboard", {
+    onError("");
+    const res = await fetch("/api/dashboard", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -60,6 +72,11 @@ export function AdminPanel({ deliverables, contactId, adminKey, onUpdate }: Admi
       },
       body: JSON.stringify({ contactId, deliverables: updated }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      onError(data.error || "Failed to delete task.");
+      return;
+    }
 
     onUpdate();
   };
@@ -148,8 +165,10 @@ export function AdminPanel({ deliverables, contactId, adminKey, onUpdate }: Admi
             </Badge>
             <span className="flex-1 text-sm truncate">{d.title}</span>
             <button
+              type="button"
+              aria-label={`Delete ${d.title}`}
               onClick={() => handleDelete(d.id)}
-              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+              className="text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

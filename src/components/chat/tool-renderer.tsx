@@ -26,7 +26,7 @@ const toolSkeletonLabels: Record<string, string> = {
   getAvailability: "Checking availability…",
   analyzeBusiness: "Analyzing your business for automation opportunities…",
   generateContract: "Preparing your contract proposal…",
-  sharePrepSheet: "Generating your prep sheet…",
+  sharePrepSheet: "Checking prep sheet details…",
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,7 +59,13 @@ function renderToolOutput(toolName: string, data: any) {
     case "sharePrepSheet":
       return <PrepSheet prepSheet={data.prepSheet} />;
     case "generateContract":
-      return <Contract contract={data.contract} delivery={data.delivery} />;
+      return (
+        <Contract
+          contract={data.contract}
+          contractQualification={data.contractQualification}
+          delivery={data.delivery}
+        />
+      );
     default:
       return null;
   }

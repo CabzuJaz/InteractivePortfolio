@@ -28,6 +28,8 @@ An interactive portfolio where visitors chat with an AI version of you. Built wi
    - `contact.ts` — email and social links
    - `fun.ts` — hobbies and fun facts
 
+   Supporting project copy for docs, proposals, and planning lives in `docs/internal/projects.md`.
+
 4. **Run the dev server:**
 
    ```bash

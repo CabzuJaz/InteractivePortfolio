@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { persona } from "@/data/persona";
+import { isLikelyClientName, isSpecificProcessDescription } from "@/lib/prep-sheet";
 
 interface Answer {
   label: string;
@@ -162,10 +163,21 @@ function SectionHeader({ number, title }: { number: string; title: string }) {
 function PrepContent() {
   const searchParams = useSearchParams();
   const clientId = searchParams.get("client") ?? "";
-  const prefillName = searchParams.get("name") ?? "";
+  const rawPrefillName = searchParams.get("name") ?? "";
+  const prefillEmail = searchParams.get("email") ?? "";
+  const prefillBusiness = searchParams.get("business") ?? "";
+  const rawPrefillProcess = searchParams.get("process") ?? "";
+  const prefillName = isLikelyClientName(rawPrefillName) ? rawPrefillName : "";
+  const prefillProcess = isSpecificProcessDescription(rawPrefillProcess)
+    ? rawPrefillProcess
+    : "";
 
   const [answers, setAnswers] = useState<Record<string, string>>({
     name: prefillName,
+    email: prefillEmail,
+    business_type: prefillBusiness,
+    biggest_bottleneck: prefillProcess,
+    automation_goal: prefillProcess,
   });
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
     "idle",

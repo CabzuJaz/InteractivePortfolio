@@ -1,13 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle, Circle, Loader2 } from "lucide-react";
+import { CheckCircle, ChevronDown, Circle, CircleDot } from "lucide-react";
 import type { Deliverable } from "@/lib/types";
 
 interface DeliverableItemProps {
   deliverable: Deliverable;
   index: number;
   isAdmin: boolean;
+  isExpanded: boolean;
+  onExpand: (id: string) => void;
   onToggle?: (id: string) => void;
 }
 
@@ -15,11 +17,13 @@ export function DeliverableItem({
   deliverable,
   index,
   isAdmin,
+  isExpanded,
+  onExpand,
   onToggle,
 }: DeliverableItemProps) {
   const statusIcon = {
     pending: <Circle className="w-5 h-5 text-muted-foreground" />,
-    "in-progress": <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />,
+    "in-progress": <CircleDot className="w-5 h-5 text-blue-500" />,
     completed: <CheckCircle className="w-5 h-5 text-green-500" />,
   };
 
@@ -39,33 +43,62 @@ export function DeliverableItem({
         stiffness: 260,
         damping: 24,
       }}
-      className={`flex items-start gap-3 p-3 rounded-xl transition-colors ${statusBg[deliverable.status]} ${
-        isAdmin ? "cursor-pointer hover:bg-accent/50" : ""
-      }`}
-      onClick={() => isAdmin && onToggle?.(deliverable.id)}
+      className={`rounded-xl transition-colors ${statusBg[deliverable.status]}`}
     >
-      <div className="mt-0.5 shrink-0">{statusIcon[deliverable.status]}</div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium ${
-            deliverable.status === "completed"
-              ? "line-through text-muted-foreground"
-              : ""
+      <button
+        type="button"
+        onClick={() => onExpand(deliverable.id)}
+        className="flex w-full items-start gap-3 rounded-xl p-3 text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        aria-expanded={isExpanded}
+      >
+        <div className="mt-0.5 shrink-0">{statusIcon[deliverable.status]}</div>
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-sm font-medium ${
+              deliverable.status === "completed"
+                ? "line-through text-muted-foreground"
+                : ""
+            }`}
+          >
+            {deliverable.title}
+          </p>
+          <p className="mt-1 text-xs capitalize text-muted-foreground">
+            {deliverable.status.replace("-", " ")}
+          </p>
+        </div>
+        <span className="hidden shrink-0 text-xs font-semibold text-primary sm:inline">
+          {isExpanded ? "Hide details" : "View details"}
+        </span>
+        <ChevronDown
+          className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+            isExpanded ? "rotate-180" : ""
           }`}
-        >
-          {deliverable.title}
-        </p>
-        {deliverable.description && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {deliverable.description}
-          </p>
-        )}
-        {deliverable.completedAt && (
-          <p className="text-xs text-green-500 mt-1">
-            Completed {new Date(deliverable.completedAt).toLocaleDateString()}
-          </p>
-        )}
-      </div>
+        />
+      </button>
+
+      {isExpanded && (
+        <div className="px-11 pb-3 pr-3">
+          {deliverable.description && (
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              {deliverable.description}
+            </p>
+          )}
+          {deliverable.completedAt && (
+            <p className="mt-2 text-xs text-green-500">
+              Completed {new Date(deliverable.completedAt).toLocaleDateString()}
+            </p>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => onToggle?.(deliverable.id)}
+              className="mt-3 rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              {deliverable.status === "completed" ? "Reopen task" : "Mark complete"}
+            </button>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }

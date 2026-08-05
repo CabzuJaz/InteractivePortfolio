@@ -6,6 +6,7 @@ import { resume } from "@/data/resume";
 import { contact } from "@/data/contact";
 import { persona } from "@/data/persona";
 import { fun } from "@/data/fun";
+import { buildPrepSheetResult } from "@/lib/prep-sheet";
 import { getModel } from "./provider";
 
 export const getProjects = tool({
@@ -99,7 +100,7 @@ export const getAvailability = tool({
 
 export const generateContract = tool({
   description:
-    "Generates a contract proposal PDF with rate card and tool costs. " +
+    "Generates a contract proposal PDF with rate card and confirmed tool costs only after qualification is complete. " +
     "REQUIRED precondition, no exceptions: at some point in this conversation the VISITOR must have " +
     "either (a) explicitly mentioned price, cost, rate, quote, contract, or hiring, or (b) explicitly " +
     "said yes after being asked whether they want a proposal/implementation plan. " +
@@ -107,8 +108,8 @@ export const generateContract = tool({
     "discovery does not imply the visitor wants a contract yet. " +
     "Do NOT call this on a visitor's first description of a new problem, even if they ask about price in " +
     "the same message — scope it first. Do NOT call this in the same turn as asking scoping questions the " +
-    "visitor hasn't answered yet. Once pricing intent AND scope both exist, call this immediately — do not " +
-    "just say in text that you'll make a proposal.",
+    "visitor hasn't answered yet. If pricing intent exists but qualification is incomplete, this tool returns " +
+    "a missing-info card instead of a formal quote. Once pricing intent AND qualified scope both exist, call this immediately.",
   inputSchema: z.object({
     clientName: z
       .string()
@@ -130,16 +131,68 @@ export const generateContract = tool({
     projectDescription: z
       .string()
       .describe("Brief description of the project or engagement scope"),
-    estimatedHours: z
-      .number()
+    existingCrm: z
+      .string()
+      .optional()
+      .describe("The CRM or lead database the client currently uses. Use 'none' only if the visitor said they have none."),
+    websitePlatform: z
+      .string()
+      .optional()
+      .describe("The website/form platform the client currently uses, such as WordPress, Webflow, Shopify, etc."),
+    smsProvider: z
+      .string()
+      .optional()
+      .describe("The SMS provider available or preferred. Use 'none' only if SMS is out of scope."),
+    emailProvider: z
+      .string()
+      .optional()
+      .describe("The email provider available or preferred. Use 'none' only if email is out of scope."),
+    bookingSystem: z
+      .string()
+      .optional()
+      .describe("The appointment-booking system available or preferred. Use 'none' only if booking is out of scope."),
+    followUpPlan: z
+      .string()
+      .optional()
+      .describe("How many follow-up messages, which channels, and the basic timing/rules."),
+    stopCondition: z
+      .string()
+      .optional()
+      .describe("When leads stop receiving follow-ups, e.g. after reply, booking, opt-out, or manual status change."),
+    internalNotifications: z
+      .string()
+      .optional()
+      .describe("Who should receive internal notifications and through which channel."),
+    monthlyLeadVolume: z
+      .string()
+      .optional()
+      .describe("Expected monthly lead volume or a rough range."),
+    includedServices: z
+      .string()
+      .optional()
+      .describe("Whether reporting, AI qualification, ongoing maintenance, revisions, and testing are included or excluded."),
+    featureBreakdown: z
+      .array(
+        z.object({
+          deliverable: z.string().describe("A concrete deliverable or integration."),
+          hours: z.number().positive().describe("Estimated hours for this deliverable."),
+        }),
+      )
       .optional()
       .describe(
-        "Estimated total hours for the project, as a single plain number (e.g. 30) — " +
-          "NEVER a string, NEVER a range like '20-30'. If you don't have an exact figure from the " +
-          "visitor, pick one reasonable number yourself based on complexity (e.g. 20 for a simple " +
-          "single integration, 40 for a moderate multi-step workflow, 80 for a complex build) rather " +
-          "than omitting this or expressing a range. Default 40 if truly unclear.",
+        "Feature-by-feature hour breakdown based only on confirmed scope. Required for a formal contract.",
       ),
+    confirmedToolCosts: z
+      .array(
+        z.object({
+          name: z.string().describe("Confirmed client-billable tool or subscription."),
+          cost: z.number().nonnegative().describe("Monthly fixed cost, if known."),
+          period: z.string().describe("Billing period, usually 'month'."),
+          note: z.string().optional().describe("Mention usage-based pricing, existing client account, or assumptions."),
+        }),
+      )
+      .optional()
+      .describe("Only include tools confirmed as client-billable. Do not include developer tools like GitHub Copilot."),
     projectComplexity: z
       .enum(["simple", "moderate", "complex"])
       .optional()
@@ -149,7 +202,70 @@ export const generateContract = tool({
       .optional()
       .describe("Client type: startup (budget-conscious), small-business (standard), enterprise (premium support)"),
   }),
-  execute: async ({ clientName, clientEmail, projectDescription, estimatedHours, projectComplexity, clientType }) => {
+  execute: async ({
+    clientName,
+    clientEmail,
+    projectDescription,
+    existingCrm,
+    websitePlatform,
+    smsProvider,
+    emailProvider,
+    bookingSystem,
+    followUpPlan,
+    stopCondition,
+    internalNotifications,
+    monthlyLeadVolume,
+    includedServices,
+    featureBreakdown,
+    confirmedToolCosts,
+    projectComplexity,
+    clientType,
+  }) => {
+    const requiredScope = [
+      { label: "Current CRM or lead database", value: existingCrm },
+      { label: "Website or form platform", value: websitePlatform },
+      { label: "SMS provider or SMS scope", value: smsProvider },
+      { label: "Email provider or email scope", value: emailProvider },
+      { label: "Appointment-booking system", value: bookingSystem },
+      { label: "Follow-up channels, message count, and timing", value: followUpPlan },
+      { label: "Stop condition after reply, booking, opt-out, or status change", value: stopCondition },
+      { label: "Internal notification recipients and channel", value: internalNotifications },
+      { label: "Expected monthly lead volume", value: monthlyLeadVolume },
+      { label: "Included/excluded reporting, AI qualification, maintenance, testing, and revisions", value: includedServices },
+    ];
+    const missingFields = requiredScope
+      .filter((item) => !item.value?.trim())
+      .map((item) => item.label);
+
+    if (missingFields.length > 0 || !featureBreakdown?.length) {
+      return {
+        contractQualification: {
+          status: "needs_info" as const,
+          message:
+            "Preliminary estimate only: based on the current description, this project may require approximately 25-50 hours. A final scope, tool list, timeline, and price will be provided after confirming the details below.",
+          missingFields: featureBreakdown?.length
+            ? missingFields
+            : [...missingFields, "Feature-by-feature deliverables and hour breakdown"],
+          questions: [
+            "What CRM and website platform do you currently use?",
+            "Which SMS and email providers are available?",
+            "Do you already have an appointment-booking system?",
+            "How many follow-up messages and channels are required?",
+            "Should leads stop receiving follow-ups when they reply or book?",
+            "Who should receive internal notifications?",
+            "What is the expected monthly lead volume?",
+            "Are reporting, AI qualification, ongoing maintenance, testing, and revisions included?",
+          ],
+        },
+        delivery: {
+          sent: false,
+          method: "none" as const,
+          sentTo: clientEmail ?? null,
+          pdfUrl: null,
+        },
+      };
+    }
+
     // Dynamic pricing based on complexity and client type
     // Base rate: $10/hr, max rate: $15/hr
     let hourlyRate = 10;
@@ -168,16 +284,10 @@ export const generateContract = tool({
       hourlyRate = Math.max(hourlyRate - 2, 10);
     }
 
-    // Add 24 hours buffer for project management, testing, and handover
-    const hours = (estimatedHours ?? 40) + 24;
+    const hours = featureBreakdown.reduce((sum, item) => sum + item.hours, 0);
     const laborCost = hourlyRate * hours;
 
-    const toolSubscriptions = [
-      { name: "Claude API (Anthropic)", cost: 100, period: "month" },
-      { name: "n8n Cloud (Automation)", cost: 50, period: "month" },
-      { name: "GitHub Copilot", cost: 10, period: "month" },
-      { name: "Groq API (Inference)", cost: 25, period: "month" },
-    ];
+    const toolSubscriptions = confirmedToolCosts ?? [];
 
     const monthlyToolCost = toolSubscriptions.reduce((sum, t) => sum + t.cost, 0);
     const projectDurationMonths = Math.ceil(hours / 80); // ~80 hrs/month
@@ -196,6 +306,19 @@ export const generateContract = tool({
       projectDurationMonths,
       totalToolCost,
       totalCost,
+      featureBreakdown,
+      scopeAssumptions: {
+        existingCrm,
+        websitePlatform,
+        smsProvider,
+        emailProvider,
+        bookingSystem,
+        followUpPlan,
+        stopCondition,
+        internalNotifications,
+        monthlyLeadVolume,
+        includedServices,
+      },
       pricingFactors: {
         complexity: projectComplexity ?? "moderate",
         clientType: clientType ?? "small-business",
@@ -208,6 +331,7 @@ export const generateContract = tool({
         "Communication: Daily async updates via preferred channel",
         "Timeline: Estimated based on scope; adjustments discussed upfront",
         "Tool subscriptions are billed at cost — no markup",
+        "Usage-based API, SMS, and email costs are estimated separately from fixed subscription costs",
         "Cancellation: 1-week notice required",
       ],
     };
@@ -303,38 +427,47 @@ Describe the directional impact qualitatively (e.g. "fewer missed leads," "faste
 
 export const sharePrepSheet = tool({
   description:
-    "Generates a prep sheet link for a business owner. Call this ONLY when the visitor EXPLICITLY " +
+    "Qualifies a visitor and returns a prep sheet link only after required details are present. " +
+    "Call this ONLY when the visitor EXPLICITLY " +
     "asks for a prep sheet, says something like 'I don't know where to start', or asks you to 'assess my " +
     "business' / 'send me the form'. Do NOT call this just because a visitor describes an automation need " +
     "or seems interested — answer their question directly first (see Response Structure). " +
     "NEVER write a /prep URL, or any placeholder/example version of one, directly in your text response — " +
-    "the ONLY valid way to give the visitor this link is calling this tool, which renders a clickable card.",
+    "the ONLY valid way to give the visitor this link is calling this tool, which renders a clickable card. " +
+    "Required qualification fields: clientName, clientEmail, and processDescription. Reuse anything already " +
+    "provided in the conversation; do not invent missing fields.",
   inputSchema: z.object({
     clientName: z
       .string()
       .optional()
-      .describe("The client's name (from the conversation) — used to pre-fill the name field"),
+      .describe("The visitor's real name from the conversation. Do not invent a placeholder."),
+    clientEmail: z
+      .string()
+      .optional()
+      .describe("The visitor's email address from the conversation. Do not invent a placeholder."),
+    businessName: z
+      .string()
+      .optional()
+      .describe("The visitor's business or company name, if provided or applicable."),
+    processDescription: z
+      .string()
+      .optional()
+      .describe("Brief description of the process, workflow, or task the visitor wants to automate or improve."),
     clientSlug: z
       .string()
       .optional()
       .describe("A URL-safe slug for tracking, e.g. 'acme-corp'"),
   }),
-  execute: async ({ clientName, clientSlug }) => {
-    const params = new URLSearchParams();
-    if (clientSlug) params.set("client", clientSlug);
-    if (clientName) params.set("name", clientName);
-
-    const qs = params.toString();
+  execute: async ({ clientName, clientEmail, businessName, processDescription, clientSlug }) => {
     const base =
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
       "https://www.buildwithjazz.com";
-    const url = `${base}/prep${qs ? `?${qs}` : ""}`;
 
     return {
-      prepSheet: {
-        url,
-        clientName: clientName ?? null,
-      },
+      prepSheet: buildPrepSheetResult(
+        { clientName, clientEmail, businessName, processDescription, clientSlug },
+        base,
+      ),
     };
   },
 });

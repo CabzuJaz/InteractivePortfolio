@@ -13,6 +13,7 @@ import {
   Send,
   Check,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -20,6 +21,12 @@ interface ToolSubscription {
   name: string;
   cost: number;
   period: string;
+  note?: string;
+}
+
+interface FeatureBreakdownItem {
+  deliverable: string;
+  hours: number;
 }
 
 interface PricingFactors {
@@ -41,6 +48,7 @@ interface ContractData {
   projectDurationMonths: number;
   totalToolCost: number;
   totalCost: number;
+  featureBreakdown?: FeatureBreakdownItem[];
   pricingFactors?: PricingFactors;
   terms: string[];
 }
@@ -53,14 +61,78 @@ interface DeliveryData {
 }
 
 interface ContractProps {
-  contract: ContractData;
+  contract?: ContractData;
   delivery?: DeliveryData;
+  contractQualification?: {
+    status: "needs_info";
+    message: string;
+    missingFields: string[];
+    questions: string[];
+  };
 }
 
-export function Contract({ contract, delivery }: ContractProps) {
+export function Contract({ contract, delivery, contractQualification }: ContractProps) {
   const [downloading, setDownloading] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  if (contractQualification?.status === "needs_info") {
+    return (
+      <div className="w-full max-w-lg">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
+          className="overflow-hidden rounded-2xl border border-border/50 bg-card"
+        >
+          <div className="border-b border-border/50 bg-primary/5 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <AlertCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Scope Details Needed</h3>
+                <p className="text-sm text-muted-foreground">No formal contract was created yet.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-5 p-5">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {contractQualification.message}
+            </p>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Missing Details
+              </p>
+              <ul className="space-y-1.5">
+                {contractQualification.missingFields.map((field) => (
+                  <li key={field} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <span className="mt-0.5 text-primary">•</span>
+                    {field}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Questions To Confirm
+              </p>
+              <ol className="list-inside list-decimal space-y-1.5 text-sm text-muted-foreground">
+                {contractQualification.questions.map((question) => (
+                  <li key={question}>{question}</li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!contract) return null;
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -171,6 +243,7 @@ export function Contract({ contract, delivery }: ContractProps) {
           </div>
 
           {/* Tool Subscriptions */}
+          {contract.toolSubscriptions.length > 0 && (
           <div>
             <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
               <Wrench className="w-3.5 h-3.5" />
@@ -186,6 +259,11 @@ export function Contract({ contract, delivery }: ContractProps) {
                   <Badge variant="secondary" className="text-xs">
                     ${tool.cost}/{tool.period}
                   </Badge>
+                  {tool.note && (
+                    <span className="col-span-full text-xs text-muted-foreground">
+                      {tool.note}
+                    </span>
+                  )}
                 </div>
               ))}
               <div className="flex items-center justify-between text-sm pt-2 border-t border-border/50">
@@ -196,6 +274,26 @@ export function Contract({ contract, delivery }: ContractProps) {
               </div>
             </div>
           </div>
+          )}
+
+          {contract.featureBreakdown && contract.featureBreakdown.length > 0 && (
+            <div>
+              <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                <Clock className="w-3.5 h-3.5" />
+                Hour Breakdown
+              </p>
+              <div className="space-y-2">
+                {contract.featureBreakdown.map((item) => (
+                  <div key={item.deliverable} className="flex items-start justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">{item.deliverable}</span>
+                    <Badge variant="secondary" className="shrink-0 text-xs">
+                      {item.hours}h
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Cost Breakdown */}
           <div>
@@ -210,14 +308,16 @@ export function Contract({ contract, delivery }: ContractProps) {
                 </span>
                 <span>${contract.laborCost.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  Tools ({contract.projectDurationMonths} month
-                  {contract.projectDurationMonths > 1 ? "s" : ""} × $
-                  {contract.monthlyToolCost})
-                </span>
-                <span>${contract.totalToolCost.toLocaleString()}</span>
-              </div>
+              {contract.totalToolCost > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    Tools ({contract.projectDurationMonths} month
+                    {contract.projectDurationMonths > 1 ? "s" : ""} × $
+                    {contract.monthlyToolCost})
+                  </span>
+                  <span>${contract.totalToolCost.toLocaleString()}</span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-border/50 text-base font-bold">
                 <span>Total Project Cost</span>
                 <span className="text-primary">
