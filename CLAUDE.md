@@ -11,7 +11,7 @@ card) directly inside the chat stream.
 
 ## Stack
 
-- **Framework:** Next.js 15, App Router, TypeScript (strict mode, no `any`)
+- **Framework:** Next.js 16, App Router, TypeScript (strict mode, no `any`)
 - **Styling:** Tailwind CSS v4 + shadcn/ui components (`src/components/ui`)
 - **AI:** Vercel AI SDK (`ai` package) — `streamText` on the server, `useChat` on the client
 - **Provider:** abstracted in `src/lib/ai/provider.ts`; default Anthropic, switchable via env
@@ -34,6 +34,8 @@ src/
     provider.ts           # model selection from env
     tools.ts              # tool definitions (zod schemas)
     system-prompt.ts      # builds persona system prompt
+  lib/ghl/
+    client.ts             # GHL base URL, auth headers, API versions
   data/
     persona.ts            # personality, tone, bio — single source of truth for "who I am"
     projects.ts           # project entries
@@ -57,6 +59,12 @@ public/                   # avatar images, project screenshots
    `GITHUB_TOKEN`, `AI_MODEL`). Keep `.env.example` updated. Never commit keys.
 6. **Streaming first:** never block the UI on a full completion; always render partial text
    and tool loading skeletons.
+7. **All GoHighLevel calls go through `src/lib/ghl/client.ts`.** Never re-declare the base
+   URL or auth headers in a route. Version differs per endpoint — `/conversations/messages`
+   accepts only `2021-04-15` — so pass it via `ghlHeaders({ version })` rather than inlining.
+8. **Verify an external API against its published spec before shipping a field name,
+   version, or limit.** HighLevel's OpenAPI specs live at
+   `github.com/GoHighLevel/highlevel-api-docs` under `apps/`.
 
 ## Commands
 
