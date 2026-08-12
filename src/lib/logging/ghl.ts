@@ -5,6 +5,7 @@
  */
 
 import type { ConversationEntry } from "../types";
+import { GHL_BASE, ghlHeaders } from "../ghl/client";
 
 // Common verbs/adjectives that are NOT names
 const NOT_NAMES = new Set([
@@ -90,12 +91,8 @@ export async function sendToGHL(
   const apiKey = process.env.GHL_API_KEY;
   if (!locationId || !apiKey) return;
 
-  const baseUrl = "https://services.leadconnectorhq.com";
-  const headers = {
-    Authorization: `Bearer ${apiKey}`,
-    "Content-Type": "application/json",
-    Version: "2021-07-28",
-  };
+  const baseUrl = GHL_BASE;
+  const headers = ghlHeaders();
 
   const info = extractContactInfo(conversations);
 
