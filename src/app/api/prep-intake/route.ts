@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { GHL_BASE, ghlHeaders } from "@/lib/ghl/client";
 
 const OWNER_EMAIL = "jazzmincabizares@gmail.com";
-const GHL_BASE = "https://services.leadconnectorhq.com";
-const GHL_HEADERS = {
-  Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-  "Content-Type": "application/json",
-  Version: "2021-07-28",
-};
+const GHL_HEADERS = ghlHeaders();
 
 interface PrepAnswer {
   label: string;

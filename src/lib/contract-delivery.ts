@@ -12,8 +12,12 @@
  * never claims an email was sent when it wasn't.
  */
 import { Resend } from "resend";
+import {
+  GHL_BASE,
+  GHL_CONVERSATIONS_VERSION,
+  ghlHeaders,
+} from "@/lib/ghl/client";
 
-const GHL_BASE = "https://services.leadconnectorhq.com";
 const OWNER_EMAIL = "jazzmincabizares@gmail.com";
 const FETCH_TIMEOUT_MS = 8000;
 
@@ -42,14 +46,6 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#039;");
 }
 
-function ghlHeaders(json = true): Record<string, string> {
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-    Version: "2021-07-28",
-  };
-  if (json) headers["Content-Type"] = "application/json";
-  return headers;
-}
 
 /** Find a GHL contact by email, creating it if missing (chat visitors usually don't exist in the CRM yet). */
 async function findOrCreateContact(
@@ -110,7 +106,7 @@ async function uploadPdfToGHL(
 
   const res = await fetch(`${GHL_BASE}/medias/upload-file`, {
     method: "POST",
-    headers: ghlHeaders(false),
+    headers: ghlHeaders({ json: false }),
     body: formData,
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -201,11 +197,7 @@ async function sendEmailViaGHL(
 ): Promise<boolean> {
   const res = await fetch(`${GHL_BASE}/conversations/messages`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-      Version: "2021-04-15",
-      "Content-Type": "application/json",
-    },
+    headers: ghlHeaders({ version: GHL_CONVERSATIONS_VERSION }),
     body: JSON.stringify({
       type: "Email",
       contactId,

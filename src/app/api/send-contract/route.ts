@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { GHL_BASE, ghlHeaders } from "@/lib/ghl/client";
 
 const OWNER_EMAIL = "jazzmincabizares@gmail.com";
 
@@ -26,15 +27,11 @@ async function uploadToGHL(
   const ghlKey = process.env.GHL_API_KEY;
   if (!locationId || !ghlKey) return;
 
-  const baseUrl = "https://services.leadconnectorhq.com";
-  const headers = {
-    Authorization: `Bearer ${ghlKey}`,
-    Version: "2021-07-28",
-  };
+  const headers = ghlHeaders({ json: false });
 
   // 1. Find the contact by email
   const searchRes = await fetch(
-    `${baseUrl}/contacts/?locationId=${locationId}&query=${encodeURIComponent(contactEmail)}&limit=1`,
+    `${GHL_BASE}/contacts/?locationId=${locationId}&query=${encodeURIComponent(contactEmail)}&limit=1`,
     { headers },
   );
   if (!searchRes.ok) return;
@@ -51,9 +48,9 @@ async function uploadToGHL(
   formData.append("file", new Blob([buffer], { type: "application/pdf" }), filename);
   formData.append("locationId", locationId);
 
-  const uploadRes = await fetch(`${baseUrl}/medias/upload-file`, {
+  const uploadRes = await fetch(`${GHL_BASE}/medias/upload-file`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${ghlKey}`, Version: "2021-07-28" },
+    headers,
     body: formData,
   });
 
@@ -76,7 +73,7 @@ async function uploadToGHL(
       `📎 Download: ${fileUrl}`,
     ].join("\n");
 
-    await fetch(`${baseUrl}/contacts/${contactId}/notes`, {
+    await fetch(`${GHL_BASE}/contacts/${contactId}/notes`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify({ body: noteBody }),
@@ -88,7 +85,7 @@ async function uploadToGHL(
     const fieldCost = process.env.GHL_FIELD_TOTAL_COST;
 
     if (fieldPdfUrl && fieldName && fieldCost) {
-      await fetch(`${baseUrl}/contacts/${contactId}`, {
+      await fetch(`${GHL_BASE}/contacts/${contactId}`, {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -103,7 +100,7 @@ async function uploadToGHL(
   }
 
   // 4. Update contact tags
-  await fetch(`${baseUrl}/contacts/${contactId}/tags`, {
+  await fetch(`${GHL_BASE}/contacts/${contactId}/tags`, {
     method: "POST",
     headers: { ...headers, "Content-Type": "application/json" },
     body: JSON.stringify({ tags: ["proposal-sent"] }),
