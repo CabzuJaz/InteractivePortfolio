@@ -11,22 +11,32 @@ import type { ConversationEntry } from "../types";
 
 export type { ConversationEntry };
 
+/** The subset of a UIMessage this logger reads. */
+type LoggableMessage = { role?: unknown; parts?: unknown };
+type LoggablePart = { type?: unknown; text?: unknown };
+
 /**
- * Extracts plain text from UIMessage parts.
+ * Extracts plain text from UIMessage parts. Messages come from the client, so
+ * every field is treated as untrusted rather than assumed to be well-formed.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function extractConversation(messages: any[]): ConversationEntry[] {
+export function extractConversation(messages: unknown[]): ConversationEntry[] {
   const entries: ConversationEntry[] = [];
 
-  for (const msg of messages) {
-    if (!msg.parts) continue;
-    for (const part of msg.parts) {
-      if (part.type === "text" && part.text?.trim()) {
-        entries.push({
-          role: msg.role === "user" ? "user" : "assistant",
-          text: part.text.trim(),
-        });
-      }
+  for (const message of messages) {
+    const msg = message as LoggableMessage;
+    if (!Array.isArray(msg.parts)) continue;
+
+    for (const rawPart of msg.parts) {
+      const part = rawPart as LoggablePart;
+      if (part.type !== "text" || typeof part.text !== "string") continue;
+
+      const text = part.text.trim();
+      if (!text) continue;
+
+      entries.push({
+        role: msg.role === "user" ? "user" : "assistant",
+        text,
+      });
     }
   }
 
