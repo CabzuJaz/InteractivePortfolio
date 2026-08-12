@@ -46,50 +46,55 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
   const [error, setError] = useState("");
   const [adminError, setAdminError] = useState("");
 
-  const fetchProject = useCallback(async () => {
-    if (!email && !slug) return;
-    try {
-      const query = slug
-        ? `slug=${encodeURIComponent(slug)}`
-        : `email=${encodeURIComponent(email ?? "")}`;
-      const res = await fetch(`/api/dashboard?${query}`);
-      if (res.ok) {
-        const data = await res.json();
-        setProject(data.project);
-      }
-    } catch {
-      // silent
+  /**
+   * Single source of truth for loading the project. Both the initial load and
+   * the post-save refresh go through here, so the request is built once and a
+   * failure is always raised rather than silently leaving stale data on screen.
+   */
+  const loadProject = useCallback(async (): Promise<ProjectData> => {
+    const query = slug
+      ? `slug=${encodeURIComponent(slug)}`
+      : `email=${encodeURIComponent(email ?? "")}`;
+
+    const res = await fetch(`/api/dashboard?${query}`);
+    if (!res.ok) {
+      throw new Error("Project not found. Check the dashboard link.");
     }
+
+    const data = await res.json();
+    return data.project as ProjectData;
   }, [email, slug]);
+
+  /** Re-reads the project after a successful save, reporting a failed refresh. */
+  const refreshProject = useCallback(async () => {
+    try {
+      setProject(await loadProject());
+    } catch {
+      setAdminError(
+        "Saved, but the view could not be refreshed. Reload the page to see the change.",
+      );
+    }
+  }, [loadProject]);
 
   useEffect(() => {
     if (!email && !slug) return;
 
     let cancelled = false;
-    const load = async () => {
-      try {
-        const query = slug
-          ? `slug=${encodeURIComponent(slug)}`
-          : `email=${encodeURIComponent(email ?? "")}`;
-        const res = await fetch(`/api/dashboard?${query}`);
-        if (cancelled) return;
-        if (!res.ok) {
-          setError("Project not found. Check the dashboard link.");
-          setLoading(false);
-          return;
-        }
-        const data = await res.json();
-        if (cancelled) return;
-        setProject(data.project);
-      } catch {
-        if (!cancelled) setError("Failed to load project.");
-      }
-      if (!cancelled) setLoading(false);
-    };
 
-    load();
+    loadProject()
+      .then((loaded) => {
+        if (!cancelled) setProject(loaded);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Failed to load project.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
     return () => { cancelled = true; };
-  }, [email, slug]);
+  }, [email, slug, loadProject]);
 
   const handleToggleDeliverable = async (id: string) => {
     if (!project || !isAdmin || !adminKey) return;
@@ -126,7 +131,7 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
       return;
     }
 
-    fetchProject();
+    await refreshProject();
   };
 
   const handleExpandDeliverable = (id: string) => {
@@ -308,7 +313,7 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
                 contactId={project.contactId}
                 adminKey={adminKey || ""}
                 onError={setAdminError}
-                onUpdate={fetchProject}
+                onUpdate={refreshProject}
               />
             </div>
           )}
