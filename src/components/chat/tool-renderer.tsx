@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import type { UIMessage } from "ai";
 import { Projects } from "@/components/tools/Projects";
 import { Skills } from "@/components/tools/Skills";
@@ -13,8 +14,7 @@ import { Contract } from "@/components/tools/Contract";
 import { PrepSheet } from "@/components/tools/PrepSheet";
 import { ToolSkeleton } from "@/components/tools/tool-skeleton";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyToolPart = { type: string; state: string; toolName: string; output?: any };
+type ToolPart = { type: string; state: string; toolName: string; output?: unknown };
 
 const toolSkeletonLabels: Record<string, string> = {
   getProjects: "Pulling up my projects…",
@@ -29,43 +29,34 @@ const toolSkeletonLabels: Record<string, string> = {
   sharePrepSheet: "Checking prep sheet details…",
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function renderToolOutput(toolName: string, data: any) {
+/**
+ * Tool output arrives untyped from the model at runtime, so each case asserts
+ * the shape its own renderer declares. Every tool returns an object whose keys
+ * are exactly that component's props, which keeps the assertion tied to the
+ * component's contract instead of a hand-maintained copy of it.
+ */
+function renderToolOutput(toolName: string, data: unknown) {
   switch (toolName) {
     case "getProjects":
-      return <Projects projects={data.projects} />;
+      return <Projects {...(data as ComponentProps<typeof Projects>)} />;
     case "getSkills":
-      return <Skills skills={data.skills} />;
+      return <Skills {...(data as ComponentProps<typeof Skills>)} />;
     case "getResume":
-      return <Resume resume={data.resume} />;
+      return <Resume {...(data as ComponentProps<typeof Resume>)} />;
     case "getContact":
-      return <Contact contact={data.contact} />;
+      return <Contact {...(data as ComponentProps<typeof Contact>)} />;
     case "getMe":
-      return <Me persona={data.persona} />;
+      return <Me {...(data as ComponentProps<typeof Me>)} />;
     case "getFun":
-      return <Fun fun={data.fun} />;
+      return <Fun {...(data as ComponentProps<typeof Fun>)} />;
     case "getAvailability":
-      return (
-        <Availability
-          status={data.status}
-          lookingFor={data.lookingFor}
-          whyHireMe={data.whyHireMe}
-          availability={data.availability}
-          location={data.location}
-        />
-      );
+      return <Availability {...(data as ComponentProps<typeof Availability>)} />;
     case "analyzeBusiness":
-      return <BusinessAnalysis analysis={data.analysis} />;
+      return <BusinessAnalysis {...(data as ComponentProps<typeof BusinessAnalysis>)} />;
     case "sharePrepSheet":
-      return <PrepSheet prepSheet={data.prepSheet} />;
+      return <PrepSheet {...(data as ComponentProps<typeof PrepSheet>)} />;
     case "generateContract":
-      return (
-        <Contract
-          contract={data.contract}
-          contractQualification={data.contractQualification}
-          delivery={data.delivery}
-        />
-      );
+      return <Contract {...(data as ComponentProps<typeof Contract>)} />;
     default:
       return null;
   }
@@ -76,7 +67,7 @@ interface ToolRendererProps {
 }
 
 export function ToolRenderer({ part }: ToolRendererProps) {
-  const p = part as unknown as AnyToolPart;
+  const p = part as unknown as ToolPart;
   if (!p.type.startsWith("tool-")) return null;
 
   // Output available
