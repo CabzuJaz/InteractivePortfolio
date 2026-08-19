@@ -20,6 +20,10 @@ export interface ProjectData {
   projectName: string;
   description: string;
   totalCost: number;
+  /** Amount received to date. Falls back to a half-split when absent. */
+  amountPaid?: number;
+  /** Outstanding balance carried by the most recent invoice. */
+  balanceDue?: number;
   downpaymentPaid: boolean;
   finalPaymentPaid: boolean;
   deliverables: Deliverable[];

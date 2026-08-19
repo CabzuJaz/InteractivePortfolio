@@ -6,17 +6,32 @@ import { Badge } from "@/components/ui/badge";
 
 interface PaymentStatusProps {
   totalCost: number;
+  /** Received to date. Falls back to a half-split for projects billed that way. */
+  amountPaid?: number;
+  /** Outstanding on the most recent invoice. Defaults to whatever is unpaid. */
+  balanceDue?: number;
   downpaymentPaid: boolean;
   finalPaymentPaid: boolean;
 }
 
+/** Whole amounts read cleanly; part-amounts need their cents. */
+function money(value: number): string {
+  return value.toLocaleString("en-US", {
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export function PaymentStatus({
   totalCost,
+  amountPaid,
+  balanceDue,
   downpaymentPaid,
   finalPaymentPaid,
 }: PaymentStatusProps) {
-  const downpaymentAmount = totalCost * 0.5;
-  const finalAmount = totalCost * 0.5;
+  const paid = amountPaid ?? (downpaymentPaid ? totalCost * 0.5 : 0);
+  const balance = balanceDue ?? Math.max(totalCost - paid, 0);
+  const settled = balance <= 0 || finalPaymentPaid;
 
   return (
     <div className="space-y-3">
@@ -26,84 +41,56 @@ export function PaymentStatus({
       </p>
 
       <div className="grid grid-cols-2 gap-3">
-        {/* Downpayment */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl p-4 border ${
-            downpaymentPaid
-              ? "bg-green-500/10 border-green-500/20"
-              : "bg-yellow-500/10 border-yellow-500/20"
-          }`}
+          className="rounded-xl p-4 border bg-green-500/10 border-green-500/20"
         >
           <div className="flex items-center gap-2 mb-2">
-            {downpaymentPaid ? (
-              <CheckCircle className="w-4 h-4 text-green-500" />
-            ) : (
-              <Clock className="w-4 h-4 text-yellow-500" />
-            )}
-            <span className="text-sm font-medium">Downpayment</span>
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span className="text-sm font-medium">Paid</span>
           </div>
-          <p className="text-2xl font-bold">${downpaymentAmount.toLocaleString()}</p>
-          <Badge
-            variant="secondary"
-            className={`mt-2 text-xs ${
-              downpaymentPaid
-                ? "bg-green-500/15 text-green-500"
-                : "bg-yellow-500/15 text-yellow-500"
-            }`}
-          >
-            {downpaymentPaid ? "Paid" : "Pending"}
+          <p className="text-2xl font-bold">${money(paid)}</p>
+          <Badge variant="secondary" className="mt-2 text-xs bg-green-500/15 text-green-500">
+            Received
           </Badge>
         </motion.div>
 
-        {/* Final Payment */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className={`rounded-xl p-4 border ${
-            finalPaymentPaid
+            settled
               ? "bg-green-500/10 border-green-500/20"
-              : downpaymentPaid
-              ? "bg-blue-500/10 border-blue-500/20"
-              : "bg-muted/30 border-border/50"
+              : "bg-blue-500/10 border-blue-500/20"
           }`}
         >
           <div className="flex items-center gap-2 mb-2">
-            {finalPaymentPaid ? (
+            {settled ? (
               <CheckCircle className="w-4 h-4 text-green-500" />
             ) : (
-              <Clock
-                className={`w-4 h-4 ${
-                  downpaymentPaid ? "text-blue-500" : "text-muted-foreground"
-                }`}
-              />
+              <Clock className="w-4 h-4 text-blue-500" />
             )}
-            <span className="text-sm font-medium">Final Payment</span>
+            <span className="text-sm font-medium">Balance from the last invoice</span>
           </div>
-          <p className="text-2xl font-bold">${finalAmount.toLocaleString()}</p>
+          <p className="text-2xl font-bold">${money(balance)}</p>
           <Badge
             variant="secondary"
             className={`mt-2 text-xs ${
-              finalPaymentPaid
+              settled
                 ? "bg-green-500/15 text-green-500"
-                : downpaymentPaid
-                ? "bg-blue-500/15 text-blue-500"
-                : "bg-muted text-muted-foreground"
+                : "bg-blue-500/15 text-blue-500"
             }`}
           >
-            {finalPaymentPaid ? "Paid" : downpaymentPaid ? "Due on delivery" : "Waiting"}
+            {settled ? "Settled" : "Outstanding"}
           </Badge>
         </motion.div>
       </div>
 
-      {/* Total */}
       <div className="flex items-center justify-between pt-3 border-t border-border/50">
         <span className="text-sm text-muted-foreground">Total Project Cost</span>
-        <span className="text-xl font-bold text-primary">
-          ${totalCost.toLocaleString()}
-        </span>
+        <span className="text-xl font-bold text-primary">${money(totalCost)}</span>
       </div>
     </div>
   );

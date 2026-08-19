@@ -36,6 +36,8 @@ export type DashboardProjectMetadata = Pick<
   | "projectName"
   | "description"
   | "totalCost"
+  | "amountPaid"
+  | "balanceDue"
   | "downpaymentPaid"
   | "finalPaymentPaid"
   | "deliverables"
@@ -96,6 +98,8 @@ function parseMetadata(entry: Record<string, unknown>): DashboardProjectMetadata
     projectName: asString(entry.projectName, "Automation Project"),
     description: asString(entry.description),
     totalCost: asNumber(entry.totalCost),
+    ...(typeof entry.amountPaid === "number" ? { amountPaid: entry.amountPaid } : {}),
+    ...(typeof entry.balanceDue === "number" ? { balanceDue: entry.balanceDue } : {}),
     downpaymentPaid: asBoolean(entry.downpaymentPaid),
     finalPaymentPaid: asBoolean(entry.finalPaymentPaid),
     deliverables: parseDeliverables(entry.deliverables),

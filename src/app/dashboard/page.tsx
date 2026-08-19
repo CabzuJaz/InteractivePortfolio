@@ -250,6 +250,8 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
         >
           <PaymentStatus
             totalCost={project.totalCost}
+            amountPaid={project.amountPaid}
+            balanceDue={project.balanceDue}
             downpaymentPaid={project.downpaymentPaid}
             finalPaymentPaid={project.finalPaymentPaid}
           />
