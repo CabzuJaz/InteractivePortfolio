@@ -115,10 +115,12 @@ interface ParsedDashboardProjects {
   slugs: Record<string, string>;
   metadata: Record<string, DashboardProjectMetadata>;
   local: Record<string, ProjectData>;
+  /** Deliberately separate from metadata so it can never reach the client. */
+  codes: Record<string, string>;
 }
 
 function parseDashboardProjects(raw: string | undefined): ParsedDashboardProjects {
-  const empty: ParsedDashboardProjects = { slugs: {}, metadata: {}, local: {} };
+  const empty: ParsedDashboardProjects = { slugs: {}, metadata: {}, local: {}, codes: {} };
   if (!raw) return empty;
 
   // Accepts raw JSON or base64-encoded JSON. Base64 is the safer form for
@@ -141,7 +143,7 @@ function parseDashboardProjects(raw: string | undefined): ParsedDashboardProject
     return empty;
   }
 
-  const result: ParsedDashboardProjects = { slugs: {}, metadata: {}, local: {} };
+  const result: ParsedDashboardProjects = { slugs: {}, metadata: {}, local: {}, codes: {} };
 
   for (const entry of parsed.projects) {
     if (!isRecord(entry)) continue;
@@ -154,6 +156,9 @@ function parseDashboardProjects(raw: string | undefined): ParsedDashboardProject
 
     const slug = asString(entry.slug).toLowerCase();
     if (slug) result.slugs[slug] = email;
+
+    const accessCode = asString(entry.accessCode);
+    if (accessCode) result.codes[email] = accessCode;
 
     if (asBoolean(entry.local)) {
       const now = new Date().toISOString();
@@ -178,6 +183,12 @@ export const dashboardProjectSlugs: Record<string, string> = dashboardProjects.s
 /** Client email → metadata layered over the live GHL lookup. */
 export const dashboardProjectMetadata: Record<string, DashboardProjectMetadata> =
   dashboardProjects.metadata;
+
+/**
+ * Client email → access code required to view that dashboard.
+ * A project with no code stays open, so existing links keep working.
+ */
+export const dashboardAccessCodes: Record<string, string> = dashboardProjects.codes;
 
 /** Client email → complete project served without touching GHL. */
 export const localDashboardProjects: Record<string, ProjectData> = dashboardProjects.local;

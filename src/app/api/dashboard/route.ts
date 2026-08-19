@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Deliverable, ProjectData } from "@/lib/types";
 import { GHL_BASE, ghlHeaders } from "@/lib/ghl/client";
 import {
+  dashboardAccessCodes,
   dashboardProjectMetadata,
   dashboardProjectSlugs,
   localDashboardProjects,
 } from "@/data/dashboard-projects";
+import { isAdminRequest, safeEqual } from "@/lib/dashboard/auth";
 
 const GHL_HEADERS = ghlHeaders();
 
@@ -212,6 +214,23 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // A project with an access code is private: the code, or the admin key,
+    // must be presented before any of its content is returned.
+    const requiredCode = dashboardAccessCodes[email.toLowerCase()];
+    if (requiredCode) {
+      const provided = req.headers.get("x-access-code");
+      const authorised =
+        (provided !== null && safeEqual(provided, requiredCode)) ||
+        isAdminRequest(req.headers.get("x-admin-key"));
+
+      if (!authorised) {
+        return NextResponse.json(
+          { error: "This dashboard is private. Enter the access code you were sent." },
+          { status: 401 },
+        );
+      }
+    }
+
     const project = await getProjectByEmail(email);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -226,8 +245,7 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   // Server-side admin auth
-  const adminKey = req.headers.get("x-admin-key");
-  if (!adminKey || adminKey !== process.env.DASHBOARD_ADMIN_KEY) {
+  if (!isAdminRequest(req.headers.get("x-admin-key"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

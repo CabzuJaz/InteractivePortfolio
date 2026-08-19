@@ -9,6 +9,7 @@ import {
   Shield,
   Briefcase,
   Calendar,
+  Lock,
   Mail,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -41,6 +42,13 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
       .catch(() => setIsAdmin(false));
   }, [adminKey]);
 
+  // Access code for a private dashboard. Held for the tab only — a client
+  // following their link again re-enters it rather than leaving it on disk.
+  const [accessCode, setAccessCode] = useState("");
+  const [codeRequired, setCodeRequired] = useState(false);
+  const [codeError, setCodeError] = useState("");
+  const [codeInput, setCodeInput] = useState("");
+
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -51,19 +59,30 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
    * the post-save refresh go through here, so the request is built once and a
    * failure is always raised rather than silently leaving stale data on screen.
    */
-  const loadProject = useCallback(async (): Promise<ProjectData> => {
+  const loadProject = useCallback(async (code?: string): Promise<ProjectData> => {
     const query = slug
       ? `slug=${encodeURIComponent(slug)}`
       : `email=${encodeURIComponent(email ?? "")}`;
 
-    const res = await fetch(`/api/dashboard?${query}`);
+    const headers: HeadersInit = {};
+    const presented = code ?? accessCode;
+    if (presented) headers["x-access-code"] = presented;
+    if (adminKey) headers["x-admin-key"] = adminKey;
+
+    const res = await fetch(`/api/dashboard?${query}`, { headers });
+
+    if (res.status === 401) {
+      const err = new Error("access-code-required");
+      err.name = "AccessCodeRequired";
+      throw err;
+    }
     if (!res.ok) {
       throw new Error("Project not found. Check the dashboard link.");
     }
 
     const data = await res.json();
     return data.project as ProjectData;
-  }, [email, slug]);
+  }, [accessCode, adminKey, email, slug]);
 
   /** Re-reads the project after a successful save, reporting a failed refresh. */
   const refreshProject = useCallback(async () => {
@@ -87,6 +106,10 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (err instanceof Error && err.name === "AccessCodeRequired") {
+          setCodeRequired(true);
+          return;
+        }
         setError(err instanceof Error ? err.message : "Failed to load project.");
       })
       .finally(() => {
@@ -134,6 +157,26 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
     await refreshProject();
   };
 
+  const handleSubmitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const entered = codeInput.trim();
+    if (!entered) return;
+
+    setCodeError("");
+    try {
+      const loaded = await loadProject(entered);
+      setAccessCode(entered);
+      setProject(loaded);
+      setCodeRequired(false);
+    } catch (err) {
+      setCodeError(
+        err instanceof Error && err.name === "AccessCodeRequired"
+          ? "That code doesn't match. Check the one you were sent."
+          : "Could not load the dashboard. Try again.",
+      );
+    }
+  };
+
   const handleExpandDeliverable = (id: string) => {
     setExpandedDeliverableId((current) => (current === id ? null : id));
   };
@@ -146,6 +189,37 @@ export function DashboardContent({ projectSlug }: { projectSlug?: string }) {
           <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:150ms]" />
           <span className="w-2 h-2 rounded-full bg-muted-foreground/40 animate-bounce [animation-delay:300ms]" />
         </div>
+      </div>
+    );
+  }
+
+  if (codeRequired) {
+    return (
+      <div className="flex h-dvh flex-col items-center justify-center gap-5 px-6">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+          <Lock className="h-5 w-5 text-primary" />
+        </div>
+        <div className="text-center">
+          <h1 className="text-lg font-semibold">This dashboard is private</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter the access code from your project link.
+          </p>
+        </div>
+        <form onSubmit={handleSubmitCode} className="flex w-full max-w-xs flex-col gap-3">
+          <input
+            type="password"
+            value={codeInput}
+            onChange={(e) => setCodeInput(e.target.value)}
+            placeholder="Access code"
+            aria-label="Access code"
+            autoFocus
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+          />
+          {codeError && <p className="text-xs text-destructive">{codeError}</p>}
+          <Button type="submit" disabled={!codeInput.trim()}>
+            View dashboard
+          </Button>
+        </form>
       </div>
     );
   }
