@@ -78,6 +78,7 @@ function parseDeliverables(value: unknown): Deliverable[] {
     const status = asString(entry.status, "pending");
     const completedAt = asString(entry.completedAt);
     const estimatedTime = asString(entry.estimatedTime);
+    const parentId = asString(entry.parentId);
 
     return [
       {
@@ -88,6 +89,8 @@ function parseDeliverables(value: unknown): Deliverable[] {
           ? (status as Deliverable["status"])
           : "pending",
         ...(estimatedTime ? { estimatedTime } : {}),
+        ...(parentId ? { parentId } : {}),
+        ...(entry.rollsUp === true ? { rollsUp: true } : {}),
         ...(completedAt ? { completedAt } : {}),
       },
     ];
