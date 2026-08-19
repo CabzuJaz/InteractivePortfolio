@@ -12,6 +12,10 @@ export interface Deliverable {
   status: "pending" | "in-progress" | "completed";
   /** Working estimate for outstanding work, e.g. "6 hours". */
   estimatedTime?: string;
+  /** Set on items that roll up into a parent, so the UI can nest them. */
+  parentId?: string;
+  /** True when this row's estimate is the sum of its nested items. */
+  rollsUp?: boolean;
   completedAt?: string;
 }
 

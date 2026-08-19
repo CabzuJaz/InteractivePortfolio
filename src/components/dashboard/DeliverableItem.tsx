@@ -21,6 +21,9 @@ export function DeliverableItem({
   onExpand,
   onToggle,
 }: DeliverableItemProps) {
+  /** A roll-up row sums the items nested beneath it rather than adding to them. */
+  const isRollup = Boolean(deliverable.rollsUp);
+
   const statusIcon = {
     pending: <Circle className="w-5 h-5 text-muted-foreground" />,
     "in-progress": <CircleDot className="w-5 h-5 text-blue-500" />,
@@ -43,7 +46,9 @@ export function DeliverableItem({
         stiffness: 260,
         damping: 24,
       }}
-      className={`rounded-xl transition-colors ${statusBg[deliverable.status]}`}
+      className={`rounded-xl transition-colors ${statusBg[deliverable.status]} ${
+        deliverable.parentId ? "ml-4 border-l-2 border-border/60 pl-1 sm:ml-6" : ""
+      }`}
     >
       <button
         type="button"
@@ -67,9 +72,16 @@ export function DeliverableItem({
               {deliverable.status.replace("-", " ")}
             </span>
             {deliverable.estimatedTime && deliverable.status !== "completed" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  isRollup
+                    ? "bg-muted text-muted-foreground"
+                    : "bg-primary/10 text-primary"
+                }`}
+              >
                 <Clock className="h-3 w-3" />
                 {deliverable.estimatedTime}
+                {isRollup && " total"}
               </span>
             )}
           </div>
