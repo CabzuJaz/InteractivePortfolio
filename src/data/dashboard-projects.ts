@@ -77,6 +77,7 @@ function parseDeliverables(value: unknown): Deliverable[] {
 
     const status = asString(entry.status, "pending");
     const completedAt = asString(entry.completedAt);
+    const estimatedTime = asString(entry.estimatedTime);
 
     return [
       {
@@ -86,6 +87,7 @@ function parseDeliverables(value: unknown): Deliverable[] {
         status: DELIVERABLE_STATUSES.has(status)
           ? (status as Deliverable["status"])
           : "pending",
+        ...(estimatedTime ? { estimatedTime } : {}),
         ...(completedAt ? { completedAt } : {}),
       },
     ];
