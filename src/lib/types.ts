@@ -10,6 +10,8 @@ export interface Deliverable {
   title: string;
   description: string;
   status: "pending" | "in-progress" | "completed";
+  /** Working estimate for outstanding work, e.g. "6 hours". */
+  estimatedTime?: string;
   completedAt?: string;
 }
 

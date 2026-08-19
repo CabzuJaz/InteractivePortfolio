@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle, ChevronDown, Circle, CircleDot } from "lucide-react";
+import { CheckCircle, ChevronDown, Circle, CircleDot, Clock } from "lucide-react";
 import type { Deliverable } from "@/lib/types";
 
 interface DeliverableItemProps {
@@ -62,9 +62,17 @@ export function DeliverableItem({
           >
             {deliverable.title}
           </p>
-          <p className="mt-1 text-xs capitalize text-muted-foreground">
-            {deliverable.status.replace("-", " ")}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="text-xs capitalize text-muted-foreground">
+              {deliverable.status.replace("-", " ")}
+            </span>
+            {deliverable.estimatedTime && deliverable.status !== "completed" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                <Clock className="h-3 w-3" />
+                {deliverable.estimatedTime}
+              </span>
+            )}
+          </div>
         </div>
         <span className="hidden shrink-0 text-xs font-semibold text-primary sm:inline">
           {isExpanded ? "Hide details" : "View details"}
