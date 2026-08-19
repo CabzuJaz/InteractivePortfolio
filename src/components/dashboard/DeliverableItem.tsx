@@ -79,7 +79,7 @@ export function DeliverableItem({
       {isExpanded && (
         <div className="px-11 pb-3 pr-3">
           {deliverable.description && (
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="whitespace-pre-line text-xs leading-relaxed text-muted-foreground">
               {deliverable.description}
             </p>
           )}
