@@ -42,6 +42,21 @@ const heroQuestions = [
 
 const serviceIcons = [Workflow, Sparkles, Database] as const;
 
+const serviceVisuals = [
+  {
+    src: "/tools/automation-systems.png",
+    alt: "Connected workflow modules passing through a validation checkpoint",
+  },
+  {
+    src: "/tools/ai-workflows.png",
+    alt: "AI orchestration core coordinating task modules and structured output",
+  },
+  {
+    src: "/tools/backend-integrations.png",
+    alt: "Database connected to multiple business systems through API pathways",
+  },
+] as const;
+
 const featuredProjects = projects.filter((project) => project.highlight).slice(0, 3);
 
 const stagger = {
@@ -414,6 +429,7 @@ export default function HomePage() {
             <div className="grid gap-4 lg:grid-cols-3">
               {persona.services.map((service, index) => {
                 const Icon = serviceIcons[index] ?? Code2;
+                const visual = serviceVisuals[index] ?? serviceVisuals[0];
                 return (
                   <motion.article
                     key={service.title}
@@ -421,21 +437,54 @@ export default function HomePage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-60px" }}
                     transition={{ delay: reduceMotion ? 0 : index * 0.06, type: "spring", stiffness: 250, damping: 24 }}
-                    className="rounded-[1.5rem] border border-border bg-card p-6 sm:p-7"
+                    className="overflow-hidden rounded-[1.5rem] border border-border bg-card p-3"
                   >
-                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                      <Icon className="h-5 w-5" />
+                    <motion.div
+                      whileHover={reduceMotion ? undefined : { scale: 1.015 }}
+                      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                      className="relative aspect-[5/4] overflow-hidden rounded-2xl border border-border/70 bg-panel"
+                    >
+                      <motion.div
+                        className="absolute inset-0 scale-[1.035]"
+                        animate={
+                          reduceMotion
+                            ? undefined
+                            : {
+                                y: [0, -5, 0],
+                                x: [0, index % 2 === 0 ? 3 : -3, 0],
+                              }
+                        }
+                        transition={{
+                          duration: 5.5 + index * 0.5,
+                          delay: index * 0.4,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        <Image
+                          src={visual.src}
+                          alt={visual.alt}
+                          fill
+                          sizes="(min-width: 1024px) 31vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover"
+                        />
+                      </motion.div>
+                      <div className="absolute bottom-3 left-3 grid h-10 w-10 place-items-center rounded-xl border border-primary/20 bg-background/85 text-primary shadow-lg backdrop-blur-md">
+                        <Icon className="h-4.5 w-4.5" />
+                      </div>
+                    </motion.div>
+                    <div className="px-3 pb-3 pt-6">
+                      <h3 className="text-xl font-bold tracking-[-0.025em]">{service.title}</h3>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.description}</p>
+                      <ul className="mt-6 grid gap-2 border-t border-border pt-5">
+                        {service.examples.map((example) => (
+                          <li key={example} className="flex items-center gap-2 text-sm font-medium">
+                            <Check className="h-4 w-4 text-primary" />
+                            {example}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <h3 className="mt-8 text-xl font-bold tracking-[-0.025em]">{service.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.description}</p>
-                    <ul className="mt-6 grid gap-2 border-t border-border pt-5">
-                      {service.examples.map((example) => (
-                        <li key={example} className="flex items-center gap-2 text-sm font-medium">
-                          <Check className="h-4 w-4 text-primary" />
-                          {example}
-                        </li>
-                      ))}
-                    </ul>
                   </motion.article>
                 );
               })}
