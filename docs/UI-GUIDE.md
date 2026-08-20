@@ -39,6 +39,9 @@ All colors are CSS variables in `src/app/globals.css` and are mapped through Tai
 | `highlight` | Soft cyan surface used sparingly for editorial emphasis |
 | `border` | Structure without heavy shadows |
 | `panel` | Stable charcoal overlay for image captions and high-contrast sections |
+| `logo-tile` | Stable white surface for unmodified third-party tool marks in either theme |
+| `logo-foreground` | Dark label text used only inside tool-logo tiles |
+| `logo-border` | Neutral edge used only around tool-logo tiles |
 
 Never add hex colors directly to components. Add a semantic variable when a new color role is genuinely required.
 
@@ -78,6 +81,13 @@ Never add hex colors directly to components. Add a semantic variable when a new 
 - Every card needs: title, direct one-line summary, one delivered result, a visual or architecture preview, and a compact technology list.
 - Use MinMin AI for extended case-study detail rather than expanding every card in place.
 
+### Working toolkit
+
+- Store third-party tool marks locally in `public/tool-logos/` and source them from each publisher’s official brand resources.
+- Keep supplied marks unmodified and place them on the stable `logo-tile` surface when their approved colors require a light background.
+- Use the moving logo rail as a quick recognition layer; keep the categorized text chips below it as the complete, readable inventory.
+- Pause the rail on hover and expose a static, horizontally scrollable row when reduced motion is enabled.
+
 ### Chat
 
 - User messages are compact, right-aligned primary bubbles.
@@ -105,7 +115,7 @@ Never add hex colors directly to components. Add a semantic variable when a new 
 - Entrance transitions use a 12–16px rise and spring motion around stiffness 240–260 / damping 24–25.
 - Stagger groups by roughly 0.06–0.08 seconds.
 - Hover movement is limited to 1–2px translation or a very small image scale.
-- Slow looping motion is reserved for the three capability illustrations and must stop when reduced motion is enabled.
+- Slow looping motion is reserved for the official-tool logo rail and must stop when reduced motion is enabled.
 - `useReducedMotion` must remove transforms and delays; CSS also provides a global reduced-motion fallback.
 
 ## Responsive and accessibility checks
