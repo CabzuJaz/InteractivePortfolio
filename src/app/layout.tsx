@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 const siteUrl = "https://www.buildwithjazz.com";
 const siteTitle = "Jazzmin Sicat-Cabizares — AI Automation Engineer";
 const siteDescription =
-  "AI Automation Engineer designing practical agents, workflow automation, and backend integrations for growing teams.";
+  "AI Automation Engineer building intelligent agents, automation systems, and backend solutions. Chat with my AI assistant to learn about my projects, skills, and experience.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -48,20 +48,11 @@ export const metadata: Metadata = {
     title: siteTitle,
     description: siteDescription,
     locale: "en_US",
-    images: [
-      {
-        url: "/og.png",
-        width: 1731,
-        height: 909,
-        alt: "Build with Jazz — I turn manual work into systems that run.",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: siteTitle,
     description: siteDescription,
-    images: ["/og.png"],
   },
   robots: {
     index: true,
@@ -87,7 +78,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           {children}
         </ThemeProvider>
       </body>

@@ -37,7 +37,7 @@ Read `CLAUDE.md`, `docs/UI-GUIDE.md`, and the applicable skills in `.claude/skil
 - Lead with outcomes, then evidence, then implementation detail.
 - Keep the landing page concise; use MinMin AI for progressive detail.
 - Use one dominant action per content block.
-- Prefer semantic theme tokens, warm neutral surfaces, deep green accents, and restrained lime highlights.
+- Prefer semantic theme tokens and preserve the established Build with Jazz identity: dark-first surfaces, cyan accents, and restrained cyan-to-blue gradients.
 - Avoid generic neon AI-dashboard styling, excessive gradients, and repeated card grids.
 - Respect keyboard use, reduced motion, touch targets, and 375px layouts.
 

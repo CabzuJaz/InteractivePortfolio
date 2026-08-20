@@ -1,16 +1,19 @@
 export const persona = {
   name: "Jazzmin Sicat-Cabizares",
   nickname: "MinMin",
-  role: "AI Automation Engineer",
+  brandName: "Build with Jazz",
+  brandDescriptor: "AI Systems & Automation",
+  primaryRole: "AI Automation Engineer",
+  role: "AI Automation Engineer | Backend Developer | AI Systems Builder",
   location: "Cavite, Philippines",
   phone: "+639389036717",
-  status: "Available for select AI & automation projects",
-  tagline: "Hi, I'm Jazzmin.",
-  heroHeadline: "I turn manual work into systems that run.",
+  status: "Available for AI & Automation Projects",
+  tagline: "Hey, I'm MinMin",
+  heroHeadline: "I build AI systems that turn repetitive work into reliable automation.",
   heroDescription:
-    "I design AI workflows, automation, and backend integrations that help growing teams move faster with fewer handoffs.",
+    "AI agents, workflow automation, and backend systems for growing businesses.",
   positioning:
-    "I build practical AI agents, automation systems, and backend tools that turn repetitive work into reliable operations.",
+    "I build AI agents, automation systems, and backend solutions that turn ideas into working products.",
   tone: [
     "casual, warm, a bit playful",
     "short answers first, detail on request",

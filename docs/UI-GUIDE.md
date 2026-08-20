@@ -8,7 +8,7 @@ This guide is the source of truth for the portfolio’s public interface. Use it
 2. **One clear action per block.** Each section should have a primary next step; secondary actions must stay visually quieter.
 3. **Evidence before inventory.** Selected work and delivered results come before long skill lists.
 4. **Progressive detail.** The landing page stays scannable. MinMin AI and project detail views handle deeper questions.
-5. **Calm technology.** The interface should feel capable and current without looking like a generic neon AI dashboard.
+5. **Calm technology.** Keep the established dark-and-cyan Build with Jazz identity without turning the interface into a generic neon AI dashboard.
 
 ## Public information hierarchy
 
@@ -31,14 +31,14 @@ All colors are CSS variables in `src/app/globals.css` and are mapped through Tai
 
 | Token | Role |
 |---|---|
-| `background` | Warm page canvas |
-| `foreground` | Deep green-black text and high-contrast surfaces |
+| `background` | Near-black canvas in the default dark theme; clean white in light mode |
+| `foreground` | High-contrast primary text |
 | `card` | Primary content surface |
-| `primary` | Actions, status, focus, and key labels |
+| `primary` | Brand cyan for actions, status, focus, and key labels |
 | `muted` | Quiet section bands and tags |
-| `highlight` | Fresh lime accent used sparingly for editorial emphasis |
+| `highlight` | Soft cyan surface used sparingly for editorial emphasis |
 | `border` | Structure without heavy shadows |
-| `panel` | Stable dark overlay for image captions |
+| `panel` | Stable charcoal overlay for image captions and high-contrast sections |
 
 Never add hex colors directly to components. Add a semantic variable when a new color role is genuinely required.
 
