@@ -210,7 +210,7 @@ export default function HomePage() {
 
               <motion.h1
                 variants={rise}
-                className="display-title max-w-4xl text-[clamp(3.4rem,8.8vw,7.6rem)] leading-[0.92]"
+                className="display-title max-w-3xl text-[clamp(2.6rem,5.2vw,4.75rem)] leading-[1]"
               >
                 {persona.heroHeadline}
               </motion.h1>
