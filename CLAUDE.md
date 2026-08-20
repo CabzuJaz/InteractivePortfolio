@@ -4,10 +4,10 @@ Project memory for Claude Code. Read this before any task in this repo.
 
 ## What this project is
 
-An interactive portfolio in the style of toukoum.fr: the whole site is a conversation with
-an AI avatar of the owner. Visitors ask questions; the model answers in first person and
-calls tools that render rich React components (project cards, skills grid, resume, contact
-card) directly inside the chat stream.
+An outcome-led portfolio with an AI exploration layer. The landing page gives visitors a
+fast path through selected work, capabilities, proof, and contact. MinMin AI answers deeper
+questions in first person and calls tools that render rich project, skills, resume, and
+contact components inside the chat stream.
 
 ## Stack
 
@@ -42,6 +42,7 @@ src/
     skills.ts             # skills grouped by category
     resume.ts, contact.ts, fun.ts
 public/                   # avatar images, project screenshots
+docs/UI-GUIDE.md          # public visual system and experience rules
 ```
 
 ## Hard rules
@@ -65,6 +66,9 @@ public/                   # avatar images, project screenshots
 8. **Verify an external API against its published spec before shipping a field name,
    version, or limit.** HighLevel's OpenAPI specs live at
    `github.com/GoHighLevel/highlevel-api-docs` under `apps/`.
+9. **Follow `docs/UI-GUIDE.md` for public UI work.** Preserve the outcome → evidence →
+   capabilities → proof → contact order, use semantic theme tokens, and keep deep detail in
+   chat rather than growing the landing page indefinitely.
 
 ## Commands
 

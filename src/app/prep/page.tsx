@@ -151,11 +151,11 @@ function getRequiredMissing(answers: Record<string, string>): string[] {
 
 function SectionHeader({ number, title }: { number: string; title: string }) {
   return (
-    <div className="mb-8">
-      <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">
+    <div className="mb-7">
+      <p className="eyebrow mb-3">
         Section {number}
       </p>
-      <h2 className="text-2xl sm:text-3xl font-bold">{title}</h2>
+      <h2 className="text-2xl font-bold tracking-[-0.035em] sm:text-3xl">{title}</h2>
     </div>
   );
 }
@@ -253,7 +253,7 @@ function PrepContent() {
     const isMissing = showErrors && isRequired && !answers[q.id]?.trim();
     const borderColor = isMissing ? "border-destructive" : "border-border";
     const base =
-      "w-full rounded-xl border-2 bg-background px-5 py-4 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/70 transition-all shadow-sm";
+      "w-full rounded-xl border bg-card px-4 py-3.5 text-base leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-2 focus:ring-primary/10";
 
     if (q.type === "textarea") {
       return (
@@ -299,16 +299,16 @@ function PrepContent() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md"
         >
-          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-          <h1 className="text-3xl font-bold mb-3">Got it!</h1>
-          <p className="text-lg text-muted-foreground leading-relaxed mb-6">
+          <CheckCircle className="mx-auto mb-6 h-16 w-16 text-primary" />
+          <h1 className="display-title mb-3 text-3xl">Got it.</h1>
+          <p className="mb-6 text-base leading-7 text-muted-foreground">
             Your answers have been sent to Jazzmin. She&apos;ll review them and
             reach out with a recommendation soon. A copy of your answers has
             been sent to your email.
           </p>
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
             Back to Home
           </Link>
@@ -320,19 +320,17 @@ function PrepContent() {
   return (
     <div className="min-h-dvh bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border/50 glass-strong">
-        <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4">
           <Link
             href="/"
-            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card transition-colors hover:bg-accent"
             aria-label="Back to home"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="flex-1">
-            <h1 className="text-sm font-semibold">
-              Automation Prep Sheet
-            </h1>
+            <h1 className="text-sm font-semibold">Automation prep sheet</h1>
             <p className="text-xs text-muted-foreground">
               {persona.name} — BuildWithJazz
             </p>
@@ -341,20 +339,20 @@ function PrepContent() {
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 sm:space-y-8 sm:py-14">
         {/* Greeting */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">
+          <p className="eyebrow mb-4">Process discovery</p>
+          <h1 className="display-title mb-4 text-3xl sm:text-5xl">
             {prefillName
-              ? `Hi ${prefillName}, let's map your process`
-              : "Let's map your process"}
+              ? `Hi ${prefillName}, let's map the workflow.`
+              : "Let's map the workflow."}
           </h1>
-          <p className="text-lg text-muted-foreground leading-relaxed">
-            Fill out what you can — every answer helps me design a better system
-            for you. Fields marked with <span className="text-primary font-semibold">*</span> are required.
+          <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
+            Short answers are fine. Share how the process works today, where it slows down, and what a better outcome looks like. Fields marked <span className="font-semibold text-primary">*</span> are required.
           </p>
         </motion.div>
 
@@ -363,18 +361,18 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5"
+          className="rounded-2xl border border-border bg-card p-5"
         >
           <div className="flex items-center justify-between text-base mb-3">
-            <span className="text-foreground font-medium">Foundation poured</span>
-            <span className="font-bold text-primary text-lg">{progress}%</span>
+            <span className="font-medium text-foreground">Form progress</span>
+            <span className="text-lg font-bold text-primary">{progress}%</span>
           </div>
-          <div className="h-3.5 rounded-full bg-muted/40 overflow-hidden">
+          <div className="h-2.5 overflow-hidden rounded-full bg-muted">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              className="h-full rounded-full bg-linear-to-r from-primary to-primary/70"
+              className="h-full rounded-full bg-primary"
             />
           </div>
         </motion.div>
@@ -384,11 +382,10 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl border border-border/30 bg-linear-to-br from-primary/5 to-transparent p-5 space-y-4"
+          className="space-y-5 rounded-2xl border border-border bg-card p-6 sm:p-8"
         >
-          <p className="text-base font-semibold text-foreground/90">
-            Contact Info (we&apos;ll email you a copy of your answers)
-          </p>
+          <SectionHeader number="00" title="Contact details" />
+          <p className="-mt-3 text-sm leading-6 text-muted-foreground">We&apos;ll use these details to send a copy of your answers and follow up.</p>
           {SECTION_0.map((q) => (
             <div key={q.id}>
               <label className="block text-base font-semibold text-foreground/90 mb-2">
@@ -404,7 +401,7 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-border/30 bg-linear-to-b from-card to-card/80 p-6 sm:p-8 shadow-sm"
+          className="rounded-2xl border border-border bg-card p-6 sm:p-8"
         >
           <SectionHeader number="01" title="Your current setup" />
           <div className="space-y-6">
@@ -425,7 +422,7 @@ function PrepContent() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-border/30 bg-linear-to-b from-card to-card/80 p-6 sm:p-8 shadow-sm"
+          className="rounded-2xl border border-border bg-card p-6 sm:p-8"
         >
           <SectionHeader number="02" title="Pain points & goals" />
           <div className="space-y-6">
@@ -457,11 +454,11 @@ function PrepContent() {
         </AnimatePresence>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 pb-12">
+        <div className="flex flex-col gap-3 pb-12 sm:flex-row">
           <button
             onClick={handleSend}
             disabled={status === "sending" || progress === 0}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-6 font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             {status === "sending" ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -472,14 +469,14 @@ function PrepContent() {
           </button>
           <button
             onClick={handleCopy}
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-full glass font-medium hover:bg-primary/10 transition-colors"
+            className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 font-semibold transition-colors hover:border-primary/40"
           >
             <Copy className="w-4 h-4" />
             Copy my answers
           </button>
           <button
             onClick={() => window.print()}
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-full glass font-medium hover:bg-primary/10 transition-colors"
+            className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 font-semibold transition-colors hover:border-primary/40"
           >
             <Printer className="w-4 h-4" />
             Save as PDF

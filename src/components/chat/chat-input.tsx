@@ -102,7 +102,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         aria-label="Attach images"
       />
 
-      <div className="flex-1 relative">
+      <div className="relative flex-1">
         {/* Image previews */}
         {selectedFiles.length > 0 && (
           <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
@@ -127,13 +127,13 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
           </div>
         )}
 
-        <div className="flex items-end gap-1.5">
+        <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-card p-1.5 shadow-sm focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/10">
           {/* Attachment button */}
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isLoading}
-            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 mb-1"
+            className="mb-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
             aria-label="Attach image"
           >
             <Paperclip className="w-4 h-4" />
@@ -147,11 +147,11 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
             placeholder={
               selectedFiles.length > 0
                 ? "Add a message about this image…"
-                : "Ask me anything…"
+                : "Ask about Jazzmin's work or your workflow…"
             }
             disabled={isLoading}
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-border/50 bg-card px-4 py-3 text-base leading-relaxed focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:opacity-50 min-h-[48px]"
+            className="min-h-[46px] flex-1 resize-none bg-transparent px-3 py-2.5 text-base leading-relaxed outline-none disabled:opacity-50"
             aria-label="Chat message"
             style={{ maxHeight: "200px" }}
           />
@@ -162,7 +162,7 @@ export function ChatInput({ onSubmit, isLoading }: ChatInputProps) {
         type="submit"
         size="icon"
         disabled={(!input.trim() && selectedFiles.length === 0) || isLoading}
-        className="rounded-full w-12 h-12 shrink-0 mb-1"
+        className="mb-0.5 h-12 w-12 shrink-0 rounded-xl"
         aria-label="Send message"
       >
         <Send className="w-4 h-4" />

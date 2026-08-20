@@ -9,7 +9,7 @@ Complete setup guide for the AI Portfolio with chat, GHL integration, n8n automa
 | Field | Value |
 |-------|-------|
 | **Document ID** | BwJ-SETUP-001 |
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Status** | Approved |
 | **Author** | Jazzmin Sicat-Cabizares |
 | **Approved by** | Jazzmin Sicat-Cabizares |
@@ -22,6 +22,7 @@ Complete setup guide for the AI Portfolio with chat, GHL integration, n8n automa
 |---------|------|--------|---------|
 | 1.0 | 2026-06-17 | Jazzmin | Initial documentation |
 | 1.1 | 2026-06-24 | Jazzmin | Security remediation: scrubbed secrets, moved GHL field IDs to env vars, added n8n resilience config, added runbook sections, de-duplicated issues |
+| 1.2 | 2026-08-20 | Jazzmin | Refreshed public UI, chat and prep-sheet patterns; added the UI guide and corrected public experience documentation |
 
 ---
 
@@ -43,8 +44,9 @@ Complete setup guide for the AI Portfolio with chat, GHL integration, n8n automa
 10. [Contract PDF System](#contract-pdf-system)
 11. [Client Dashboard](#client-dashboard)
 12. [Prep Sheet](#prep-sheet)
-13. [Issues & Resolutions](#issues--resolutions)
-14. [Maintenance Guide](#maintenance-guide)
+13. [Portfolio UI](#portfolio-ui)
+14. [Issues & Resolutions](#issues--resolutions)
+15. [Maintenance Guide](#maintenance-guide)
 
 ---
 
@@ -495,8 +497,8 @@ https://www.buildwithjazz.com/prep?client=larry-bmpc&name=Larry&email=larry@exam
 
 ### Features
 
-- 17 questions across 2 sections
-- Progress gauge ("Foundation poured")
+- 15 questions across contact details, current setup, and pain points/goals
+- Plain-language progress indicator
 - Email and WhatsApp fields
 - Sends dashboard link via WhatsApp
 - Creates GHL contact with answers
@@ -519,6 +521,36 @@ Sends Discord notification
     ↓
 Shows success screen with dashboard link
 ```
+
+---
+
+## Portfolio UI
+
+The public portfolio uses one shared visual system across `/`, `/chat`, and `/prep`.
+
+### Public Journey
+
+```
+Outcome-led hero
+    ↓
+Selected project evidence
+    ↓
+Capabilities and working toolkit
+    ↓
+Background and credentials
+    ↓
+Book a call or continue with MinMin AI
+```
+
+### Source of Truth
+
+- Personal facts and claims: `src/data/`
+- Theme tokens and shared utilities: `src/app/globals.css`
+- Landing composition: `src/app/page.tsx`
+- Chat patterns: `src/app/chat/` and `src/components/chat/`
+- Detailed design, copy, responsive, and accessibility rules: `docs/UI-GUIDE.md`
+
+Public copy should lead with the business or operational outcome. Implementation tools belong in supporting detail. The landing page presents only selected evidence; MinMin AI provides deeper project and experience exploration.
 
 ---
 
