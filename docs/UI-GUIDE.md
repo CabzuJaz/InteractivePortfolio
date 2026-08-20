@@ -105,7 +105,7 @@ Never add hex colors directly to components. Add a semantic variable when a new 
 - Entrance transitions use a 12–16px rise and spring motion around stiffness 240–260 / damping 24–25.
 - Stagger groups by roughly 0.06–0.08 seconds.
 - Hover movement is limited to 1–2px translation or a very small image scale.
-- Never loop decorative motion.
+- Slow looping motion is reserved for the three capability illustrations and must stop when reduced motion is enabled.
 - `useReducedMotion` must remove transforms and delays; CSS also provides a global reduced-motion fallback.
 
 ## Responsive and accessibility checks
