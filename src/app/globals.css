@@ -44,6 +44,9 @@
   --color-highlight-foreground: var(--highlight-foreground);
   --color-panel: var(--panel);
   --color-panel-foreground: var(--panel-foreground);
+  --color-logo-tile: var(--logo-tile);
+  --color-logo-foreground: var(--logo-foreground);
+  --color-logo-border: var(--logo-border);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -77,6 +80,9 @@
   --highlight-foreground: oklch(0.25 0.08 215);
   --panel: oklch(0.15 0.015 220);
   --panel-foreground: oklch(0.98 0 0);
+  --logo-tile: #ffffff;
+  --logo-foreground: #111820;
+  --logo-border: #e2e8f0;
   --chart-1: oklch(0.55 0.18 195);
   --chart-2: oklch(0.5 0.15 260);
   --chart-3: oklch(0.45 0.12 150);
@@ -237,6 +243,34 @@
   }
 }
 
+.tool-logo-rail {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+}
+
+.tool-logo-track {
+  display: flex;
+  width: max-content;
+  animation: tool-logo-marquee 32s linear infinite;
+  will-change: transform;
+}
+
+.tool-logo-group {
+  display: flex;
+  gap: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.tool-logo-rail:hover .tool-logo-track {
+  animation-play-state: paused;
+}
+
+@keyframes tool-logo-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -245,6 +279,21 @@
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .tool-logo-rail {
+    -webkit-mask-image: none;
+    mask-image: none;
+    overflow-x: auto;
+  }
+
+  .tool-logo-track {
+    animation: none;
+    transform: none;
+  }
+
+  .tool-logo-group[aria-hidden="true"] {
+    display: none;
   }
 }
 

@@ -42,19 +42,15 @@ const heroQuestions = [
 
 const serviceIcons = [Workflow, Sparkles, Database] as const;
 
-const serviceVisuals = [
-  {
-    src: "/tools/automation-systems.png",
-    alt: "Connected workflow modules passing through a validation checkpoint",
-  },
-  {
-    src: "/tools/ai-workflows.png",
-    alt: "AI orchestration core coordinating task modules and structured output",
-  },
-  {
-    src: "/tools/backend-integrations.png",
-    alt: "Database connected to multiple business systems through API pathways",
-  },
+const toolLogos = [
+  { name: "Anthropic API", src: "/tool-logos/anthropic.png", width: 32, height: 32, showName: true },
+  { name: "n8n", src: "/tool-logos/n8n.svg", width: 104, height: 28, showName: false },
+  { name: "Python", src: "/tool-logos/python.svg", width: 104, height: 31, showName: false },
+  { name: "Google Sheets", src: "/tool-logos/google-sheets.svg", width: 34, height: 34, showName: true },
+  { name: "GitHub", src: "/tool-logos/github.svg", width: 100, height: 23, showName: false },
+  { name: "Git", src: "/tool-logos/git.svg", width: 34, height: 34, showName: true },
+  { name: "WordPress", src: "/tool-logos/wordpress.png", width: 34, height: 34, showName: true },
+  { name: "HighLevel", src: "/tool-logos/highlevel.png", width: 112, height: 25, showName: false },
 ] as const;
 
 const featuredProjects = projects.filter((project) => project.highlight).slice(0, 3);
@@ -100,6 +96,43 @@ function SectionIntro({
         {copy}
       </p>
     </motion.div>
+  );
+}
+
+function ToolLogoRail() {
+  return (
+    <div className="tool-logo-rail mt-7 overflow-hidden" aria-label="Selected tools and platforms">
+      <div className="tool-logo-track">
+        {[false, true].map((duplicate) => (
+          <div
+            key={duplicate ? "duplicate" : "primary"}
+            className="tool-logo-group"
+            aria-hidden={duplicate || undefined}
+          >
+            {toolLogos.map((tool) => (
+              <div
+                key={tool.name}
+                title={tool.name}
+                className="flex h-16 shrink-0 items-center justify-center gap-2.5 rounded-xl border border-logo-border bg-logo-tile px-4"
+              >
+                <Image
+                  src={tool.src}
+                  alt={duplicate ? "" : tool.name}
+                  width={tool.width}
+                  height={tool.height}
+                  className="shrink-0 object-contain"
+                />
+                {tool.showName ? (
+                  <span className="whitespace-nowrap text-xs font-semibold tracking-[-0.01em] text-logo-foreground">
+                    {tool.name}
+                  </span>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -429,7 +462,6 @@ export default function HomePage() {
             <div className="grid gap-4 lg:grid-cols-3">
               {persona.services.map((service, index) => {
                 const Icon = serviceIcons[index] ?? Code2;
-                const visual = serviceVisuals[index] ?? serviceVisuals[0];
                 return (
                   <motion.article
                     key={service.title}
@@ -437,65 +469,42 @@ export default function HomePage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-60px" }}
                     transition={{ delay: reduceMotion ? 0 : index * 0.06, type: "spring", stiffness: 250, damping: 24 }}
-                    className="overflow-hidden rounded-[1.5rem] border border-border bg-card p-3"
+                    className="rounded-[1.5rem] border border-border bg-card p-6 sm:p-7"
                   >
-                    <motion.div
-                      whileHover={reduceMotion ? undefined : { scale: 1.015 }}
-                      transition={{ type: "spring", stiffness: 260, damping: 24 }}
-                      className="relative aspect-[5/4] overflow-hidden rounded-2xl border border-border/70 bg-panel"
-                    >
-                      <motion.div
-                        className="absolute inset-0 scale-[1.035]"
-                        animate={
-                          reduceMotion
-                            ? undefined
-                            : {
-                                y: [0, -5, 0],
-                                x: [0, index % 2 === 0 ? 3 : -3, 0],
-                              }
-                        }
-                        transition={{
-                          duration: 5.5 + index * 0.5,
-                          delay: index * 0.4,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        <Image
-                          src={visual.src}
-                          alt={visual.alt}
-                          fill
-                          sizes="(min-width: 1024px) 31vw, (min-width: 640px) 50vw, 100vw"
-                          className="object-cover"
-                        />
-                      </motion.div>
-                      <div className="absolute bottom-3 left-3 grid h-10 w-10 place-items-center rounded-xl border border-primary/20 bg-background/85 text-primary shadow-lg backdrop-blur-md">
-                        <Icon className="h-4.5 w-4.5" />
-                      </div>
-                    </motion.div>
-                    <div className="px-3 pb-3 pt-6">
-                      <h3 className="text-xl font-bold tracking-[-0.025em]">{service.title}</h3>
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.description}</p>
-                      <ul className="mt-6 grid gap-2 border-t border-border pt-5">
-                        {service.examples.map((example) => (
-                          <li key={example} className="flex items-center gap-2 text-sm font-medium">
-                            <Check className="h-4 w-4 text-primary" />
-                            {example}
-                          </li>
-                        ))}
-                      </ul>
+                    <div className="grid h-11 w-11 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
                     </div>
+                    <h3 className="mt-8 text-xl font-bold tracking-[-0.025em]">{service.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.description}</p>
+                    <ul className="mt-6 grid gap-2 border-t border-border pt-5">
+                      {service.examples.map((example) => (
+                        <li key={example} className="flex items-center gap-2 text-sm font-medium">
+                          <Check className="h-4 w-4 text-primary" />
+                          {example}
+                        </li>
+                      ))}
+                    </ul>
                   </motion.article>
                 );
               })}
             </div>
 
             <div className="mt-12 rounded-[1.5rem] border border-border bg-background p-6 sm:p-8">
-              <div className="grid gap-7 lg:grid-cols-[0.35fr_1fr]">
+              <div className="grid gap-3 sm:grid-cols-[0.35fr_1fr] sm:items-end">
                 <div>
                   <p className="eyebrow">Working toolkit</p>
-                  <p className="mt-3 text-sm leading-6 text-muted-foreground">Tools change. Strong system thinking stays.</p>
                 </div>
+                <p className="text-sm leading-6 text-muted-foreground sm:justify-self-end">
+                  Tools change. Strong system thinking stays.
+                </p>
+              </div>
+
+              <ToolLogoRail />
+
+              <div className="mt-8 grid gap-7 border-t border-border pt-8 lg:grid-cols-[0.35fr_1fr]">
+                <p className="max-w-xs text-sm leading-6 text-muted-foreground">
+                  A practical stack for AI workflows, business systems, APIs, and maintainable backends.
+                </p>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {skills.map((category) => (
                     <div key={category.category}>
