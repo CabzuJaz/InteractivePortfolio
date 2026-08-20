@@ -118,12 +118,12 @@ export default function HomePage() {
       <header className="fixed inset-x-0 top-0 z-50 border-b border-border/70 bg-background/88 backdrop-blur-xl">
         <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-5 sm:px-8">
           <a href="#top" className="group flex min-w-0 items-center gap-3" aria-label="Back to top">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-foreground text-xs font-bold tracking-tight text-background transition-transform group-hover:-rotate-3">
-              JSC
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/12 text-sm font-bold text-primary ring-1 ring-primary/20 transition-transform group-hover:-rotate-3">
+              BWJ
             </span>
-            <span className="hidden min-w-0 sm:block">
-              <span className="block truncate text-sm font-semibold leading-tight">{persona.name}</span>
-              <span className="block truncate text-xs text-muted-foreground">{persona.role}</span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold leading-tight">{persona.brandName}</span>
+              <span className="hidden truncate text-xs text-muted-foreground sm:block">{persona.brandDescriptor}</span>
             </span>
           </a>
 
@@ -205,7 +205,7 @@ export default function HomePage() {
               </motion.button>
 
               <motion.p variants={rise} className="eyebrow mb-4">
-                {persona.role} · {persona.location}
+                {persona.primaryRole} · {persona.location}
               </motion.p>
 
               <motion.h1
@@ -250,11 +250,11 @@ export default function HomePage() {
                 <div className="relative aspect-[4/4.35] overflow-hidden rounded-[1.45rem] bg-highlight">
                   <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4">
                     <span className="rounded-full bg-background/88 px-3 py-1 text-xs font-semibold backdrop-blur">{persona.tagline}</span>
-                    <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">Build with Jazz</span>
+                    <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">{persona.brandName}</span>
                   </div>
                   <Image
                     src="/avatars/avatar.webp"
-                    alt={`${persona.name}, ${persona.role}`}
+                    alt={`${persona.name}, ${persona.primaryRole}`}
                     width={640}
                     height={700}
                     priority
@@ -263,8 +263,8 @@ export default function HomePage() {
                   <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/20 bg-panel/90 p-4 text-panel-foreground backdrop-blur-md">
                     <div className="flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-sm font-semibold">Practical systems. Clear handoffs.</p>
-                        <p className="mt-1 text-xs text-panel-foreground/70">AI · automation · backend</p>
+                        <p className="text-sm font-semibold">{persona.brandDescriptor}</p>
+                        <p className="mt-1 text-xs text-panel-foreground/70">Agents · workflows · integrations</p>
                       </div>
                       <Bot className="h-6 w-6 text-highlight" />
                     </div>
@@ -280,7 +280,7 @@ export default function HomePage() {
               className="relative z-10 lg:col-span-2"
             >
               <form onSubmit={submitQuestion} className="rounded-2xl border border-border bg-card p-2 shadow-sm">
-                <label htmlFor="portfolio-question" className="sr-only">Ask MinMin AI about Jazzmin&apos;s work</label>
+                <label htmlFor="portfolio-question" className="sr-only">Ask MinMin AI about {persona.name}&apos;s work</label>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <div className="flex min-h-12 flex-1 items-center gap-3 px-3">
                     <Sparkles className="h-5 w-5 shrink-0 text-primary" />
@@ -574,7 +574,7 @@ export default function HomePage() {
                   href={contact.calendly}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-background px-6 text-sm font-semibold text-foreground transition-transform hover:-translate-y-0.5"
+                  className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
                 >
                   <Calendar className="h-4 w-4" />
                   Book a 15-minute call
@@ -619,7 +619,7 @@ export default function HomePage() {
 
       <footer className="px-5 py-8 sm:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Build with Jazz</p>
+          <p>© {new Date().getFullYear()} {persona.brandName}</p>
           <p>Designed for clarity. Built for conversation.</p>
         </div>
       </footer>
