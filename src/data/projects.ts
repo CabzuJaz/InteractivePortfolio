@@ -26,7 +26,7 @@ export const projects: Project[] = [
     title: "Automated Lead Intake & Estimating System",
     industry: "Home Services",
     oneLiner:
-      "Multi-workflow lead pipeline unifying WordPress intake, CRM sync, estimate automation, and an auditable override trail",
+      "One lead pipeline for intake, CRM sync, estimating, staff follow-up, and an auditable override trail.",
     description:
       "Designed and built a single lead pipeline for a US-based home-services company, replacing scattered tools with five coordinated n8n workflows. Leads from three WordPress form paths are normalized, duplicate-checked, and synced to both GorillaDesk and a Google Sheets CRM with a concise summary of what the customer needs. An estimating layer applies configurable service-area and pricing rules, routing anything uncertain to manual review instead of guessing. Staff notifications run over Gmail and Twilio SMS with an acknowledgement reminder loop, and every estimate override is captured in an append-only audit trail that syncs idempotently back to the CRM.",
     problem:
@@ -78,7 +78,7 @@ export const projects: Project[] = [
   {
     slug: "str-lead-research-agent",
     title: "STR Lead Research Agent",
-    oneLiner: "Website-powered lead research with automated internet search and Google Sheets output",
+    oneLiner: "A simple web form that turns a market and location into an organized lead list.",
     description:
       "Built a web interface where users input location and business type, then the system automatically searches the internet for matching businesses, collects data, and saves structured results to Google Sheets. An n8n workflow processes the data for enrichment and follow-up. Fully automated from user input to organized lead database.",
     problem: "Manual lead research was time-consuming, inconsistent, and couldn't scale. Sales teams spent hours searching for potential clients one by one.",
@@ -112,7 +112,7 @@ export const projects: Project[] = [
   {
     slug: "ai-email-triage",
     title: "AI Email Triage System",
-    oneLiner: "Intelligent email classification and routing with Claude API",
+    oneLiner: "AI-powered email classification and routing with real-time processing feedback.",
     description:
       "Intelligent email classification and routing system using Claude API with tool use, SSE streaming, and n8n integration for automated workflow execution. Processes incoming emails, classifies intent, and routes to appropriate handlers.",
     problem: "High volume of incoming emails required manual classification and routing, causing delays and inconsistency.",
@@ -146,7 +146,7 @@ export const projects: Project[] = [
   {
     slug: "multi-agent-orchestrator",
     title: "Multi-Agent Orchestrator Pipeline",
-    oneLiner: "End-to-end multi-agent pipeline from email to structured output",
+    oneLiner: "A coordinated agent pipeline that turns email requests into structured outputs.",
     description:
       "End-to-end multi-agent pipeline: email intake → Claude orchestration → sub-agents → tool use → structured output to Sheets/DB. Features SSE streaming and FastMCP for standardized tool access.",
     problem: "Complex workflows required coordination between multiple AI agents, each with specialized capabilities.",
@@ -180,7 +180,7 @@ export const projects: Project[] = [
   {
     slug: "mcp-server-sqlite",
     title: "MCP Server + SQLite Integration",
-    oneLiner: "Standardized AI tool access with MCP protocol and REST API",
+    oneLiner: "Reusable MCP tools that give AI clients safe, structured access to SQLite data.",
     description:
       "Built a Model Context Protocol server for standardized AI tool access with SQLite backend, Flask REST API, and CSV data import. Enables any MCP-compatible AI client to query and manage structured data.",
     problem: "AI tools needed a standardized way to access structured data across different clients and systems.",
@@ -213,7 +213,7 @@ export const projects: Project[] = [
   {
     slug: "ai-lead-qualification",
     title: "AI Lead Qualification & Follow-Up Automation",
-    oneLiner: "End-to-end lead management with AI scoring, automated follow-ups, and real-time notifications",
+    oneLiner: "Lead scoring, personalized follow-up, and owner alerts in one automated workflow.",
     description:
       "Built an end-to-end lead management workflow using n8n, Groq AI, Google Sheets, Gmail, and Telegram. The system automatically qualifies incoming leads, scores buying intent, recommends services, sends personalized follow-ups, and notifies the business owner in real time.",
     problem: "Manual lead qualification was slow, inconsistent, and leads were falling through the cracks without timely follow-up.",

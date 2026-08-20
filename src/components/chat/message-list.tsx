@@ -19,8 +19,8 @@ function isFilePart(
 
 export function MessageList({ messages, isLoading }: MessageListProps) {
   return (
-    <div className="px-4 py-6" aria-live="polite" role="log">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="px-4 py-7" aria-live="polite" role="log">
+      <div className="mx-auto max-w-3xl space-y-8">
         {messages.map((message) => {
           const textParts = message.parts?.filter((p) => p.type === "text") ?? [];
           const fileParts = message.parts?.filter(isFilePart) ?? [];
@@ -60,10 +60,11 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                 </div>
               ) : (
                 /* ── Assistant message ── */
-                <div className="space-y-3">
-                  {/* Text bubble */}
+                <div className="space-y-4">
+                  {/* Assistant replies stay full-width and visually calm. */}
                   {textParts.length > 0 && (
-                    <div className="rounded-2xl bg-muted/50 border border-border/30 px-4 py-4 sm:px-5 break-words overflow-hidden">
+                    <div className="break-words border-l-2 border-primary/30 py-1 pl-4 pr-1 sm:pl-5">
+                      <p className="mb-2 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-primary">MinMin AI</p>
                       {textParts.map((p, i) => (
                         <div
                           key={i}

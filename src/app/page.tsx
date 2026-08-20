@@ -1,775 +1,628 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
-  MessageCircle,
-  Mail,
-  ChevronDown,
-  Menu,
-  X,
-  Brain,
+  ArrowUpRight,
+  Award,
+  Bot,
+  Calendar,
+  Check,
+  ChevronRight,
   Code2,
   Database,
-  Zap,
-  Layers,
-  Shield,
-  Calendar,
+  Download,
+  Mail,
   MapPin,
-  Phone,
-  Cpu,
-  Lightbulb,
-  Target,
-  AlertTriangle,
-  Award,
-  ExternalLink,
+  Menu,
+  MessageCircle,
+  Sparkles,
+  Workflow,
+  X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { persona } from "@/data/persona";
-import { skills } from "@/data/skills";
-import { resume } from "@/data/resume";
-import { projects } from "@/data/projects";
-import { fun } from "@/data/fun";
-import { contact } from "@/data/contact";
-import { Badge } from "@/components/ui/badge";
-import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { ArchitectureFlow } from "@/components/tools/ArchitectureFlow";
+import { GithubIcon, LinkedinIcon } from "@/components/icons";
+import { persona } from "@/data/persona";
+import { projects } from "@/data/projects";
+import { resume } from "@/data/resume";
+import { skills } from "@/data/skills";
+import { contact } from "@/data/contact";
+
+const heroQuestions = [
+  { label: "Selected work", query: "Show me your strongest projects and what changed because of them." },
+  { label: "Skills & tools", query: "What are your strongest skills and tools?" },
+  { label: "How you work", query: "How do you approach a new automation project?" },
+  { label: "Availability", query: "Are you available for a new project?" },
+  { label: "My workflow", query: "Can you help me find automation opportunities in my workflow?" },
+] as const;
+
+const serviceIcons = [Workflow, Sparkles, Database] as const;
+
+const featuredProjects = projects.filter((project) => project.highlight).slice(0, 3);
 
 const stagger = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.08 } },
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 260, damping: 24 } },
+const rise = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring" as const, stiffness: 260, damping: 24 },
+  },
 };
 
-const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  "AI & Automation": Brain,
-  Programming: Code2,
-  "APIs & Integrations": Zap,
-  "Backend & Data": Database,
-  Tools: Layers,
-};
+function SectionIntro({
+  eyebrow,
+  title,
+  copy,
+}: {
+  eyebrow: string;
+  title: string;
+  copy: string;
+}) {
+  const reduceMotion = useReducedMotion();
 
-const hobbyIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  brain: Brain,
-  layers: Layers,
-  shield: Shield,
-  zap: Zap,
-};
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ type: "spring", stiffness: 260, damping: 24 }}
+      className="mb-10 grid gap-4 md:grid-cols-[minmax(0,0.7fr)_minmax(20rem,0.45fr)] md:items-end md:justify-between"
+    >
+      <div>
+        <p className="eyebrow mb-4">{eyebrow}</p>
+        <h2 className="display-title max-w-3xl text-4xl sm:text-5xl lg:text-6xl">{title}</h2>
+      </div>
+      <p className="max-w-xl text-base leading-7 text-muted-foreground md:justify-self-end md:text-lg">
+        {copy}
+      </p>
+    </motion.div>
+  );
+}
 
 export default function HomePage() {
   const router = useRouter();
-  const [expandedProject, setExpandedProject] = useState<string | null>(null);
+  const reduceMotion = useReducedMotion();
+  const [question, setQuestion] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
-  // Framer Motion animates via JS, so the prefers-reduced-motion CSS block in
-  // globals.css cannot stop the looping avatar float — it has to be gated here.
-  const prefersReducedMotion = useReducedMotion();
 
-  const handleChatClick = () => {
-    router.push("/chat");
-  };
-
-  // Dismiss the mobile menu with Escape
   useEffect(() => {
     if (!menuOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
+    const closeMenu = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", closeMenu);
+    return () => window.removeEventListener("keydown", closeMenu);
   }, [menuOpen]);
 
-  const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-    setMenuOpen(false);
+  const openChat = (query?: string) => {
+    const cleanQuery = query?.trim();
+    router.push(cleanQuery ? `/chat?query=${encodeURIComponent(cleanQuery)}` : "/chat");
+  };
+
+  const submitQuestion = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (question.trim()) openChat(question);
   };
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/80 bg-background/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-          <button
-            onClick={() => scrollToSection("top")}
-            className="text-left text-sm font-bold leading-tight"
-            aria-label="Go to top"
-          >
-            <span className="block text-foreground">Build with Jazz</span>
-            <span className="block text-xs font-medium text-muted-foreground">AI Systems & Automation</span>
-          </button>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/70 bg-background/88 backdrop-blur-xl">
+        <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-5 sm:px-8">
+          <a href="#top" className="group flex min-w-0 items-center gap-3" aria-label="Back to top">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-foreground text-xs font-bold tracking-tight text-background transition-transform group-hover:-rotate-3">
+              JSC
+            </span>
+            <span className="hidden min-w-0 sm:block">
+              <span className="block truncate text-sm font-semibold leading-tight">{persona.name}</span>
+              <span className="block truncate text-xs text-muted-foreground">{persona.role}</span>
+            </span>
+          </a>
 
-          <nav
-            aria-label="Primary navigation"
-            className="hidden items-center gap-6 text-sm font-semibold text-muted-foreground md:flex"
-          >
-            {[
-              ["About", "about"],
-              ["Work", "projects"],
-              ["Skills", "skills"],
-              ["Credentials", "credentials"],
-            ].map(([label, id]) => (
-              <button
-                key={id}
-                onClick={() => scrollToSection(id)}
-                className="min-h-10 transition-colors hover:text-primary active:text-primary"
-              >
-                {label}
-              </button>
-            ))}
+          <nav className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex" aria-label="Primary navigation">
+            <a href="#work" className="transition-colors hover:text-foreground">Work</a>
+            <a href="#capabilities" className="transition-colors hover:text-foreground">Capabilities</a>
+            <a href="#about" className="transition-colors hover:text-foreground">About</a>
           </nav>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              onClick={() => scrollToSection("contact")}
-              className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-cyan"
+            <a
+              href={contact.calendly}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden min-h-10 items-center gap-2 rounded-xl bg-foreground px-4 text-sm font-semibold text-background transition-transform hover:-translate-y-0.5 sm:inline-flex"
             >
-              Let&apos;s Talk
+              Book a call
+              <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((current) => !current)}
+              className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-card md:hidden"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
-
-          <button
-            onClick={() => setMenuOpen((open) => !open)}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-muted md:hidden"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-          >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
 
         {menuOpen && (
-          <div id="mobile-menu" className="border-t border-border bg-background px-4 py-4 md:hidden">
-            <nav aria-label="Mobile navigation" className="mx-auto grid max-w-5xl gap-2 text-base font-semibold">
+          <nav id="mobile-menu" className="border-t border-border bg-background px-5 py-4 md:hidden" aria-label="Mobile navigation">
+            <div className="mx-auto grid max-w-7xl gap-1">
               {[
+                ["Work", "work"],
+                ["Capabilities", "capabilities"],
                 ["About", "about"],
-                ["Work", "projects"],
-                ["Skills", "skills"],
-                ["Credentials", "credentials"],
                 ["Contact", "contact"],
               ].map(([label, id]) => (
-                <button
+                <a
                   key={id}
-                  onClick={() => scrollToSection(id)}
-                  className="min-h-12 rounded-lg px-3 py-3 text-left text-muted-foreground transition-colors hover:bg-muted hover:text-primary active:text-primary"
+                  href={`#${id}`}
+                  onClick={() => setMenuOpen(false)}
+                  className="flex min-h-12 items-center justify-between rounded-xl px-3 text-base font-semibold hover:bg-muted"
                 >
                   {label}
-                </button>
-              ))}
-            </nav>
-            <div className="mx-auto mt-3 flex max-w-5xl items-center justify-between border-t border-border pt-4">
-              <span className="text-sm font-medium text-muted-foreground">Theme</span>
-              <ThemeToggle />
-            </div>
-          </div>
-        )}
-      </header>
-
-      {/* ─── HERO ─── */}
-      <section
-        id="top"
-        className="relative flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center overflow-hidden px-4 py-[clamp(2.5rem,6vh,5.5rem)] pt-[clamp(5rem,10vh,6.5rem)] sm:px-6"
-      >
-        {/* Background effects */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent" />
-          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-[120px]" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        </div>
-
-        <motion.div
-          variants={stagger}
-          initial="hidden"
-          animate="show"
-          className="flex w-full max-w-[1700px] flex-col items-center text-center"
-        >
-          {/* Status pill */}
-          <motion.div variants={fadeUp} className="mb-[clamp(0.75rem,1.8vh,1rem)] max-w-full">
-            <Badge
-              variant="secondary"
-              className="h-auto max-w-full whitespace-normal rounded-full bg-green-500/10 px-3 py-1.5 text-center text-[0.72rem] leading-snug text-green-500 sm:px-4 sm:text-[0.82rem]"
-              title={persona.status}
-            >
-              <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse" />
-              {persona.status}
-            </Badge>
-          </motion.div>
-
-          {/* Animated Avatar */}
-          <motion.div variants={fadeUp} className="mb-[clamp(0.875rem,2vh,1.25rem)]">
-            <motion.div
-              animate={prefersReducedMotion ? undefined : { y: [0, -8, 0] }}
-              transition={
-                prefersReducedMotion
-                  ? undefined
-                  : { duration: 3, repeat: Infinity, ease: "easeInOut" }
-              }
-              className="relative"
-            >
-              <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-110" />
-              <Image
-                src="/avatars/avatar.webp"
-                alt="MinMin avatar for Jazzmin Sicat-Cabizares"
-                width={128}
-                height={128}
-                priority
-                className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-primary glow-cyan"
-              />
-            </motion.div>
-          </motion.div>
-
-          {/* Outcome headline */}
-          <motion.h1
-            variants={fadeUp}
-            className="w-full max-w-[1700px] text-balance text-center text-[clamp(2.25rem,5.4vw,5.6rem)] font-bold leading-[1.04] tracking-normal [overflow-wrap:normal] [word-break:normal] sm:tracking-[-0.035em] lg:tracking-[-0.045em]"
-          >
-            <span className="block">I build AI systems that turn</span>
-            <span className="block">repetitive work into</span>
-            <span className="block text-gradient">reliable automation.</span>
-          </motion.h1>
-
-          {/* Positioning */}
-          <motion.p
-            variants={fadeUp}
-            className="mb-[clamp(0.875rem,2vh,1.25rem)] mt-[clamp(0.875rem,2vh,1.25rem)] max-w-[850px] text-base leading-relaxed text-muted-foreground sm:text-lg lg:whitespace-nowrap"
-          >
-            AI agents, workflow automation, and backend systems for growing businesses.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="mb-[clamp(1rem,3vh,1.75rem)] text-center">
-            <p className="text-lg font-semibold text-gradient">{persona.name}</p>
-            <p className="text-sm font-medium text-muted-foreground">AI Automation Engineer</p>
-          </motion.div>
-
-          {/* CTA Buttons */}
-          <motion.div variants={fadeUp} className="flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center">
-            <button
-              onClick={() => scrollToSection("projects")}
-              className="flex min-h-12 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 py-3 text-base font-semibold text-primary-foreground transition-all hover:-translate-y-0.5 hover:bg-cyan active:translate-y-0"
-            >
-              Explore My Work
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleChatClick}
-              className="glass flex min-h-12 min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-full px-6 py-3 text-base font-semibold transition-all hover:-translate-y-0.5 hover:border-primary hover:text-primary active:translate-y-0"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Ask MinMin AI
-            </button>
-          </motion.div>
-
-        </motion.div>
-      </section>
-
-      {/* ─── ABOUT ─── */}
-      <section id="about" className="px-5 py-12 sm:px-6 md:py-18">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-          >
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">About</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-              I build systems that <span className="text-gradient">work</span>
-            </h2>
-            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              I design and deploy AI workflows, multi-agent pipelines, and backend integrations that make business operations faster and more dependable.
-            </p>
-
-            {/* Highlights list */}
-            <ul className="mt-6 space-y-2 max-w-2xl">
-              {persona.highlights.map((h) => (
-                <li key={h} className="flex items-start gap-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                  <span className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  </span>
-                  {h}
-                </li>
-              ))}
-            </ul>
-
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3 mt-8 min-[420px]:grid-cols-2 sm:grid-cols-4">
-              {[
-                { label: "Yrs in Engineering", value: "3+", icon: Calendar },
-                { label: "Yrs in AI Systems", value: "1+", icon: Brain },
-                { label: "AI Projects Built", value: String(projects.length), icon: Cpu },
-                { label: "Based In", value: "Cavite, PH", icon: MapPin },
-              ].map((stat) => (
-                <div key={stat.label} className="glass rounded-xl p-4 text-center">
-                  <stat.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold leading-tight">{stat.value}</p>
-                  <p className="mt-1 text-xs font-medium leading-snug text-muted-foreground">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ─── SKILLS ─── */}
-      <section id="skills" className="px-5 py-12 sm:px-6 md:py-18 border-t border-border/50">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-          >
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Skills</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8">
-              Systems I <span className="text-gradient">build with</span>
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {skills.map((category, ci) => {
-              const Icon = categoryIcons[category.category] ?? Layers;
-              return (
-                <motion.div
-                  key={category.category}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ delay: ci * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                  className="glass rounded-2xl p-5 sm:p-6"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="text-base font-semibold">{category.category}</h3>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {category.items.map((skill) => (
-                      <Badge
-                        key={skill.name}
-                        variant="secondary"
-                        className={`text-xs ${
-                          skill.level === 3
-                            ? "bg-primary/15 text-primary"
-                            : skill.level === 2
-                            ? "bg-secondary text-secondary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {skill.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── EXPERIENCE — hidden ─── */}
-
-      {/* ─── CERTIFICATES ─── */}
-      {resume.certificates && resume.certificates.length > 0 && (
-        <section id="credentials" className="px-5 py-12 sm:px-6 md:py-18 border-t border-border/50">
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-            >
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Certificates</p>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-8">
-                Credentials & <span className="text-gradient">Certifications</span>
-              </h2>
-            </motion.div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {resume.certificates.map((cert, i) => (
-                <motion.div
-                  key={cert.name}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ delay: i * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                  className="glass rounded-2xl overflow-hidden group hover:border-primary/30 transition-all"
-                >
-                  <div className="flex min-h-36 gap-4 p-5 sm:p-6">
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                      <Award className="h-9 w-9 text-primary" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-lg font-semibold leading-snug">{cert.name}</h3>
-                      <p className="mt-1 text-sm font-medium text-muted-foreground">{cert.issuer}</p>
-                      <p className="text-sm text-muted-foreground">{cert.date}</p>
-                      {cert.url && (
-                        <a
-                          href={cert.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
-                        >
-                          View Credential
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* ─── PROJECTS ─── */}
-      <section id="projects" className="px-5 py-12 sm:px-6 md:py-18 border-t border-border/50">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-          >
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Projects</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8">
-              What I&apos;ve <span className="text-gradient">built</span>
-            </h2>
-          </motion.div>
-
-          <div className="space-y-4">
-            {projects.map((project, i) => (
-              <motion.div
-                key={project.slug}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: i * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                className="glass rounded-2xl overflow-hidden"
-              >
-                <div className="p-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        {project.highlight && (
-                          <Badge variant="secondary" className="bg-primary/15 text-primary text-xs border-0">
-                            Featured
-                          </Badge>
-                        )}
-                        {project.industry && (
-                          <Badge variant="secondary" className="text-xs">
-                            {project.industry}
-                          </Badge>
-                        )}
-                        {project.year && <span className="text-xs text-muted-foreground">{project.year}</span>}
-                      </div>
-                      <h3 className="text-xl font-semibold leading-snug sm:text-2xl">{project.title}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">{project.oneLiner}</p>
-                    </div>
-                  </div>
-
-                  {project.images[0] ? (
-                    <div className="mt-5 overflow-hidden rounded-xl border border-border bg-muted/30">
-                      <Image
-                        src={project.images[0]}
-                        alt={`${project.title} workflow preview`}
-                        width={1200}
-                        height={849}
-                        className="h-auto w-full object-contain"
-                      />
-                    </div>
-                  ) : (
-                    <ArchitectureFlow architecture={project.architecture} className="mt-5" />
-                  )}
-
-                  <div className="mt-4 rounded-xl border border-border bg-muted/40 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-primary">Impact</p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                      {project.results[0]}
-                    </p>
-                  </div>
-
-                  <p className="text-sm mt-4 leading-relaxed text-muted-foreground sm:text-base">{project.description}</p>
-
-                  <div className="flex flex-wrap gap-1.5 mt-4">
-                    {project.tech.map((t) => (
-                      <Badge key={t} variant="secondary" className="text-xs">
-                        {t}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() =>
-                      setExpandedProject(expandedProject === project.slug ? null : project.slug)
-                    }
-                    className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline mt-4"
-                  >
-                    {expandedProject === project.slug ? "Hide" : "View"} Case Study
-                    <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform ${
-                        expandedProject === project.slug ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                </div>
-
-                {/* Architecture panel */}
-                {expandedProject === project.slug && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-                    className="border-t border-border/50 px-5 pb-5 pt-4 space-y-4 sm:px-6 sm:pb-6"
-                  >
-                    <div>
-                      <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        <Layers className="w-3.5 h-3.5" />
-                        Architecture
-                      </p>
-                      <p className="text-sm font-mono bg-muted/50 rounded-lg px-3 py-2 leading-relaxed">
-                        {project.architecture}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                          <Target className="w-3.5 h-3.5" />
-                          Problem
-                        </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{project.problem}</p>
-                      </div>
-                      <div>
-                        <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                          <Lightbulb className="w-3.5 h-3.5" />
-                          Solution
-                        </p>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{project.solution}</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                        <Zap className="w-3.5 h-3.5" />
-                        Key Features
-                      </p>
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                        {project.keyFeatures.map((f) => (
-                          <li key={f} className="text-sm text-muted-foreground flex items-start gap-2">
-                            <span className="text-primary mt-0.5">•</span>
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          Challenges
-                        </p>
-                        <ul className="space-y-1">
-                          {project.challenges.map((c) => (
-                            <li key={c} className="text-sm text-muted-foreground">• {c}</li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div>
-                        <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
-                          <Cpu className="w-3.5 h-3.5" />
-                          Results
-                        </p>
-                        <ul className="space-y-1">
-                          {project.results.map((r) => (
-                            <li key={r} className="text-sm text-muted-foreground">• {r}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FUN FACTS ─── */}
-      <section className="px-5 py-12 sm:px-6 md:py-18 border-t border-border/50">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-          >
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Beyond the Build</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8">
-              A little <span className="text-gradient">about me</span>
-            </h2>
-          </motion.div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {fun.hobbies.slice(0, 3).map((hobby, i) => {
-              const Icon = hobbyIcons[hobby.icon] ?? Zap;
-              return (
-                <motion.div
-                  key={hobby.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ delay: i * 0.1, type: "spring" as const, stiffness: 260, damping: 24 }}
-                  className="glass rounded-2xl p-5"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 className="font-semibold">{hobby.name}</h3>
-                  </div>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{hobby.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <div className="glass rounded-2xl p-5 sm:p-6">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-primary" />
-              Quick Facts
-            </h3>
-            <ul className="space-y-2">
-              {fun.facts.map((fact, i) => (
-                <motion.li
-                  key={fact}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06 }}
-                  className="text-sm text-muted-foreground"
-                >
-                  • {fact}
-                </motion.li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── CONTACT ─── */}
-      <section id="contact" className="px-5 py-12 sm:px-6 md:py-18 border-t border-border/50">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ type: "spring" as const, stiffness: 260, damping: 24 }}
-          >
-            <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">Contact</p>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-              Let&apos;s <span className="text-gradient">build something</span>
-            </h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Have a repetitive process slowing down your business? Let&apos;s explore how it can become a reliable system.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="glass rounded-2xl p-5 sm:p-8 max-w-2xl mx-auto space-y-6"
-          >
-            <p className="text-sm font-medium text-muted-foreground">{contact.availability}. I typically reply within 1-2 business days.</p>
-
-            <div className="grid gap-4 text-left sm:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)]">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Mail className="w-6 h-6 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="break-all text-[0.82rem] font-medium leading-snug min-[420px]:text-sm sm:whitespace-nowrap sm:text-[0.92rem] md:text-[0.95rem]">
-                    {contact.email}
-                  </p>
-                </div>
-              </div>
-
-              {contact.whatsapp && (
-                <a
-                  href={contact.whatsapp}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-w-0 items-center gap-3 transition-opacity hover:opacity-80"
-                >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Phone className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <p className="text-sm text-muted-foreground">WhatsApp</p>
-                    <p className="font-medium">Message me</p>
-                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </a>
-              )}
-            </div>
-
-            <div className="flex justify-center gap-3">
-              {contact.socials.map((social) => {
-                const Icon = social.icon === "github" ? GithubIcon : LinkedinIcon;
-                return (
-                  <a
-                    key={social.label}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-12 h-12 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors"
-                    aria-label={social.label}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </a>
-                );
-              })}
-            </div>
-
-            {contact.calendly && (
+              ))}
               <a
                 href={contact.calendly}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full px-6 py-3 rounded-full bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity glow-cyan"
+                className="mt-2 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-foreground px-4 font-semibold text-background"
               >
-                <Calendar className="w-4 h-4" />
-                Book a Discovery Call
+                Book a call
+                <ArrowUpRight className="h-4 w-4" />
               </a>
-            )}
+            </div>
+          </nav>
+        )}
+      </header>
 
-            <button
-              onClick={handleChatClick}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-border bg-muted font-semibold text-foreground hover:bg-accent transition-colors"
+      <main>
+        <section id="top" className="hero-grid relative overflow-hidden border-b border-border pt-[4.5rem]">
+          <div className="relative z-10 mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-7xl gap-10 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,1.12fr)_minmax(22rem,0.72fr)] lg:items-center lg:gap-14 lg:py-20">
+            <motion.div variants={stagger} initial="hidden" animate="show" className="relative z-10">
+              <motion.button
+                variants={rise}
+                type="button"
+                onClick={() => openChat("Are you available for a new project?")}
+                className="mb-7 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-3 py-1.5 text-left text-xs font-semibold text-primary sm:text-sm"
+              >
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                {persona.status}
+              </motion.button>
+
+              <motion.p variants={rise} className="eyebrow mb-4">
+                {persona.role} · {persona.location}
+              </motion.p>
+
+              <motion.h1
+                variants={rise}
+                className="display-title max-w-4xl text-[clamp(3.4rem,8.8vw,7.6rem)] leading-[0.92]"
+              >
+                {persona.heroHeadline}
+              </motion.h1>
+
+              <motion.p variants={rise} className="mt-7 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
+                {persona.heroDescription}
+              </motion.p>
+
+              <motion.div variants={rise} className="mt-8 flex flex-wrap gap-3">
+                <a
+                  href="#work"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5"
+                >
+                  See selected work
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => openChat()}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-semibold transition-colors hover:border-foreground/30"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Ask MinMin AI
+                </button>
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reduceMotion ? 0 : 0.18, type: "spring", stiffness: 220, damping: 25 }}
+              className="relative mx-auto w-full max-w-md lg:max-w-none"
             >
-              <MessageCircle className="w-4 h-4" />
-              Ask MinMin About Your Workflow
-            </button>
-          </motion.div>
+              <div className="absolute -left-5 top-10 h-24 w-24 rounded-full bg-highlight/70 blur-2xl" />
+              <div className="absolute -right-6 bottom-20 h-32 w-32 rounded-full bg-primary/20 blur-3xl" />
+              <div className="relative overflow-hidden rounded-[2rem] border border-foreground/10 bg-card p-3 shadow-2xl">
+                <div className="relative aspect-[4/4.35] overflow-hidden rounded-[1.45rem] bg-highlight">
+                  <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4">
+                    <span className="rounded-full bg-background/88 px-3 py-1 text-xs font-semibold backdrop-blur">{persona.tagline}</span>
+                    <span className="rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">Build with Jazz</span>
+                  </div>
+                  <Image
+                    src="/avatars/avatar.webp"
+                    alt={`${persona.name}, ${persona.role}`}
+                    width={640}
+                    height={700}
+                    priority
+                    className="h-full w-full object-cover object-center"
+                  />
+                  <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/20 bg-panel/90 p-4 text-panel-foreground backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-semibold">Practical systems. Clear handoffs.</p>
+                        <p className="mt-1 text-xs text-panel-foreground/70">AI · automation · backend</p>
+                      </div>
+                      <Bot className="h-6 w-6 text-highlight" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
 
-          {/* Footer */}
-          <div className="mt-16 pt-8 border-t border-border/50">
-            <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} BuildWithJazz.com
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: reduceMotion ? 0 : 0.28, type: "spring", stiffness: 240, damping: 24 }}
+              className="relative z-10 lg:col-span-2"
+            >
+              <form onSubmit={submitQuestion} className="rounded-2xl border border-border bg-card p-2 shadow-sm">
+                <label htmlFor="portfolio-question" className="sr-only">Ask MinMin AI about Jazzmin&apos;s work</label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="flex min-h-12 flex-1 items-center gap-3 px-3">
+                    <Sparkles className="h-5 w-5 shrink-0 text-primary" />
+                    <input
+                      id="portfolio-question"
+                      value={question}
+                      onChange={(event) => setQuestion(event.target.value)}
+                      placeholder="Ask about my work, skills, or your workflow..."
+                      className="h-12 min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!question.trim()}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-foreground px-5 text-sm font-semibold text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Ask MinMin
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </form>
+              <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {heroQuestions.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => openChat(item.query)}
+                    className="shrink-0 rounded-full border border-border bg-background/75 px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/35 hover:text-foreground"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
           </div>
+        </section>
+
+        <section id="work" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28">
+          <div className="mx-auto max-w-7xl">
+            <SectionIntro
+              eyebrow="Selected work"
+              title="Systems built around the real bottleneck."
+              copy="A few recent builds across lead operations, research, and AI-assisted decision workflows."
+            />
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              {featuredProjects.map((project, index) => (
+                <motion.article
+                  key={project.slug}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-70px" }}
+                  transition={{ delay: reduceMotion ? 0 : index * 0.06, type: "spring", stiffness: 240, damping: 25 }}
+                  className={`group overflow-hidden rounded-[1.75rem] border border-border bg-card ${index === 0 ? "lg:col-span-2" : ""}`}
+                >
+                  <div className={index === 0 ? "grid lg:grid-cols-[1.05fr_0.95fr]" : ""}>
+                    <div className={`bg-muted/60 p-3 ${index === 0 ? "lg:order-2" : ""}`}>
+                      {project.images[0] ? (
+                        <div className="overflow-hidden rounded-2xl border border-border bg-background">
+                          <Image
+                            src={project.images[0]}
+                            alt={`${project.title} workflow preview`}
+                            width={1200}
+                            height={849}
+                            className="aspect-[16/10] h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.015]"
+                          />
+                        </div>
+                      ) : (
+                        <ArchitectureFlow architecture={project.architecture} className="min-h-64 rounded-2xl bg-background" />
+                      )}
+                    </div>
+
+                    <div className={`flex flex-col p-6 sm:p-8 ${index === 0 ? "lg:order-1 lg:p-10" : ""}`}>
+                      <div className="flex items-center justify-between gap-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        <span>{project.industry ?? project.year ?? "AI systems"}</span>
+                      </div>
+                      <h3 className={`mt-7 font-bold tracking-[-0.035em] ${index === 0 ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"}`}>
+                        {project.title}
+                      </h3>
+                      <p className="mt-4 text-base leading-7 text-muted-foreground">{project.oneLiner}</p>
+
+                      <div className="mt-6 border-l-2 border-primary pl-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Delivered</p>
+                        <p className="mt-2 text-sm leading-6 text-foreground/85">{project.results[0]}</p>
+                      </div>
+
+                      <div className="mt-7 flex flex-wrap gap-2">
+                        {project.tech.slice(0, 6).map((technology) => (
+                          <span key={technology} className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                            {technology}
+                          </span>
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => openChat(`Tell me about the ${project.title} case study.`)}
+                        className="mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                      >
+                        Ask about this build
+                        <ArrowUpRight className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => openChat("Show me all of your projects.")}
+                className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-semibold hover:border-foreground/30"
+              >
+                Explore all projects with MinMin
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="capabilities" className="scroll-mt-24 border-y border-border bg-muted/35 px-5 py-20 sm:px-8 sm:py-28">
+          <div className="mx-auto max-w-7xl">
+            <SectionIntro
+              eyebrow="Capabilities"
+              title="From messy process to dependable flow."
+              copy="I work across the full system: understanding the operation, connecting the tools, and making exceptions visible."
+            />
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              {persona.services.map((service, index) => {
+                const Icon = serviceIcons[index] ?? Code2;
+                return (
+                  <motion.article
+                    key={service.title}
+                    initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ delay: reduceMotion ? 0 : index * 0.06, type: "spring", stiffness: 250, damping: 24 }}
+                    className="rounded-[1.5rem] border border-border bg-card p-6 sm:p-7"
+                  >
+                    <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <h3 className="mt-8 text-xl font-bold tracking-[-0.025em]">{service.title}</h3>
+                    <p className="mt-3 text-sm leading-6 text-muted-foreground">{service.description}</p>
+                    <ul className="mt-6 grid gap-2 border-t border-border pt-5">
+                      {service.examples.map((example) => (
+                        <li key={example} className="flex items-center gap-2 text-sm font-medium">
+                          <Check className="h-4 w-4 text-primary" />
+                          {example}
+                        </li>
+                      ))}
+                    </ul>
+                  </motion.article>
+                );
+              })}
+            </div>
+
+            <div className="mt-12 rounded-[1.5rem] border border-border bg-background p-6 sm:p-8">
+              <div className="grid gap-7 lg:grid-cols-[0.35fr_1fr]">
+                <div>
+                  <p className="eyebrow">Working toolkit</p>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">Tools change. Strong system thinking stays.</p>
+                </div>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {skills.map((category) => (
+                    <div key={category.category}>
+                      <h3 className="text-sm font-semibold">{category.category}</h3>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {category.items.slice(0, 6).map((skill) => (
+                          <span key={skill.name} className="rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground">
+                            {skill.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="about" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28">
+          <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.72fr)] lg:gap-20">
+            <motion.div
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-70px" }}
+              transition={{ type: "spring", stiffness: 250, damping: 24 }}
+            >
+              <p className="eyebrow mb-4">About</p>
+              <h2 className="display-title max-w-3xl text-4xl sm:text-5xl lg:text-6xl">Engineering roots. Automation focus.</h2>
+              <p className="mt-7 max-w-3xl text-lg leading-8 text-muted-foreground">{persona.bio}</p>
+
+              <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+                {persona.highlights.slice(0, 4).map((highlight) => (
+                  <li key={highlight} className="flex items-start gap-3 text-sm leading-6">
+                    <span className="mt-1 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/10">
+                      <Check className="h-3 w-3 text-primary" />
+                    </span>
+                    {highlight}
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={resume.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-9 inline-flex min-h-12 items-center gap-2 rounded-xl border border-border bg-card px-5 text-sm font-semibold hover:border-foreground/30"
+              >
+                <Download className="h-4 w-4" />
+                Download résumé
+              </a>
+            </motion.div>
+
+            <motion.aside
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-70px" }}
+              transition={{ delay: reduceMotion ? 0 : 0.08, type: "spring", stiffness: 250, damping: 24 }}
+              className="space-y-5"
+            >
+              <div className="grid grid-cols-3 overflow-hidden rounded-[1.5rem] border border-border bg-card">
+                {[
+                  ["3+", "Years in engineering"],
+                  ["1+", "Year focused on AI"],
+                  [String(projects.length), "Systems featured"],
+                ].map(([value, label], index) => (
+                  <div key={label} className={`p-5 ${index > 0 ? "border-l border-border" : ""}`}>
+                    <p className="text-2xl font-bold tracking-[-0.04em] sm:text-3xl">{value}</p>
+                    <p className="mt-2 text-[0.68rem] leading-4 text-muted-foreground sm:text-xs">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-[1.5rem] border border-border bg-card p-6">
+                <div className="flex items-center gap-3">
+                  <Award className="h-5 w-5 text-primary" />
+                  <h3 className="font-semibold">Credentials</h3>
+                </div>
+                <div className="mt-5 divide-y divide-border">
+                  {resume.certificates.map((certificate) => (
+                    <a
+                      key={certificate.name}
+                      href={certificate.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+                    >
+                      <span>
+                        <span className="block text-sm font-semibold">{certificate.name}</span>
+                        <span className="mt-1 block text-xs text-muted-foreground">{certificate.issuer} · {certificate.date}</span>
+                      </span>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-border bg-highlight p-6 text-highlight-foreground">
+                <MapPin className="h-5 w-5" />
+                <p className="mt-5 text-lg font-bold">Based in {persona.location}</p>
+                <p className="mt-2 text-sm leading-6 text-highlight-foreground/70">Available for remote collaboration and project-based work.</p>
+              </div>
+            </motion.aside>
+          </div>
+        </section>
+
+        <section id="contact" className="scroll-mt-24 px-5 pb-8 sm:px-8 sm:pb-10">
+          <motion.div
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-70px" }}
+            transition={{ type: "spring", stiffness: 240, damping: 24 }}
+            className="contact-panel mx-auto max-w-7xl overflow-hidden rounded-[2rem] p-7 sm:p-10 lg:p-14"
+          >
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-current/60">Start a conversation</p>
+                <h2 className="display-title mt-5 max-w-4xl text-4xl sm:text-6xl lg:text-7xl">Have a workflow that should run better?</h2>
+                <p className="mt-6 max-w-2xl text-base leading-7 text-current/70 sm:text-lg">
+                  Share the process, the bottleneck, and the tools you use today. I&apos;ll help you find the clearest next step.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <a
+                  href={contact.calendly}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-background px-6 text-sm font-semibold text-foreground transition-transform hover:-translate-y-0.5"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Book a 15-minute call
+                </a>
+                <button
+                  type="button"
+                  onClick={() => openChat("I have a workflow I want to improve. Where should we start?")}
+                  className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl border border-current/20 px-6 text-sm font-semibold transition-colors hover:bg-current/5"
+                >
+                  <Bot className="h-4 w-4" />
+                  Start with MinMin AI
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-12 flex flex-col gap-5 border-t border-current/15 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <a href={`mailto:${contact.email}`} className="inline-flex items-center gap-2 font-medium hover:underline">
+                <Mail className="h-4 w-4" />
+                {contact.email}
+              </a>
+              <div className="flex items-center gap-2">
+                {contact.socials.map((social) => {
+                  const Icon = social.icon === "github" ? GithubIcon : LinkedinIcon;
+                  return (
+                    <a
+                      key={social.label}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="grid h-10 w-10 place-items-center rounded-xl border border-current/20 transition-colors hover:bg-current/5"
+                      aria-label={social.label}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        </section>
+      </main>
+
+      <footer className="px-5 py-8 sm:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Build with Jazz</p>
+          <p>Designed for clarity. Built for conversation.</p>
         </div>
-      </section>
+      </footer>
     </div>
   );
 }

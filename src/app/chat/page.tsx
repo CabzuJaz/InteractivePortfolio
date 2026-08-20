@@ -276,13 +276,13 @@ function ChatContent() {
   const visibleLocalPrepSheets = showLocalPrepSheets ? localPrepSheets.slice(-1) : [];
 
   return (
-    <div className="flex flex-col h-dvh bg-background">
+    <div className="flex h-dvh flex-col bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-10 border-b border-border/50 glass-strong">
-        <div className="max-w-3xl mx-auto flex items-center gap-3 px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-3xl items-center gap-3 px-4">
           <Link
             href="/"
-            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+            className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-card transition-colors hover:bg-accent"
             aria-label="Back to home"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -293,11 +293,14 @@ function ChatContent() {
               alt={persona.nickname}
               width={32}
               height={32}
-              className="w-8 h-8 rounded-full object-cover"
+              className="h-9 w-9 rounded-xl object-cover"
             />
             <div>
-              <h1 className="text-sm font-semibold">{persona.nickname}</h1>
-              <p className="text-xs text-muted-foreground">AI Assistant</p>
+              <h1 className="text-sm font-semibold">{persona.nickname} AI</h1>
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                Interactive portfolio
+              </p>
             </div>
           </div>
           <ThemeToggle />
@@ -306,6 +309,17 @@ function ChatContent() {
 
       {/* Messages */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+        {messages.length === 0 && (
+          <div className="mx-auto max-w-3xl px-4 pb-2 pt-12 sm:pt-16">
+            <p className="eyebrow">Ask the portfolio</p>
+            <h2 className="display-title mt-4 max-w-2xl text-3xl sm:text-4xl">
+              Start with the work, the skills, or a workflow you want to improve.
+            </h2>
+            <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
+              I&apos;m the AI version of {persona.nickname}. I answer from {persona.name}&apos;s portfolio and can pull up projects, experience, and contact details.
+            </p>
+          </div>
+        )}
         <MessageList messages={messages} isLoading={isLoading} />
         {visibleLocalPrepSheets.length > 0 && (
           <div className="max-w-3xl mx-auto px-4 pb-3 space-y-3">
@@ -331,7 +345,7 @@ function ChatContent() {
       </div>
 
       {/* Bottom: suggestions + input */}
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur-md pt-3 pb-1">
+      <div className="sticky bottom-0 border-t border-border/70 bg-background/90 pb-1 pt-3 backdrop-blur-xl">
         <div className="max-w-3xl mx-auto">
           <SuggestionChips onSelect={handleSendMessage} disabled={isLoading} />
           <ChatInput onSubmit={handleSendMessage} isLoading={isLoading} />
