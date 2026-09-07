@@ -29,8 +29,8 @@ export default function BugManLogin() {
         throw new Error(data?.error || "That code did not work.");
       }
 
-      // A full reload so the server re-renders the page with the new cookie.
-      window.location.reload();
+      // A full navigation so the server renders the gated route with the new cookie.
+      window.location.assign("/bug-man/dashboard");
     } catch (unlockError) {
       setError(unlockError instanceof Error ? unlockError.message : "That code did not work.");
       setIsSubmitting(false);
