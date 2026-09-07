@@ -13,7 +13,8 @@ const accessSchema = z.object({
   accountEmail: z.union([z.literal(""), z.string().trim().email().max(254)]),
   loginUrl: z.union([z.literal(""), z.string().trim().url().max(500)]),
   permission: z.string().trim().min(2).max(500),
-  credentialReference: z.string().trim().max(500),
+  deliveryMethod: z.enum(["invite", "link", "call"]),
+  secretLink: z.union([z.literal(""), z.string().trim().url().max(500)]),
   submittedBy: z.enum(["Larry", "Tyson", "Jazz", "Other"]),
   notes: z.string().trim().max(1000),
   website: z.string().max(200).optional(),
@@ -25,6 +26,28 @@ const submissionWindows = new Map<string, number[]>();
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT = 8;
 const obviousSecretPattern = /(?:^|\n)\s*(?:password|passcode|api[_ -]?key|secret|access[_ -]?token|recovery[_ -]?code)\s*[:=]\s*\S+/i;
+
+// Only single-view secret services are accepted, so a shared credential cannot outlive the handover.
+const oneTimeLinkHosts = ["onetimesecret.com", "1password.com", "bitwarden.com", "privnote.com", "yopass.se"];
+
+const deliveryLabels: Record<string, string> = {
+  invite: "Invited Jazz as a user inside the system",
+  link: "Sent a one-time secret link (stored only in the private record)",
+  call: "Wants to hand the details over on a call",
+};
+
+function isOneTimeLink(value: string) {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  return (
+    url.protocol === "https:" &&
+    oneTimeLinkHosts.some((host) => url.hostname === host || url.hostname.endsWith("." + host))
+  );
+}
 
 function json(body: object, status: number) {
   return NextResponse.json(body, {
@@ -114,7 +137,7 @@ async function sendDiscordNotification(access: Omit<AccessSubmission, "website">
           { name: "Account email", value: discordValue(access.accountEmail), inline: false },
           { name: "Login URL", value: discordValue(access.loginUrl), inline: false },
           { name: "Required permission", value: discordValue(access.permission), inline: false },
-          { name: "Credential reference", value: discordValue(access.credentialReference), inline: false },
+          { name: "How access is shared", value: discordValue(deliveryLabels[access.deliveryMethod]), inline: false },
           { name: "Notes", value: discordValue(access.notes), inline: false },
         ],
         timestamp: submittedAt,
@@ -208,12 +231,14 @@ export async function POST(request: NextRequest) {
     return json({ ok: true, notificationSent: true }, 200);
   }
 
-  const textFields = [parsed.data.permission, parsed.data.credentialReference, parsed.data.notes];
+  const textFields = [parsed.data.permission, parsed.data.notes];
   if (textFields.some((value) => obviousSecretPattern.test(value))) {
-    return json({ error: "Remove passwords, API keys, tokens, or recovery codes. Enter only a secure credential reference." }, 400);
+    return json({ error: "Please remove the password, key, or code from this form, then choose the invite or one-time link option instead." }, 400);
   }
-  if (/https?:\/\//i.test(parsed.data.credentialReference)) {
-    return json({ error: "Do not paste a secure-share URL. Enter only the credential vault item name." }, 400);
+
+  const secretLink = parsed.data.deliveryMethod === "link" ? parsed.data.secretLink : "";
+  if (parsed.data.deliveryMethod === "link" && !isOneTimeLink(secretLink)) {
+    return json({ error: "Paste the link from a one-time secret service such as onetimesecret.com, so it stops working once Jazz opens it." }, 400);
   }
 
   const access: Omit<AccessSubmission, "website"> = {
@@ -222,7 +247,8 @@ export async function POST(request: NextRequest) {
     accountEmail: parsed.data.accountEmail,
     loginUrl: parsed.data.loginUrl,
     permission: parsed.data.permission,
-    credentialReference: parsed.data.credentialReference,
+    deliveryMethod: parsed.data.deliveryMethod,
+    secretLink,
     submittedBy: parsed.data.submittedBy,
     notes: parsed.data.notes,
   };
