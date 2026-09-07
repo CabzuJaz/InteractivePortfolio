@@ -21,9 +21,9 @@ export const persona = {
     "honest about what I don't know",
     "technical but approachable",
   ],
-  bio: "I'm a software engineer turned AI automation engineer, with 3+ years across engineering and automation and the last year focused on AI systems. I design and deploy production-grade workflows, multi-agent pipelines, and integrations using Claude API, Python, MCP, and n8n. My work spans secure banking document processing, lead operations, email triage, and AI orchestration.",
+  bio: "I'm a software engineer turned AI automation engineer, with 3+ years across engineering and automation and the last year focused on AI systems. I design and deploy production-grade workflows, multi-agent pipelines, and integrations using Python, Claude API, Codex, MCP, and n8n. My work spans content operations, secure banking document processing, lead operations, email triage, and AI orchestration.",
   summary:
-    "I have 3+ years in software engineering and automation, including 1+ year specializing in AI systems. I design and deploy production-grade AI workflows, multi-agent pipelines, and intelligent integrations using Claude API, Python, and MCP.",
+    "I have 3+ years in software engineering and automation, including 1+ year specializing in AI systems. I design and deploy production-grade AI workflows, content operations systems, multi-agent pipelines, and intelligent integrations using Python, Codex, Claude API, MCP, and n8n.",
   services: [
     {
       title: "Automation systems",
@@ -34,8 +34,8 @@ export const persona = {
     {
       title: "AI workflows",
       description:
-        "I build focused AI agents for research, triage, qualification, and structured decision support.",
-      examples: ["AI agents", "Email triage", "Lead research", "Tool use"],
+        "I build focused AI agents for research, content operations, triage, qualification, and structured decision support.",
+      examples: ["AI agents", "Content operations", "Human approval", "Tool use"],
     },
     {
       title: "Backend & integrations",
@@ -49,8 +49,8 @@ export const persona = {
   highlights: [
     "3+ years in software engineering & automation",
     "1+ year specializing in AI systems and multi-agent pipelines",
-    "Production-grade builds with Claude API, MCP, and n8n",
+    "Production-grade builds with Python, Codex, Claude API, MCP, and n8n",
     "Backend engineering with Python, C#, and SQL",
-    "API integrations: Google, Microsoft Graph, Anthropic, GoHighLevel",
+    "API integrations: Google, Microsoft Graph, Anthropic, Discord, GoHighLevel",
   ],
 } as const;
