@@ -11,6 +11,7 @@ Jazzmin Sicat-Cabizares’s interactive portfolio for AI automation, workflow en
 | `/prep` | Structured automation discovery form for prospective clients |
 | `/dashboard` | Internal client-project dashboard |
 | `/client/[slug]` | Client-facing project view |
+| `/bug-man` | Bug-Man Phase 1 project-readiness and access-intake dashboard |
 
 The public journey is deliberately short: understand the value → see evidence → explore details → start a conversation.
 
@@ -102,3 +103,26 @@ The UI must remain usable at 375px, 768px, and 1280px; keyboard focus must remai
 ## Deployment
 
 The production project is configured for Vercel. Push an approved, validated change to the connected branch and verify the resulting deployment. Environment values are managed in the deployment platform and must never be committed.
+
+### Bug-Man access form setup
+
+The `/bug-man` access form saves each non-secret response as a private `.txt` object and sends a notification to a dedicated Discord channel. The files are not imported by or passed to the portfolio AI. Never ask Larry to paste passwords, API keys, tokens, recovery codes, or secure-share URLs into the form.
+
+For local development, records append to `.private/bug-man/access-submissions.txt`. The entire `.private/` directory is excluded from Git. On Vercel, each response is stored separately under `bug-man/access-responses/YYYY-MM-DD/<record-id>.txt` in a Private Blob store.
+
+On macOS, the dashboard reads the Discord webhook from the Keychain service `discord-creds-notif` when `BUG_MAN_ACCESS_DISCORD_WEBHOOK_URL` is not set. The webhook value is read only by the server route and is never printed, committed, or sent to the portfolio AI.
+
+For Vercel production:
+
+1. In the Vercel project, open **Storage**, create a Blob store with **Private** access, and connect it to the project. Vercel supplies the Blob credentials to the deployment.
+2. Keep the already configured Discord webhook environment value:
+
+   ```bash
+   BUG_MAN_ACCESS_DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/REPLACE_ID/REPLACE_TOKEN
+   ```
+
+Create a dedicated private Discord channel, open **Edit Channel → Integrations → Webhooks**, create a webhook, and store its URL only in the deployment environment. Do not commit the URL because its token allows messages to be posted to the channel.
+
+After deployment, submit one controlled WordPress record and one GorillaDesk record, confirm both private Blob files exist, and verify both Discord notifications.
+
+If the file saves successfully but Discord delivery fails or is not configured, the form shows a warning while retaining the private record.
