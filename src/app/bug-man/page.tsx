@@ -3,32 +3,22 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   Bell,
   Bug,
   Check,
   CheckCircle2,
-  ChevronRight,
-  CircleDashed,
+  Circle,
   Clock3,
   Database,
-  FileText,
-  Gauge,
   Inbox,
-  LayoutDashboard,
   LockKeyhole,
-  Mail,
-  Menu,
   MessageSquareText,
-  PlugZap,
   Search,
   Send,
-  Settings,
   ShieldCheck,
   SlidersHorizontal,
-  UsersRound,
-  Webhook,
-  X,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,116 +26,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
-type View = "overview" | "workflow" | "access";
-
-const milestones = [
-  {
-    id: "access",
-    number: "01",
-    title: "Access & feasibility",
-    description: "Confirm source access, APIs, and Tyson’s handling rules.",
-    cap: 4,
-    status: "ready",
-  },
-  {
-    id: "capture",
-    number: "02",
-    title: "Capture & GorillaDesk",
-    description: "Normalize, match, create or update each qualified lead.",
-    cap: 8,
-    status: "locked",
-  },
-  {
-    id: "operations",
-    number: "03",
-    title: "Slack & Discord operations",
-    description: "Route notifications, reminders, and visible failure alerts.",
-    cap: 5,
-    status: "locked",
-  },
-  {
-    id: "wordpress",
-    number: "04",
-    title: "WordPress connection",
-    description: "Connect approved forms after answering-service validation.",
-    cap: 3,
-    status: "locked",
-  },
-  {
-    id: "testing",
-    number: "05",
-    title: "Test & handoff",
-    description: "Run controlled tests, document, and walk through with Tyson.",
-    cap: 4,
-    status: "locked",
-  },
-] as const;
-
-const accessItems = [
-  { id: "samples", label: "Answering-service text/email samples", owner: "Larry" },
-  { id: "gorilla", label: "Bug-Man GorillaDesk + API access", owner: "Larry" },
-  { id: "wordpress", label: "WordPress / WPForms access", owner: "Larry" },
-  { id: "slack", label: "General Slack workspace + Bug-Man channel permissions", owner: "Larry" },
-  { id: "discord", label: "Dedicated Discord channel webhook", owner: "Larry" },
-  { id: "log", label: "Private Bug-Man response storage", owner: "Jazz" },
-  { id: "tyson", label: "GorillaDesk rules walkthrough", owner: "Tyson" },
-] as const;
-
-const workflow = [
-  {
-    icon: Inbox,
-    label: "Capture",
-    detail: "Answering service or WPForms",
-  },
-  {
-    icon: SlidersHorizontal,
-    label: "Normalize",
-    detail: "Name, phone, email, service need",
-  },
-  {
-    icon: Search,
-    label: "Match",
-    detail: "Check phone and email",
-  },
-  {
-    icon: Database,
-    label: "GorillaDesk",
-    detail: "Create lead or update customer",
-  },
-  {
-    icon: Bell,
-    label: "Notify",
-    detail: "Bug-Man channels in general Slack + Discord",
-  },
-] as const;
-
-const acceptanceCriteria = [
-  "Each approved source reaches the correct workflow",
-  "Valid leads create or update the correct record",
-  "Duplicate events do not create duplicate customers",
-  "Incomplete information routes to manual review",
-  "Failures create a visible internal alert",
-  "Bug-Man data never enters BMPC systems",
-  "Tyson completes the working-process walkthrough",
-  "No internal SMS or customer auto-texting is active",
-];
-
-function BugMark() {
-  return (
-    <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-      <Bug className="size-[18px]" strokeWidth={2.4} />
-    </div>
-  );
-}
-
-function StatusPill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold text-primary">
-      <span className="size-1.5 rounded-full bg-primary" />
-      {children}
-    </span>
-  );
-}
+type View = "start" | "access" | "plan";
+type Approval = "approved" | "hold" | null;
 
 type AccessFormState = {
   system: string;
@@ -158,46 +40,67 @@ type AccessFormState = {
   notes: string;
 };
 
+const requiredSystems = ["Answering service", "GorillaDesk", "WordPress", "Slack", "Discord"] as const;
+
 const accessSystemPresets: Record<string, Pick<AccessFormState, "accessArea" | "permission">> = {
+  "Answering service": {
+    accessArea: "Answering-service texts and emails",
+    permission: "Sample messages and access to the approved delivery inbox or integration",
+  },
+  GorillaDesk: {
+    accessArea: "GorillaDesk CRM and API",
+    permission: "Customers, leads, notes, custom fields, and API access",
+  },
   WordPress: {
     accessArea: "WordPress / WPForms",
     permission: "Administrator access or a role that can review forms and configure webhooks",
   },
-  GorillaDesk: {
-    accessArea: "GorillaDesk CRM and API",
-    permission: "Access to customers, leads, notes, custom fields, and API credentials",
-  },
-  "Answering service": {
-    accessArea: "Answering-service texts and emails",
-    permission: "Access to sample messages and the approved delivery inbox or integration",
-  },
   Slack: {
     accessArea: "General Slack workspace",
-    permission: "Permission to create and manage dedicated Bug-Man lead and alert channels",
+    permission: "Create and manage dedicated Bug-Man lead and alert channels",
   },
   Discord: {
     accessArea: "Dedicated Bug-Man response channel",
-    permission: "Permission to create a channel webhook for internal access-response alerts",
+    permission: "Create and use a channel webhook for internal access-response alerts",
   },
-  "Private response log": {
-    accessArea: "Bug-Man private response files",
-    permission: "Private Vercel Blob storage available to the dashboard backend only",
-  },
-  Other: { accessArea: "", permission: "" },
 };
 
-const emptyAccessForm: AccessFormState = {
-  system: "WordPress",
+const initialAccessForm: AccessFormState = {
+  system: "GorillaDesk",
   accountEmail: "",
   loginUrl: "",
   credentialReference: "",
   submittedBy: "Larry",
   notes: "",
-  ...accessSystemPresets.WordPress,
+  ...accessSystemPresets.GorillaDesk,
 };
 
-function AccessDetailsForm() {
-  const [form, setForm] = useState<AccessFormState>(emptyAccessForm);
+const milestones = [
+  ["01", "Access & feasibility", "Confirm source access, APIs, and Tyson’s handling rules.", "4h"],
+  ["02", "Capture & GorillaDesk", "Normalize, match, create, or update each qualified lead.", "8h"],
+  ["03", "Slack & Discord", "Route lead notifications and visible failure alerts.", "5h"],
+  ["04", "WordPress connection", "Connect approved forms after the answering-service path works.", "3h"],
+  ["05", "Test & handoff", "Run controlled tests, document, and walk through with Tyson.", "4h"],
+] as const;
+
+const workflow = [
+  { icon: Inbox, label: "Capture", detail: "Texts, emails, or WPForms" },
+  { icon: SlidersHorizontal, label: "Clean", detail: "Normalize customer details" },
+  { icon: Search, label: "Match", detail: "Check phone and email" },
+  { icon: Database, label: "Update", detail: "Create or update GorillaDesk" },
+  { icon: Bell, label: "Alert", detail: "Slack and Discord" },
+] as const;
+
+function BugMark() {
+  return (
+    <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+      <Bug className="size-5" strokeWidth={2.4} />
+    </div>
+  );
+}
+
+function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => void }) {
+  const [form, setForm] = useState<AccessFormState>(initialAccessForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{ tone: "success" | "error" | "warning"; message: string } | null>(null);
 
@@ -226,17 +129,23 @@ function AccessDetailsForm() {
       const data = (await response.json().catch(() => null)) as { error?: string; notificationSent?: boolean } | null;
 
       if (!response.ok) {
-        throw new Error(data?.error || "The access details could not be saved.");
+        throw new Error(data?.error || "These details could not be saved.");
       }
 
+      onSubmitted(form.system);
       setResult(data?.notificationSent === false
-        ? { tone: "warning", message: "Details were saved privately, but the Discord notification could not be sent." }
-        : { tone: "success", message: "Details were saved privately and the Discord notification was sent." });
-      setForm((current) => ({ ...emptyAccessForm, submittedBy: current.submittedBy }));
+        ? { tone: "warning", message: "Saved privately. The Discord alert needs attention, but your response is safe." }
+        : { tone: "success", message: "Done—saved privately and Jazz was notified in Discord." });
+      setForm((current) => ({
+        ...initialAccessForm,
+        system: current.system,
+        submittedBy: current.submittedBy,
+        ...accessSystemPresets[current.system],
+      }));
     } catch (error) {
       setResult({
         tone: "error",
-        message: error instanceof Error ? error.message : "The access details could not be saved.",
+        message: error instanceof Error ? error.message : "These details could not be saved.",
       });
     } finally {
       setIsSubmitting(false);
@@ -251,91 +160,90 @@ function AccessDetailsForm() {
       : "border-destructive/25 bg-destructive/10 text-destructive";
 
   return (
-    <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-      <div className="flex flex-col gap-3 border-b border-border px-5 py-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-base font-semibold">Submit access details</h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Add one system at a time. Each submission is recorded separately so Jazz can verify access and follow up.
-          </p>
-        </div>
-        <Badge variant="outline" className="w-fit border-primary/25 bg-primary/10 text-primary">Private file + Discord</Badge>
-      </div>
-
-      <CardContent className="p-5">
-        <div className="mb-5 flex gap-3 rounded-xl border border-primary/20 bg-primary/[0.06] p-4">
-          <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" />
-          <p className="text-sm leading-6 text-muted-foreground">
-            Do not enter passwords, API keys, tokens, recovery codes, or secure-share URLs. Enter only the name of the item in the approved credential vault.
-          </p>
-        </div>
-
-        <form className="space-y-5" onSubmit={submitAccess}>
+    <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+      <CardContent className="p-5 sm:p-7">
+        <form className="space-y-6" onSubmit={submitAccess}>
           <div className="absolute -left-[10000px] top-auto size-px overflow-hidden" aria-hidden="true">
             <label htmlFor="bug-man-website">Website</label>
             <input id="bug-man-website" name="website" tabIndex={-1} autoComplete="off" />
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <label className="text-sm font-medium">
-              System <span className="text-primary">*</span>
-              <select className={fieldClass} value={form.system} onChange={(event) => selectSystem(event.target.value)} required>
-                {Object.keys(accessSystemPresets).map((system) => <option key={system}>{system}</option>)}
-              </select>
-            </label>
-
-            <label className="text-sm font-medium">
-              Access area <span className="text-primary">*</span>
-              <input className={fieldClass} value={form.accessArea} onChange={(event) => updateField("accessArea", event.target.value)} maxLength={100} required />
-            </label>
-
-            <label className="text-sm font-medium">
-              Account or login email
-              <input className={fieldClass} type="email" autoComplete="email" placeholder="larry@example.com" value={form.accountEmail} onChange={(event) => updateField("accountEmail", event.target.value)} maxLength={254} />
-            </label>
-
-            <label className="text-sm font-medium">
-              Login URL
-              <input className={fieldClass} type="url" inputMode="url" placeholder="https://example.com/login" value={form.loginUrl} onChange={(event) => updateField("loginUrl", event.target.value)} maxLength={500} />
-            </label>
-
-            <label className="text-sm font-medium md:col-span-2">
-              Required permission or role <span className="text-primary">*</span>
-              <input className={fieldClass} value={form.permission} onChange={(event) => updateField("permission", event.target.value)} maxLength={500} required />
-            </label>
-
-            <label className="text-sm font-medium md:col-span-2">
-              Secure credential reference
-              <input className={fieldClass} placeholder="Example: 1Password item 'Bug-Man WordPress'" value={form.credentialReference} onChange={(event) => updateField("credentialReference", event.target.value)} maxLength={500} />
-              <span className="mt-2 block text-xs font-normal text-muted-foreground">Reference only—never paste the credential itself.</span>
-            </label>
-
-            <label className="text-sm font-medium">
-              Submitted by <span className="text-primary">*</span>
-              <select className={fieldClass} value={form.submittedBy} onChange={(event) => updateField("submittedBy", event.target.value)} required>
-                {["Larry", "Tyson", "Jazz", "Other"].map((name) => <option key={name}>{name}</option>)}
-              </select>
-            </label>
-
-            <label className="text-sm font-medium md:col-span-2">
-              Notes
-              <textarea className="mt-2 min-h-28 w-full resize-y rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Add setup notes, limitations, or the best contact for access approval." value={form.notes} onChange={(event) => updateField("notes", event.target.value)} maxLength={1000} />
-            </label>
+          <div>
+            <p className="text-sm font-semibold">1. Choose the system</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {requiredSystems.map((system) => (
+                <button
+                  key={system}
+                  type="button"
+                  aria-pressed={form.system === system}
+                  onClick={() => selectSystem(system)}
+                  className={cn(
+                    "flex min-h-11 items-center justify-between rounded-xl border px-3.5 py-3 text-left text-sm font-medium transition",
+                    form.system === system
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                  )}
+                >
+                  {system}
+                  {form.system === system && <Check className="size-4" />}
+                </button>
+              ))}
+            </div>
           </div>
 
+          <div className="border-t border-border pt-6">
+            <p className="text-sm font-semibold">2. Tell us where the access belongs</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">Use the account information Jazz should expect. All fields except the permission are optional.</p>
+
+            <div className="mt-4 grid gap-5 md:grid-cols-2">
+              <label className="text-sm font-medium">
+                Account or login email
+                <input className={fieldClass} type="email" autoComplete="email" placeholder="larry@example.com" value={form.accountEmail} onChange={(event) => updateField("accountEmail", event.target.value)} maxLength={254} />
+              </label>
+
+              <label className="text-sm font-medium">
+                Login page
+                <input className={fieldClass} type="url" inputMode="url" placeholder="https://example.com/login" value={form.loginUrl} onChange={(event) => updateField("loginUrl", event.target.value)} maxLength={500} />
+              </label>
+
+              <label className="text-sm font-medium md:col-span-2">
+                Credential vault item name
+                <input className={fieldClass} placeholder="Example: 1Password item 'Bug-Man GorillaDesk'" value={form.credentialReference} onChange={(event) => updateField("credentialReference", event.target.value)} maxLength={500} />
+                <span className="mt-2 block text-xs font-normal leading-5 text-muted-foreground">Enter the item name only—never paste a password, token, key, or secure-share URL.</span>
+              </label>
+            </div>
+          </div>
+
+          <details className="rounded-xl border border-border bg-muted/25">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Review permission and add notes</summary>
+            <div className="grid gap-5 border-t border-border p-4 md:grid-cols-2">
+              <label className="text-sm font-medium md:col-span-2">
+                Permission Jazz needs <span className="text-primary">*</span>
+                <input className={fieldClass} value={form.permission} onChange={(event) => updateField("permission", event.target.value)} maxLength={500} required />
+              </label>
+              <label className="text-sm font-medium">
+                Submitted by
+                <select className={fieldClass} value={form.submittedBy} onChange={(event) => updateField("submittedBy", event.target.value)}>
+                  {["Larry", "Tyson", "Jazz", "Other"].map((name) => <option key={name}>{name}</option>)}
+                </select>
+              </label>
+              <label className="text-sm font-medium md:col-span-2">
+                Notes
+                <textarea className="mt-2 min-h-24 w-full resize-y rounded-xl border border-border bg-background px-3 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20" placeholder="Anything Jazz should know about this access." value={form.notes} onChange={(event) => updateField("notes", event.target.value)} maxLength={1000} />
+              </label>
+            </div>
+          </details>
+
           {result && (
-            <div role="status" className={cn("rounded-xl border px-4 py-3 text-sm", resultClass)}>
+            <div role="status" className={cn("rounded-xl border px-4 py-3 text-sm leading-6", resultClass)}>
               {result.message}
             </div>
           )}
 
-          <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-5 text-muted-foreground">The form saves a private timestamped .txt record; it is never sent to the portfolio AI.</p>
-            <Button type="submit" className="min-w-44 rounded-xl" disabled={isSubmitting}>
-              <Send className="size-4" />
-              {isSubmitting ? "Saving…" : "Send access details"}
-            </Button>
-          </div>
+          <Button type="submit" size="lg" className="w-full rounded-xl sm:w-auto sm:min-w-52" disabled={isSubmitting}>
+            <Send className="size-4" />
+            {isSubmitting ? "Saving securely…" : "Save access details"}
+          </Button>
         </form>
       </CardContent>
     </Card>
@@ -343,496 +251,384 @@ function AccessDetailsForm() {
 }
 
 export default function BugManDashboard() {
-  const [view, setView] = useState<View>("overview");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [checkedAccess, setCheckedAccess] = useState<string[]>([]);
+  const [view, setView] = useState<View>("start");
+  const [approval, setApproval] = useState<Approval>(null);
+  const [submittedSystems, setSubmittedSystems] = useState<string[]>([]);
 
   useEffect(() => {
-    const restoreSavedState = window.setTimeout(() => {
+    const restore = window.setTimeout(() => {
       try {
-        const saved = window.localStorage.getItem("bug-man-access-checks");
-        if (saved) {
-          const parsed: unknown = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.every((item) => typeof item === "string")) {
-            setCheckedAccess(parsed);
-          }
+        const savedApproval = window.localStorage.getItem("bug-man-approval");
+        if (savedApproval === "approved" || savedApproval === "hold") setApproval(savedApproval);
+
+        const savedSystems: unknown = JSON.parse(window.localStorage.getItem("bug-man-submitted-systems") || "[]");
+        if (Array.isArray(savedSystems) && savedSystems.every((item) => typeof item === "string")) {
+          setSubmittedSystems(savedSystems);
         }
       } catch {
-        // Device-local convenience only; the dashboard still works without it.
+        // The workflow remains usable when browser storage is unavailable.
       }
     }, 0);
-
-    return () => window.clearTimeout(restoreSavedState);
+    return () => window.clearTimeout(restore);
   }, []);
 
-  const toggleAccess = (id: string) => {
-    setCheckedAccess((current) => {
-      const next = current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id];
+  const chooseApproval = (choice: Exclude<Approval, null>) => {
+    setApproval(choice);
+    try {
+      window.localStorage.setItem("bug-man-approval", choice);
+    } catch {
+      // Device-local convenience only.
+    }
+  };
+
+  const recordSubmission = (system: string) => {
+    setSubmittedSystems((current) => {
+      const next = current.includes(system) ? current : [...current, system];
       try {
-        window.localStorage.setItem("bug-man-access-checks", JSON.stringify(next));
+        window.localStorage.setItem("bug-man-submitted-systems", JSON.stringify(next));
       } catch {
-        // Keep the interaction working when browser storage is unavailable.
+        // The private server record is already saved.
       }
       return next;
     });
   };
 
-  const accessPercent = Math.round((checkedAccess.length / accessItems.length) * 100);
-  const hours = useMemo(() => milestones.reduce((sum, item) => sum + item.cap, 0), []);
+  const requiredSubmitted = useMemo(
+    () => requiredSystems.filter((system) => submittedSystems.includes(system)).length,
+    [submittedSystems],
+  );
+  const progressCount = requiredSubmitted + (approval ? 1 : 0);
+  const progressPercent = Math.round((progressCount / (requiredSystems.length + 1)) * 100);
 
-  const navItems = [
-    { id: "overview" as const, label: "Overview", icon: LayoutDashboard },
-    { id: "workflow" as const, label: "Lead workflow", icon: Webhook },
-    { id: "access" as const, label: "Access & readiness", icon: LockKeyhole },
-  ];
+  const navigate = (nextView: View) => {
+    setView(nextView);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col border-r border-border bg-card transition-transform duration-300 lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex h-[74px] items-center gap-3 border-b border-border px-5">
+      <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-18 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <BugMark />
-          <div>
-            <p className="text-[15px] font-semibold tracking-[-0.02em]">Bug-Man</p>
-            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Lead operations</p>
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold">Bug-Man Phase 1</p>
+            <p className="hidden text-xs text-muted-foreground sm:block">Lead capture setup</p>
           </div>
-          <button
-            type="button"
-            className="ml-auto text-muted-foreground lg:hidden"
-            aria-label="Close navigation"
-            onClick={() => setSidebarOpen(false)}
-          >
-            <X className="size-5" />
-          </button>
-        </div>
 
-        <nav aria-label="Project navigation" className="space-y-1 px-3 py-5">
-          <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Phase 1 workspace
-          </p>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
+          <nav className="ml-auto hidden items-center gap-1 rounded-xl border border-border bg-muted/30 p-1 sm:flex" aria-label="Dashboard sections">
+            {[
+              ["start", "Start here"],
+              ["access", "Share access"],
+              ["plan", "Project plan"],
+            ].map(([id, label]) => (
               <button
-                key={item.id}
+                key={id}
                 type="button"
-                onClick={() => {
-                  setView(item.id);
-                  setSidebarOpen(false);
-                }}
+                aria-current={view === id ? "page" : undefined}
+                onClick={() => navigate(id as View)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium transition-colors",
-                  view === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  "rounded-lg px-3.5 py-2 text-sm font-medium transition",
+                  view === id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <Icon className="size-4" />
-                {item.label}
+                {label}
               </button>
-            );
-          })}
+            ))}
+          </nav>
+          <ThemeToggle />
+        </div>
+
+        <nav className="mx-auto grid max-w-6xl grid-cols-3 border-t border-border px-2 py-2 sm:hidden" aria-label="Dashboard sections">
+          {[
+            ["start", "Start"],
+            ["access", "Access"],
+            ["plan", "Plan"],
+          ].map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              aria-current={view === id ? "page" : undefined}
+              onClick={() => navigate(id as View)}
+              className={cn("rounded-lg px-2 py-2 text-sm font-medium", view === id ? "bg-primary text-primary-foreground" : "text-muted-foreground")}
+            >
+              {label}
+            </button>
+          ))}
         </nav>
+      </header>
 
-        <div className="mt-2 border-t border-border px-3 py-5">
-          <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Controls
-          </p>
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-muted-foreground">
-            <UsersRound className="size-4" /> Team & roles
-            <LockKeyhole className="ml-auto size-3.5" />
-          </div>
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] text-muted-foreground">
-            <Settings className="size-4" /> Settings
-            <LockKeyhole className="ml-auto size-3.5" />
-          </div>
-        </div>
-
-        <div className="mt-auto p-4">
-          <div className="rounded-xl border border-border bg-muted/40 p-3.5">
-            <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground">
-              <ShieldCheck className="size-4 text-primary" />
-              Records stay separated
-            </div>
-            <p className="mt-2 text-[10px] leading-4 text-muted-foreground">
-              Slack is shared. Bug-Man records and notifications stay in dedicated channels.
-            </p>
-          </div>
-          <div className="mt-4 flex items-center gap-3 px-1">
-            <div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-              LA
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium">Larry</p>
-              <p className="truncate text-[10px] text-muted-foreground">Project approver</p>
-            </div>
-            <ChevronRight className="size-4 text-muted-foreground" />
-          </div>
-        </div>
-      </aside>
-
-      <div className="lg:pl-[260px]">
-        <header className="sticky top-0 z-20 flex h-[74px] items-center border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-7 lg:px-9">
-          <button
-            type="button"
-            className="mr-3 rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden"
-            aria-label="Open navigation"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="size-5" />
-          </button>
-          <div>
-            <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
-              Projects <ChevronRight className="size-3" /> Bug-Man Phase 1
-            </div>
-            <p className="mt-1 text-sm font-medium sm:text-[15px]">
-              Answering-service & WordPress lead capture
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <ThemeToggle />
-            <Badge className="hidden h-8 rounded-lg border border-border bg-muted/40 px-3 text-[11px] font-medium text-muted-foreground hover:bg-muted/40 sm:inline-flex">
-              Phase 1 · Proposed
-            </Badge>
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-[1500px] px-4 py-6 sm:px-7 lg:px-9 lg:py-8">
-          {view === "overview" && (
-            <div className="space-y-6">
-              <section className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
-                <div>
-                  <StatusPill>Awaiting Larry’s clarification</StatusPill>
-                  <h1 className="display-title mt-4 max-w-3xl text-2xl sm:text-3xl">
-                    Build a reliable path from first contact to the right GorillaDesk record.
-                  </h1>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                    Capture new-customer details, prevent duplicate records, and give the Bug-Man team a clear next action—without touching BMPC systems.
-                  </p>
+      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10">
+        {view === "start" && (
+          <div className="space-y-7">
+            <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary">Proposed · Setup only</Badge>
+                <h1 className="mt-4 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">Larry, here’s what we need to get started.</h1>
+                <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Complete the decision and share access. Jazz will handle the technical setup from there.</p>
+              </div>
+              <div className="w-full rounded-2xl border border-border bg-card p-4 sm:w-56">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">Setup progress</span>
+                  <span className="font-semibold text-primary">{progressCount}/6</span>
                 </div>
-                <div className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
-                  <Clock3 className="size-3.5" /> Last reviewed Sep 7, 2026
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: String(progressPercent) + "%" }} />
                 </div>
-              </section>
+              </div>
+            </section>
 
-              <section className="relative overflow-hidden rounded-2xl border border-primary/25 bg-primary p-5 text-primary-foreground sm:p-6">
-                <div className="pointer-events-none absolute -right-14 -top-20 size-56 rounded-full border-[35px] border-black/[0.04]" />
-                <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
-                  <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-card text-primary">
-                    <AlertTriangle className="size-[17px]" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] opacity-60">Decision required before work begins</p>
-                    <h2 className="mt-1 text-lg font-semibold tracking-[-0.025em]">Should new-customer details be added to GorillaDesk automatically?</h2>
-                    <p className="mt-1 max-w-2xl text-xs leading-5 opacity-70">
-                      Larry’s confirmation must be recorded through the agreed project approval process. This dashboard does not grant approval or activate production automation.
-                    </p>
-                  </div>
-                  <Button type="button" variant="secondary" onClick={() => setView("access")} className="shrink-0 rounded-xl bg-card text-foreground hover:bg-card/90">
-                    Provide access details <ArrowRight className="size-4" />
-                  </Button>
-                </div>
-              </section>
-
-              <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {[
-                  { label: "Project status", value: "Proposed", icon: Gauge, note: "Pending Larry’s approval" },
-                  { label: "Total hour cap", value: `${hours} hours`, icon: Clock3, note: "Across 5 milestones" },
-                  { label: "Planned sources", value: "3 channels", icon: Inbox, note: "Texts, email, WPForms" },
-                  { label: "Live automations", value: "0 active", icon: PlugZap, note: "Production safely off" },
-                ].map(({ label, value, icon: Icon, note }) => (
-                  <Card key={label} className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                    <CardContent className="p-4.5">
-                      <div className="flex items-start justify-between">
-                        <p className="text-[11px] font-medium text-muted-foreground">{label}</p>
-                        <div className="flex size-8 items-center justify-center rounded-lg border border-border bg-muted/50 text-muted-foreground">
-                          <Icon className="size-4" />
-                        </div>
+            <section className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.55fr)]">
+              <div className="space-y-5">
+                <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+                  <CardContent className="p-5 sm:p-7">
+                    <div className="flex items-start gap-4">
+                      <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold", approval ? "border-primary bg-primary text-primary-foreground" : "border-border bg-muted")}>
+                        {approval ? <Check className="size-4" /> : "1"}
                       </div>
-                      <p className="mt-4 text-[22px] font-semibold tracking-[-0.035em]">{value}</p>
-                      <p className="mt-1 text-[10px] text-muted-foreground">{note}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </section>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-primary">Decision</p>
+                        <h2 className="mt-1 text-xl font-semibold">Add new-customer details to GorillaDesk automatically?</h2>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">Valid leads will be created or matched to an existing customer. Unclear information will always go to manual review.</p>
 
-              <section className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.75fr)]">
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          <button
+                            type="button"
+                            aria-pressed={approval === "approved"}
+                            onClick={() => chooseApproval("approved")}
+                            className={cn(
+                              "rounded-xl border p-4 text-left transition",
+                              approval === "approved" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40",
+                            )}
+                          >
+                            <span className="flex items-center gap-2 text-sm font-semibold">
+                              {approval === "approved" ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}
+                              Yes, prepare automation
+                            </span>
+                            <span className="mt-1.5 block text-xs leading-5 text-muted-foreground">Production still stays off until final approval.</span>
+                          </button>
+                          <button
+                            type="button"
+                            aria-pressed={approval === "hold"}
+                            onClick={() => chooseApproval("hold")}
+                            className={cn(
+                              "rounded-xl border p-4 text-left transition",
+                              approval === "hold" ? "border-primary bg-primary/10" : "border-border hover:border-primary/40",
+                            )}
+                          >
+                            <span className="flex items-center gap-2 text-sm font-semibold">
+                              {approval === "hold" ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}
+                              Not yet
+                            </span>
+                            <span className="mt-1.5 block text-xs leading-5 text-muted-foreground">Jazz will pause and clarify the workflow.</span>
+                          </button>
+                        </div>
+                        <p className="mt-3 text-xs text-muted-foreground">This choice is saved on this device; formal approval is recorded separately.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+                  <CardContent className="p-5 sm:p-7">
+                    <div className="flex items-start gap-4">
+                      <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold", requiredSubmitted === requiredSystems.length ? "border-primary bg-primary text-primary-foreground" : "border-border bg-muted")}>
+                        {requiredSubmitted === requiredSystems.length ? <Check className="size-4" /> : "2"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-primary">Access</p>
+                        <h2 className="mt-1 text-xl font-semibold">Share access one system at a time.</h2>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">Use vault item names only. Passwords and tokens never belong in this dashboard.</p>
+
+                        <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                          {requiredSystems.map((system) => {
+                            const complete = submittedSystems.includes(system);
+                            return (
+                              <div key={system} className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-3.5 py-3">
+                                {complete ? <CheckCircle2 className="size-4 shrink-0 text-primary" /> : <Circle className="size-4 shrink-0 text-muted-foreground" />}
+                                <span className={cn("text-sm", complete ? "font-medium" : "text-muted-foreground")}>{system}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <Button size="lg" onClick={() => navigate("access")} className="mt-5 w-full rounded-xl sm:w-auto">
+                          Share access details <ArrowRight className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-5">
+                <Card className="gap-0 rounded-2xl border-primary/20 bg-primary/[0.06] py-0 ring-0">
+                  <CardContent className="p-5">
+                    <h2 className="text-base font-semibold">What happens next</h2>
+                    <div className="mt-4 space-y-4">
+                      {[
+                        "Jazz verifies each connection.",
+                        "Tyson confirms GorillaDesk rules.",
+                        "A controlled test runs before anything goes live.",
+                      ].map((item, index) => (
+                        <div key={item} className="flex gap-3">
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">{index + 1}</span>
+                          <p className="pt-0.5 text-sm leading-5 text-muted-foreground">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                      <ShieldCheck className="size-4 text-primary" /> Safety rules
+                    </div>
+                    <ul className="mt-4 space-y-3 text-sm leading-5 text-muted-foreground">
+                      <li>• Bug-Man stays separate from BMPC.</li>
+                      <li>• No automatic customer texting.</li>
+                      <li>• Unclear leads require human review.</li>
+                      <li>• Failures create a visible alert.</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            <section className="grid gap-3 sm:grid-cols-3">
+              {[
+                ["24 hours", "Maximum Phase 1 cap", Clock3],
+                ["3 sources", "Texts, emails, and WPForms", MessageSquareText],
+                ["0 live", "Production automations", LockKeyhole],
+              ].map(([value, label, Icon]) => (
+                <div key={String(label)} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+                  <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold">{String(value)}</p>
+                    <p className="text-xs text-muted-foreground">{String(label)}</p>
+                  </div>
+                </div>
+              ))}
+            </section>
+          </div>
+        )}
+
+        {view === "access" && (
+          <div className="space-y-6">
+            <section>
+              <button type="button" onClick={() => navigate("start")} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+                <ArrowLeft className="size-4" /> Back to setup
+              </button>
+              <Badge variant="outline" className="mt-6 border-primary/25 bg-primary/10 text-primary">Private .txt + Discord</Badge>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Share one access item.</h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Choose a system, identify the account, and save. Repeat only for the systems you can provide today.</p>
+            </section>
+
+            <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <AccessDetailsForm onSubmitted={recordSubmission} />
+              <aside className="space-y-5">
+                <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+                  <CardContent className="p-5">
+                    <h2 className="text-sm font-semibold">Completed on this device</h2>
+                    <div className="mt-4 space-y-3">
+                      {requiredSystems.map((system) => {
+                        const complete = submittedSystems.includes(system);
+                        return (
+                          <div key={system} className="flex items-center gap-3">
+                            {complete ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}
+                            <span className={cn("text-sm", complete ? "font-medium" : "text-muted-foreground")}>{system}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+                <div className="flex gap-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
+                  <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" />
+                  <p className="text-sm leading-6 text-muted-foreground">Responses are private, excluded from the portfolio AI, and copied to the dedicated Discord alert channel.</p>
+                </div>
+              </aside>
+            </section>
+          </div>
+        )}
+
+        {view === "plan" && (
+          <div className="space-y-7">
+            <section>
+              <Badge variant="outline" className="border-primary/25 bg-primary/10 text-primary">24-hour maximum</Badge>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">A short, controlled Phase 1.</h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Access is checked first. If a required system cannot connect, work stops before the remaining hours are used.</p>
+            </section>
+
+            <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+              <div className="border-b border-border px-5 py-4">
+                <h2 className="text-base font-semibold">Milestones</h2>
+              </div>
+              <CardContent className="divide-y divide-border p-0">
+                {milestones.map(([number, title, detail, cap], index) => (
+                  <div key={number} className="grid gap-3 px-5 py-5 sm:grid-cols-[44px_minmax(0,1fr)_60px] sm:items-center">
+                    <span className={cn("flex size-8 items-center justify-center rounded-full text-xs font-semibold", index === 0 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>{number}</span>
                     <div>
-                      <h2 className="text-sm font-semibold">Milestone plan</h2>
-                      <p className="mt-1 text-[11px] text-muted-foreground">Actual time will be recorded against each approved cap.</p>
+                      <p className="text-sm font-semibold">{title}</p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{detail}</p>
                     </div>
-                    <button type="button" onClick={() => setView("workflow")} className="flex items-center gap-1 text-[11px] font-medium text-primary hover:underline">
-                      View workflow <ChevronRight className="size-3.5" />
-                    </button>
+                    <span className="text-sm font-semibold sm:text-right">{cap}</span>
                   </div>
-                  <CardContent className="px-0 py-1">
-                    {milestones.map((milestone, index) => (
-                      <div key={milestone.id} className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-5 py-4 last:border-0 sm:grid-cols-[42px_minmax(0,1fr)_110px_76px]">
-                        <span className="font-mono text-xs text-muted-foreground">{milestone.number}</span>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="truncate text-xs font-semibold sm:text-[13px]">{milestone.title}</p>
-                            {index === 0 && <span className="hidden size-1.5 rounded-full bg-primary sm:block" />}
-                          </div>
-                          <p className="mt-1 truncate text-[10px] text-muted-foreground">{milestone.description}</p>
-                        </div>
-                        <div className="hidden items-center gap-2 sm:flex">
-                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                            <div className="h-full w-0 rounded-full bg-primary" />
-                          </div>
-                          <span className="w-6 text-right text-[10px] text-muted-foreground">0h</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs font-semibold">{milestone.cap}h</span>
-                          <span className="ml-1 text-[9px] text-muted-foreground">cap</span>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
+                ))}
+              </CardContent>
+            </Card>
 
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="border-b border-border px-5 py-4">
+            <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+              <div className="border-b border-border px-5 py-4">
+                <h2 className="text-base font-semibold">How each lead moves</h2>
+              </div>
+              <CardContent className="grid gap-3 p-5 md:grid-cols-5">
+                {workflow.map(({ icon: Icon, label, detail }, index) => (
+                  <div key={label} className="relative rounded-xl border border-border bg-muted/20 p-4">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-semibold">Access readiness</h2>
-                      <span className="font-mono text-[11px] text-primary">{checkedAccess.length}/{accessItems.length}</span>
+                      <Icon className="size-5 text-primary" />
+                      <span className="text-xs text-muted-foreground">0{index + 1}</span>
                     </div>
-                    <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${accessPercent}%` }} />
-                    </div>
+                    <p className="mt-5 text-sm font-semibold">{label}</p>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p>
                   </div>
-                  <CardContent className="space-y-1 p-3">
-                    {accessItems.slice(0, 5).map((item) => {
-                      const checked = checkedAccess.includes(item.id);
-                      return (
-                        <button key={item.id} type="button" onClick={() => toggleAccess(item.id)} className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-muted">
-                          <span className={cn("flex size-4 shrink-0 items-center justify-center rounded border", checked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-muted/40")}>
-                            {checked && <Check className="size-3" strokeWidth={3} />}
-                          </span>
-                          <span className={cn("min-w-0 flex-1 truncate text-[11px]", checked ? "text-muted-foreground line-through" : "text-muted-foreground")}>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                    <Button variant="ghost" onClick={() => setView("access")} className="mt-2 w-full justify-between rounded-xl text-[11px] text-muted-foreground hover:bg-muted hover:text-foreground">
-                      Review all requirements <ChevronRight className="size-3.5" />
-                    </Button>
-                  </CardContent>
-                </Card>
-              </section>
+                ))}
+              </CardContent>
+            </Card>
 
-              <section className="grid gap-5 lg:grid-cols-2">
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="flex items-center justify-between border-b border-border px-5 py-4">
-                    <h2 className="text-sm font-semibold">Lead sources</h2>
-                    <span className="text-[10px] text-muted-foreground">Connection order</span>
-                  </div>
-                  <CardContent className="grid gap-3 p-4 sm:grid-cols-3">
-                    {[
-                      { icon: MessageSquareText, label: "Service texts", order: "First", state: "Access needed" },
-                      { icon: Mail, label: "Service emails", order: "First", state: "Access needed" },
-                      { icon: FileText, label: "WPForms", order: "After validation", state: "Queued" },
-                    ].map(({ icon: Icon, label, order, state }) => (
-                      <div key={label} className="rounded-xl border border-border bg-muted/30 p-3.5">
-                        <div className="flex items-center justify-between">
-                          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <Icon className="size-4" />
-                          </div>
-                          <span className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">{order}</span>
-                        </div>
-                        <p className="mt-4 text-xs font-semibold">{label}</p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">{state}</p>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="border-b border-border px-5 py-4">
-                    <h2 className="text-sm font-semibold">Guardrails</h2>
-                  </div>
-                  <CardContent className="grid gap-x-5 gap-y-3.5 p-5 sm:grid-cols-2">
-                    {[
-                      ["No customer auto-texting", "Customer messaging stays off."],
-                      ["Shared general Slack", "Dedicated Bug-Man lead and alert channels."],
-                      ["No unapproved AI / OCR", "Separate review required."],
-                      ["Stop on infeasibility", "Report options before more hours."],
-                    ].map(([title, detail]) => (
-                      <div key={title} className="flex gap-3">
-                        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-                        <div>
-                          <p className="text-[11px] font-semibold">{title}</p>
-                          <p className="mt-0.5 text-[10px] leading-4 text-muted-foreground">{detail}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </section>
-            </div>
-          )}
-
-          {view === "workflow" && (
-            <div className="space-y-6">
-              <section>
-                <StatusPill>Blueprint · Not connected</StatusPill>
-                <h1 className="display-title mt-4 text-2xl sm:text-3xl">One controlled path for every new inquiry.</h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Every source follows the same validation, matching, and notification rules before any action reaches production.</p>
-              </section>
-
-              <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                <div className="border-b border-border px-5 py-4">
-                  <h2 className="text-sm font-semibold">Primary lead path</h2>
-                  <p className="mt-1 text-[11px] text-muted-foreground">Answering-service path first, WordPress after validation.</p>
-                </div>
-                <CardContent className="p-5 sm:p-7">
-                  <div className="grid gap-3 md:grid-cols-5">
-                    {workflow.map(({ icon: Icon, label, detail }, index) => (
-                      <div key={label} className="relative">
-                        <div className="h-full rounded-xl border border-border bg-muted/40 p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                              <Icon className="size-4" />
-                            </div>
-                            <span className="font-mono text-[10px] text-muted-foreground">0{index + 1}</span>
-                          </div>
-                          <p className="mt-5 text-xs font-semibold">{label}</p>
-                          <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{detail}</p>
-                        </div>
-                        {index < workflow.length - 1 && <ArrowRight className="absolute -right-3 top-1/2 z-10 hidden size-3 text-muted-foreground md:block" />}
-                      </div>
-                    ))}
-                  </div>
+            <section className="grid gap-5 md:grid-cols-2">
+              <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
+                <CardContent className="p-5">
+                  <h2 className="flex items-center gap-2 text-base font-semibold"><CheckCircle2 className="size-5 text-primary" /> A successful test means</h2>
+                  <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
+                    <li>• New leads reach the correct GorillaDesk workflow.</li>
+                    <li>• Existing customers receive an update and source note.</li>
+                    <li>• Duplicate events do not create duplicate customers.</li>
+                    <li>• Missing information goes to manual review.</li>
+                  </ul>
                 </CardContent>
               </Card>
+              <Card className="gap-0 rounded-2xl border-primary/20 bg-primary/[0.06] py-0 ring-0">
+                <CardContent className="p-5">
+                  <h2 className="flex items-center gap-2 text-base font-semibold"><AlertTriangle className="size-5 text-primary" /> Not included</h2>
+                  <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
+                    <li>• Internal SMS notifications or reminders</li>
+                    <li>• Automated customer texting</li>
+                    <li>• Changes to BMPC workflows</li>
+                    <li>• AI or OCR without separate approval</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </section>
 
-              <section className="grid gap-5 lg:grid-cols-2">
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="border-b border-border px-5 py-4"><h2 className="text-sm font-semibold">Decision logic</h2></div>
-                  <CardContent className="space-y-3 p-5">
-                    {[
-                      { title: "Required information is complete", action: "Check phone + email for an existing customer", tone: "lime" },
-                      { title: "No customer match", action: "Create a new GorillaDesk lead", tone: "lime" },
-                      { title: "Existing customer found", action: "Update the customer and add a source note", tone: "lime" },
-                      { title: "Missing or uncertain details", action: "Route to Bug-Man Slack for manual review", tone: "amber" },
-                      { title: "Integration failure", action: "Raise a visible internal alert; do not silently retry", tone: "red" },
-                    ].map((item) => (
-                      <div key={item.title} className="flex items-center gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3">
-                        <span className={cn("size-2 shrink-0 rounded-full", item.tone === "lime" ? "bg-primary" : item.tone === "amber" ? "bg-primary" : "bg-destructive")} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[11px] font-semibold">{item.title}</p>
-                          <p className="mt-0.5 text-[10px] text-muted-foreground">{item.action}</p>
-                        </div>
-                        <ChevronRight className="size-3.5 text-muted-foreground" />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="border-b border-border px-5 py-4"><h2 className="text-sm font-semibold">Acceptance checklist</h2></div>
-                  <CardContent className="space-y-3 p-5">
-                    {acceptanceCriteria.map((item) => (
-                      <div key={item} className="flex gap-3">
-                        <CircleDashed className="mt-px size-4 shrink-0 text-muted-foreground" />
-                        <p className="text-[11px] leading-4 text-muted-foreground">{item}</p>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </section>
-            </div>
-          )}
-
-          {view === "access" && (
-            <div className="space-y-6">
-              <section className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-                <div>
-                  <StatusPill>Milestone 01 · Up to 4 hours</StatusPill>
-                  <h1 className="display-title mt-4 text-2xl sm:text-3xl">Access & feasibility gate</h1>
-                  <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Verify every required connection before implementation hours are used. Checks below are saved only on this device.</p>
-                </div>
-                <div className="min-w-44 rounded-xl border border-border bg-card p-4">
-                  <div className="flex items-end justify-between"><span className="text-2xl font-semibold">{accessPercent}%</span><span className="text-[10px] text-muted-foreground">ready</span></div>
-                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${accessPercent}%` }} /></div>
-                </div>
-              </section>
-
-              <AccessDetailsForm />
-
-              <section className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(300px,0.6fr)]">
-                <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                  <div className="grid grid-cols-[minmax(0,1fr)_72px_36px] border-b border-border px-5 py-3 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:grid-cols-[minmax(0,1fr)_100px_90px]">
-                    <span>Requirement</span><span>Owner</span><span className="text-right">Status</span>
-                  </div>
-                  <CardContent className="px-0 py-0">
-                    {accessItems.map((item) => {
-                      const checked = checkedAccess.includes(item.id);
-                      return (
-                        <button key={item.id} type="button" onClick={() => toggleAccess(item.id)} className="grid w-full grid-cols-[minmax(0,1fr)_72px_36px] items-center border-b border-border px-5 py-4 text-left transition last:border-0 hover:bg-muted/30 sm:grid-cols-[minmax(0,1fr)_100px_90px]">
-                          <span className="flex min-w-0 items-center gap-3">
-                            <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-md border", checked ? "border-primary bg-primary text-primary-foreground" : "border-border bg-muted/40")}>
-                              {checked && <Check className="size-3.5" strokeWidth={3} />}
-                            </span>
-                            <span className={cn("truncate text-xs", checked ? "text-muted-foreground line-through" : "text-muted-foreground")}>{item.label}</span>
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">{item.owner}</span>
-                          <span className="text-right">
-                            {checked ? <CheckCircle2 className="ml-auto size-4 text-primary" /> : <span className="hidden text-[9px] text-primary sm:inline">Needed</span>}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-
-                <div className="space-y-5">
-                  <Card className="gap-0 rounded-2xl border border-primary/20 bg-primary/[0.06] py-0 ring-0">
-                    <CardContent className="p-5">
-                      <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary"><AlertTriangle className="size-4" /></div>
-                      <h2 className="mt-4 text-sm font-semibold text-primary">Stop condition</h2>
-                      <p className="mt-2 text-[11px] leading-5 text-muted-foreground">If a required system cannot support the connection, stop after feasibility checks. Report the limitation and available options before using any remaining hours.</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="gap-0 rounded-2xl border border-border bg-card py-0 ring-0">
-                    <CardContent className="p-5">
-                      <h2 className="text-sm font-semibold">People involved</h2>
-                      <div className="mt-4 space-y-4">
-                        {[
-                          ["Larry", "Approval, credentials, source access", "LA"],
-                          ["Tyson", "GorillaDesk rules & walkthrough", "TY"],
-                          ["Jazz", "Build, test, document", "JZ"],
-                        ].map(([name, role, initials]) => (
-                          <div key={name} className="flex items-center gap-3">
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary">{initials}</div>
-                            <div><p className="text-[11px] font-semibold">{name}</p><p className="mt-0.5 text-[9px] text-muted-foreground">{role}</p></div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </section>
-            </div>
-          )}
-        </main>
-      </div>
+            <Button size="lg" onClick={() => navigate("access")} className="rounded-xl">
+              Share access details <ArrowRight className="size-4" />
+            </Button>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
