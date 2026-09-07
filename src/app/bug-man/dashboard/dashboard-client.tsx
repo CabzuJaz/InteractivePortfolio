@@ -53,6 +53,8 @@ type SystemGuide = {
   permission: string;
   whyItMatters: string;
   inviteSteps: readonly string[];
+  /** Shown with the one-time link option when the secret has to be a specific thing. */
+  secretHint?: string;
 };
 
 const requiredSystems = ["Answering service", "GorillaDesk", "WordPress", "Slack"] as const;
@@ -70,13 +72,14 @@ const accessSystemGuides: Record<string, SystemGuide> = {
   },
   GorillaDesk: {
     accessArea: "GorillaDesk CRM and API",
-    permission: "Customers, leads, notes, custom fields, and API access",
+    permission: "Super Admin access, or an API key created from a Super Admin account",
     whyItMatters: "This is where every lead gets created or matched.",
     inviteSteps: [
       "Open GorillaDesk and go to Settings.",
       "Open Users, then choose Add User.",
-      "Paste the email below and give it Admin access.",
+      "Paste the email below and set the role to Super Admin.",
     ],
+    secretHint: "For GorillaDesk this needs to be an API key created from a Super Admin account. A lower role cannot create or update customers.",
   },
   WordPress: {
     accessArea: "WordPress / WPForms",
@@ -343,6 +346,9 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
                     </li>
                   ))}
                 </ol>
+                {guide.secretHint && (
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">{guide.secretHint}</p>
+                )}
                 <label className="mt-4 block text-sm font-medium">
                   Paste the one-time link
                   <input
