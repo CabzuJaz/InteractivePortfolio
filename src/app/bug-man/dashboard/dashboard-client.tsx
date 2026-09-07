@@ -57,6 +57,10 @@ type SystemGuide = {
 
 const requiredSystems = ["Answering service", "GorillaDesk", "WordPress", "Slack"] as const;
 
+// Access Jazz already holds. These stay on the checklist so it reads as complete,
+// but show as done so Larry is never asked to arrange them a second time.
+const preCompletedSystems: readonly string[] = ["Slack"];
+
 const accessSystemGuides: Record<string, SystemGuide> = {
   "Answering service": {
     accessArea: "Answering-service texts and emails",
@@ -451,9 +455,13 @@ export default function BugManDashboard() {
     });
   };
 
-  const requiredSubmitted = useMemo(
-    () => requiredSystems.filter((system) => submittedSystems.includes(system)).length,
+  const completedSystems = useMemo(
+    () => new Set<string>([...preCompletedSystems, ...submittedSystems]),
     [submittedSystems],
+  );
+  const requiredSubmitted = useMemo(
+    () => requiredSystems.filter((system) => completedSystems.has(system)).length,
+    [completedSystems],
   );
   const progressCount = requiredSubmitted + (approval ? 1 : 0);
   const progressPercent = Math.round((progressCount / (requiredSystems.length + 1)) * 100);
@@ -599,11 +607,13 @@ export default function BugManDashboard() {
 
                         <div className="mt-5 grid gap-2 sm:grid-cols-2">
                           {requiredSystems.map((system) => {
-                            const complete = submittedSystems.includes(system);
+                            const complete = completedSystems.has(system);
+                            const alreadyHandled = preCompletedSystems.includes(system);
                             return (
                               <div key={system} className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 px-3.5 py-3">
                                 {complete ? <CheckCircle2 className="size-4 shrink-0 text-primary" /> : <Circle className="size-4 shrink-0 text-muted-foreground" />}
                                 <span className={cn("text-sm", complete ? "font-medium" : "text-muted-foreground")}>{system}</span>
+                                {alreadyHandled && <span className="ml-auto shrink-0 text-xs text-muted-foreground">Already set up</span>}
                               </div>
                             );
                           })}
@@ -689,14 +699,16 @@ export default function BugManDashboard() {
               <aside className="space-y-5">
                 <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
                   <CardContent className="p-5">
-                    <h2 className="text-sm font-semibold">Completed on this device</h2>
+                    <h2 className="text-sm font-semibold">Setup checklist</h2>
                     <div className="mt-4 space-y-3">
                       {requiredSystems.map((system) => {
-                        const complete = submittedSystems.includes(system);
+                        const complete = completedSystems.has(system);
+                        const alreadyHandled = preCompletedSystems.includes(system);
                         return (
                           <div key={system} className="flex items-center gap-3">
-                            {complete ? <CheckCircle2 className="size-4 text-primary" /> : <Circle className="size-4 text-muted-foreground" />}
+                            {complete ? <CheckCircle2 className="size-4 shrink-0 text-primary" /> : <Circle className="size-4 shrink-0 text-muted-foreground" />}
                             <span className={cn("text-sm", complete ? "font-medium" : "text-muted-foreground")}>{system}</span>
+                            {alreadyHandled && <span className="ml-auto shrink-0 text-xs text-muted-foreground">Already set up</span>}
                           </div>
                         );
                       })}
