@@ -11,23 +11,30 @@ import {
   CheckCircle2,
   Circle,
   Clock3,
+  Copy,
   Database,
   Inbox,
+  Link2,
   LockKeyhole,
   MessageSquareText,
+  Phone,
   Search,
   Send,
   ShieldCheck,
   SlidersHorizontal,
+  UserPlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { contact } from "@/data/contact";
 import { cn } from "@/lib/utils";
 
 type View = "start" | "access" | "plan";
 type Approval = "approved" | "hold" | null;
+
+type DeliveryMethod = "invite" | "link" | "call";
 
 type AccessFormState = {
   system: string;
@@ -35,50 +42,82 @@ type AccessFormState = {
   accountEmail: string;
   loginUrl: string;
   permission: string;
-  credentialReference: string;
+  deliveryMethod: DeliveryMethod;
+  secretLink: string;
   submittedBy: string;
   notes: string;
 };
 
-const requiredSystems = ["Answering service", "GorillaDesk", "WordPress", "Slack", "Discord"] as const;
+type SystemGuide = {
+  accessArea: string;
+  permission: string;
+  whyItMatters: string;
+  inviteSteps: readonly string[];
+};
 
-const accessSystemPresets: Record<string, Pick<AccessFormState, "accessArea" | "permission">> = {
+const requiredSystems = ["Answering service", "GorillaDesk", "WordPress", "Slack"] as const;
+
+const accessSystemGuides: Record<string, SystemGuide> = {
   "Answering service": {
     accessArea: "Answering-service texts and emails",
     permission: "Sample messages and access to the approved delivery inbox or integration",
+    whyItMatters: "This is where a new lead arrives first.",
+    inviteSteps: [],
   },
   GorillaDesk: {
     accessArea: "GorillaDesk CRM and API",
     permission: "Customers, leads, notes, custom fields, and API access",
+    whyItMatters: "This is where every lead gets created or matched.",
+    inviteSteps: [
+      "Open GorillaDesk and go to Settings.",
+      "Open Users, then choose Add User.",
+      "Paste the email below and give it Admin access.",
+    ],
   },
   WordPress: {
     accessArea: "WordPress / WPForms",
     permission: "Administrator access or a role that can review forms and configure webhooks",
+    whyItMatters: "This connects the forms on your website.",
+    inviteSteps: [
+      "Open your WordPress admin area.",
+      "Go to Users, then Add New User.",
+      "Paste the email below and set the role to Administrator.",
+    ],
   },
   Slack: {
     accessArea: "General Slack workspace",
     permission: "Create and manage dedicated Bug-Man lead and alert channels",
-  },
-  Discord: {
-    accessArea: "Dedicated Bug-Man response channel",
-    permission: "Create and use a channel webhook for internal access-response alerts",
+    whyItMatters: "This is where lead and failure alerts land.",
+    inviteSteps: [
+      "Open your Slack workspace menu.",
+      "Choose Invite people to Slack.",
+      "Paste the email below and invite as a Member.",
+    ],
   },
 };
 
+const deliveryOptions = [
+  { id: "invite", icon: UserPlus, title: "Invite Jazz as a user", detail: "Simplest and safest. You never type a password." },
+  { id: "link", icon: Link2, title: "Send a one-time link", detail: "The link stops working after Jazz opens it once." },
+  { id: "call", icon: Phone, title: "Hand it over on a call", detail: "Jazz walks you through it live instead." },
+] as const;
+
 const initialAccessForm: AccessFormState = {
   system: "GorillaDesk",
+  accessArea: accessSystemGuides.GorillaDesk.accessArea,
+  permission: accessSystemGuides.GorillaDesk.permission,
   accountEmail: "",
   loginUrl: "",
-  credentialReference: "",
+  deliveryMethod: "invite",
+  secretLink: "",
   submittedBy: "Larry",
   notes: "",
-  ...accessSystemPresets.GorillaDesk,
 };
 
 const milestones = [
   ["01", "Access & feasibility", "Confirm source access, APIs, and Tyson’s handling rules.", "4h"],
   ["02", "Capture & GorillaDesk", "Normalize, match, create, or update each qualified lead.", "8h"],
-  ["03", "Slack & Discord", "Route lead notifications and visible failure alerts.", "5h"],
+  ["03", "Notifications & alerts", "Route lead notifications and visible failure alerts.", "5h"],
   ["04", "WordPress connection", "Connect approved forms after the answering-service path works.", "3h"],
   ["05", "Test & handoff", "Run controlled tests, document, and walk through with Tyson.", "4h"],
 ] as const;
@@ -88,7 +127,7 @@ const workflow = [
   { icon: SlidersHorizontal, label: "Clean", detail: "Normalize customer details" },
   { icon: Search, label: "Match", detail: "Check phone and email" },
   { icon: Database, label: "Update", detail: "Create or update GorillaDesk" },
-  { icon: Bell, label: "Alert", detail: "Slack and Discord" },
+  { icon: Bell, label: "Alert", detail: "Slack and internal alerts" },
 ] as const;
 
 function BugMark() {
@@ -102,7 +141,11 @@ function BugMark() {
 function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => void }) {
   const [form, setForm] = useState<AccessFormState>(initialAccessForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [result, setResult] = useState<{ tone: "success" | "error" | "warning"; message: string } | null>(null);
+
+  const guide = accessSystemGuides[form.system];
+  const canInvite = guide.inviteSteps.length > 0;
 
   const updateField = (field: keyof AccessFormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -110,8 +153,36 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
   };
 
   const selectSystem = (system: string) => {
-    setForm((current) => ({ ...current, system, ...accessSystemPresets[system] }));
+    const next = accessSystemGuides[system];
+    setForm((current) => ({
+      ...current,
+      system,
+      accessArea: next.accessArea,
+      permission: next.permission,
+      deliveryMethod:
+        next.inviteSteps.length === 0 && current.deliveryMethod === "invite" ? "link" : current.deliveryMethod,
+      secretLink: "",
+    }));
     setResult(null);
+  };
+
+  const selectDelivery = (deliveryMethod: DeliveryMethod) => {
+    setForm((current) => ({
+      ...current,
+      deliveryMethod,
+      secretLink: deliveryMethod === "link" ? current.secretLink : "",
+    }));
+    setResult(null);
+  };
+
+  const copyInviteEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(contact.email);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Copying is only a convenience; the address stays visible on screen.
+    }
   };
 
   const submitAccess = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -119,6 +190,8 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
     setIsSubmitting(true);
     setResult(null);
     const honeypot = new FormData(event.currentTarget).get("website");
+    const submittedSystem = form.system;
+    const submittedMethod = form.deliveryMethod;
 
     try {
       const response = await fetch("/api/bug-man/access", {
@@ -132,15 +205,26 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
         throw new Error(data?.error || "These details could not be saved.");
       }
 
-      onSubmitted(form.system);
-      setResult(data?.notificationSent === false
-        ? { tone: "warning", message: "Saved privately. The Discord alert needs attention, but your response is safe." }
-        : { tone: "success", message: "Done—saved privately and Jazz was notified in Discord." });
+      onSubmitted(submittedSystem);
+      const successMessage =
+        submittedMethod === "invite"
+          ? "Thank you — " + submittedSystem + " is done. Jazz will accept the invite and confirm it works."
+          : submittedMethod === "link"
+            ? "Saved privately. Jazz will open the link once, and it stops working straight after."
+            : "Noted. Jazz will contact you and set " + submittedSystem + " up with you.";
+
+      setResult(
+        data?.notificationSent === false
+          ? { tone: "warning", message: "Saved privately. The internal notification needs attention, but your response is safe." }
+          : { tone: "success", message: successMessage },
+      );
       setForm((current) => ({
         ...initialAccessForm,
         system: current.system,
+        accessArea: current.accessArea,
+        permission: current.permission,
+        deliveryMethod: current.deliveryMethod,
         submittedBy: current.submittedBy,
-        ...accessSystemPresets[current.system],
       }));
     } catch (error) {
       setResult({
@@ -158,6 +242,12 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
     : result?.tone === "warning"
       ? "border-primary/25 bg-primary/[0.06] text-foreground"
       : "border-destructive/25 bg-destructive/10 text-destructive";
+  const stepNumberClass = "flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary";
+  const submitLabel = form.deliveryMethod === "invite"
+    ? "I have sent the invite"
+    : form.deliveryMethod === "link"
+      ? "Save the one-time link"
+      : "Ask Jazz to reach out";
 
   return (
     <Card className="gap-0 rounded-2xl border-border bg-card py-0 ring-0">
@@ -169,8 +259,8 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
           </div>
 
           <div>
-            <p className="text-sm font-semibold">1. Choose the system</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <p className="text-sm font-semibold">1. Which system is this for?</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {requiredSystems.map((system) => (
                 <button
                   key={system}
@@ -189,34 +279,110 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
                 </button>
               ))}
             </div>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{guide.whyItMatters}</p>
           </div>
 
           <div className="border-t border-border pt-6">
-            <p className="text-sm font-semibold">2. Tell us where the access belongs</p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">Use the account information Jazz should expect. All fields except the permission are optional.</p>
+            <p className="text-sm font-semibold">2. How would you like to give access?</p>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">Pick whichever is easiest. Never type a password into this page.</p>
 
-            <div className="mt-4 grid gap-5 md:grid-cols-2">
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {deliveryOptions
+                .filter((option) => option.id !== "invite" || canInvite)
+                .map(({ id, icon: Icon, title, detail }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={form.deliveryMethod === id}
+                    onClick={() => selectDelivery(id)}
+                    className={cn(
+                      "flex gap-3 rounded-xl border p-4 text-left transition",
+                      form.deliveryMethod === id
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background hover:border-primary/40",
+                    )}
+                  >
+                    <Icon className={cn("mt-0.5 size-5 shrink-0", form.deliveryMethod === id ? "text-primary" : "text-muted-foreground")} />
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold">{title}</span>
+                      <span className="mt-1 block text-xs leading-5 text-muted-foreground">{detail}</span>
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            {form.deliveryMethod === "invite" && (
+              <div className="mt-4 rounded-xl border border-primary/20 bg-primary/[0.06] p-4">
+                <p className="text-sm font-semibold">Invite this email address</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <span className="flex-1 truncate rounded-lg border border-border bg-background px-3 py-2.5 font-mono text-sm">{contact.email}</span>
+                  <Button type="button" variant="outline" onClick={copyInviteEmail} className="h-11 shrink-0 rounded-lg">
+                    {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+                    {copied ? "Copied" : "Copy email"}
+                  </Button>
+                </div>
+                <ol className="mt-4 space-y-2.5">
+                  {guide.inviteSteps.map((step, index) => (
+                    <li key={step} className="flex gap-3 text-sm leading-6 text-muted-foreground">
+                      <span className={stepNumberClass}>{index + 1}</span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {form.deliveryMethod === "link" && (
+              <div className="mt-4 rounded-xl border border-primary/20 bg-primary/[0.06] p-4">
+                <p className="text-sm font-semibold">Make a link that expires after one view</p>
+                <ol className="mt-3 space-y-2.5">
+                  {[
+                    "Open onetimesecret.com in a new tab.",
+                    "Type the login details there and create the link.",
+                    "Copy that link and paste it below.",
+                  ].map((step, index) => (
+                    <li key={step} className="flex gap-3 text-sm leading-6 text-muted-foreground">
+                      <span className={stepNumberClass}>{index + 1}</span>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+                <label className="mt-4 block text-sm font-medium">
+                  Paste the one-time link
+                  <input
+                    className={fieldClass}
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://onetimesecret.com/secret/..."
+                    value={form.secretLink}
+                    onChange={(event) => updateField("secretLink", event.target.value)}
+                    maxLength={500}
+                    required
+                  />
+                  <span className="mt-2 block text-xs font-normal leading-5 text-muted-foreground">Jazz is the only person who opens it, and it stops working right after.</span>
+                </label>
+              </div>
+            )}
+
+            {form.deliveryMethod === "call" && (
+              <div className="mt-4 flex gap-3 rounded-xl border border-primary/20 bg-primary/[0.06] p-4">
+                <Phone className="mt-0.5 size-5 shrink-0 text-primary" />
+                <p className="text-sm leading-6 text-muted-foreground">Nothing else is needed here. Save this and Jazz will contact you to set up {form.system} together.</p>
+              </div>
+            )}
+          </div>
+
+          <details className="rounded-xl border border-border bg-muted/25">
+            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Optional: account details and notes</summary>
+            <div className="grid gap-5 border-t border-border p-4 md:grid-cols-2">
               <label className="text-sm font-medium">
                 Account or login email
                 <input className={fieldClass} type="email" autoComplete="email" placeholder="larry@example.com" value={form.accountEmail} onChange={(event) => updateField("accountEmail", event.target.value)} maxLength={254} />
               </label>
-
               <label className="text-sm font-medium">
                 Login page
                 <input className={fieldClass} type="url" inputMode="url" placeholder="https://example.com/login" value={form.loginUrl} onChange={(event) => updateField("loginUrl", event.target.value)} maxLength={500} />
               </label>
-
-              <label className="text-sm font-medium md:col-span-2">
-                Credential vault item name
-                <input className={fieldClass} placeholder="Example: 1Password item 'Bug-Man GorillaDesk'" value={form.credentialReference} onChange={(event) => updateField("credentialReference", event.target.value)} maxLength={500} />
-                <span className="mt-2 block text-xs font-normal leading-5 text-muted-foreground">Enter the item name only—never paste a password, token, key, or secure-share URL.</span>
-              </label>
-            </div>
-          </div>
-
-          <details className="rounded-xl border border-border bg-muted/25">
-            <summary className="cursor-pointer px-4 py-3 text-sm font-medium">Review permission and add notes</summary>
-            <div className="grid gap-5 border-t border-border p-4 md:grid-cols-2">
               <label className="text-sm font-medium md:col-span-2">
                 Permission Jazz needs <span className="text-primary">*</span>
                 <input className={fieldClass} value={form.permission} onChange={(event) => updateField("permission", event.target.value)} maxLength={500} required />
@@ -242,7 +408,7 @@ function AccessDetailsForm({ onSubmitted }: { onSubmitted: (system: string) => v
 
           <Button type="submit" size="lg" className="w-full rounded-xl sm:w-auto sm:min-w-52" disabled={isSubmitting}>
             <Send className="size-4" />
-            {isSubmitting ? "Saving securely…" : "Save access details"}
+            {isSubmitting ? "Saving securely…" : submitLabel}
           </Button>
         </form>
       </CardContent>
@@ -369,7 +535,7 @@ export default function BugManDashboard() {
               <div className="w-full rounded-2xl border border-border bg-card p-4 sm:w-56">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">Setup progress</span>
-                  <span className="font-semibold text-primary">{progressCount}/6</span>
+                  <span className="font-semibold text-primary">{progressCount}/{requiredSystems.length + 1}</span>
                 </div>
                 <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
                   <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: String(progressPercent) + "%" }} />
@@ -437,7 +603,7 @@ export default function BugManDashboard() {
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-primary">Access</p>
                         <h2 className="mt-1 text-xl font-semibold">Share access one system at a time.</h2>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">Use vault item names only. Passwords and tokens never belong in this dashboard.</p>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">For most systems you just invite Jazz as a user. You never type a password into this page.</p>
 
                         <div className="mt-5 grid gap-2 sm:grid-cols-2">
                           {requiredSystems.map((system) => {
@@ -521,9 +687,9 @@ export default function BugManDashboard() {
               <button type="button" onClick={() => navigate("start")} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
                 <ArrowLeft className="size-4" /> Back to setup
               </button>
-              <Badge variant="outline" className="mt-6 border-primary/25 bg-primary/10 text-primary">Private .txt + Discord</Badge>
+              <Badge variant="outline" className="mt-6 border-primary/25 bg-primary/10 text-primary">Private access intake</Badge>
               <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Share one access item.</h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Choose a system, identify the account, and save. Repeat only for the systems you can provide today.</p>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">Pick a system, choose how you want to give access, and save. Repeat only for the systems you can do today.</p>
             </section>
 
             <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -547,7 +713,7 @@ export default function BugManDashboard() {
                 </Card>
                 <div className="flex gap-3 rounded-2xl border border-primary/20 bg-primary/[0.06] p-4">
                   <ShieldCheck className="mt-0.5 size-5 shrink-0 text-primary" />
-                  <p className="text-sm leading-6 text-muted-foreground">Responses are private, excluded from the portfolio AI, and copied to the dedicated Discord alert channel.</p>
+                  <p className="text-sm leading-6 text-muted-foreground">Responses are private, excluded from the portfolio AI, and shared only with Jazz for setup.</p>
                 </div>
               </aside>
             </section>
