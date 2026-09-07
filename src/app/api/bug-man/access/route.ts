@@ -4,6 +4,7 @@ import { execFile } from "node:child_process";
 import { put } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { BUG_MAN_COOKIE, isUnlocked } from "@/lib/bug-man/auth";
 
 export const runtime = "nodejs";
 
@@ -209,6 +210,12 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) {
     return json({ error: "This submission was not accepted." }, 403);
+  }
+
+  // The page is gated, so the intake is gated too. Without this an unlocked
+  // endpoint would still accept anonymous records into the private log.
+  if (!isUnlocked(request.cookies.get(BUG_MAN_COOKIE)?.value)) {
+    return json({ error: "Your session expired. Reload the page and enter the access code again." }, 401);
   }
 
   if (isRateLimited(request)) {

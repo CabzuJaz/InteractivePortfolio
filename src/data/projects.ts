@@ -22,6 +22,60 @@ export interface Project {
 
 export const projects: Project[] = [
   {
+    slug: "ai-content-operations-system",
+    title: "AI Content Operations System",
+    industry: "Content Operations",
+    oneLiner:
+      "One controlled pipeline for planning, AI-assisted copy and visuals, human approval, and verified social scheduling.",
+    description:
+      "Designed and built a Python-first content operations system with both a local operator interface and a complete CLI. The platform turns strategy and a reusable topic bank into scheduled content briefs, then moves each item through separately scoped copy, visual, approval, media, and publishing workflows. Deterministic application logic owns state, validation, timing, and side effects; AI providers operate behind explicit schemas and policy boundaries. Drafts and media remain immutable and checksum-verified, Discord supplies human approval gates, and approved posts can move to GoHighLevel for draft creation or scheduled Facebook and Instagram delivery.",
+    problem:
+      "Content planning, copy, visuals, approvals, and publishing were separate activities with no shared source of truth. A single AI response could change strategy, prose, and artwork together, so fixing one part risked reviving rejected work elsewhere. Remote actions also needed clear confirmation, auditability, and recovery instead of a fragile publish-now workflow.",
+    solution:
+      "Built an explicit content lifecycle around SQLite and immutable local artifacts. A deterministic planner balances strategy and publishing slots; scoped AI roles create the brief, copy, and visual direction without crossing ownership boundaries; copy and media are approved independently in Discord; and GoHighLevel integration handles preview, draft creation, media reuse, and scheduling. A loopback-only operator UI, daily queue, pipeline view, integrity doctor, and tested backup/restore path make the system usable and recoverable in day-to-day operation.",
+    architecture:
+      "Strategy + Topic Bank → Deterministic Planner → Scoped AI Roles (brief, copy, visual) → Immutable SQLite + File Artifacts → Discord Copy & Media Approval → GoHighLevel Drafts & Scheduling → Operator UI, Queue & Health Checks",
+    tech: [
+      "Python",
+      "SQLite",
+      "Codex CLI",
+      "Discord API",
+      "GoHighLevel API",
+      "OpenAI Images API",
+      "Pillow",
+      "PyYAML",
+      "pytest",
+      "HTML/CSS/JavaScript",
+    ],
+    year: 2026,
+    keyFeatures: [
+      "Deterministic strategy planner with weighted distribution, publishing slots, blackout dates, and a reusable topic bank",
+      "Separate strategist, copywriter, and visual-director schemas with revision scopes that cannot overwrite each other's artifacts",
+      "Immutable copy and media versions with SHA-256 verification and explicit lifecycle history",
+      "Independent Discord approval flows for copy and per-platform media candidates",
+      "Safe GoHighLevel preview, draft, media-upload, and scheduling workflows with idempotent remote operations",
+      "Loopback-only operator interface backed by the same domain safeguards as the full CLI",
+      "Daily queue, pipeline status, integrity checks, health reporting, and actionable recovery guidance",
+      "SQLite-aware backup and restore flow that excludes secrets and verifies the recovered system",
+    ],
+    challenges: [
+      "Separating strategy, copy, and visual ownership so a narrow revision cannot silently change already approved work",
+      "Modeling copy, media, per-platform bindings, approvals, and remote publishing as independent but coordinated lifecycles",
+      "Keeping AI generation bounded by strict schemas while deterministic code remains authoritative for state and side effects",
+      "Making external Discord and GoHighLevel operations retryable and idempotent without hiding unknown remote states",
+      "Protecting credentials and managed media through environment isolation, path validation, signature sniffing, and redacted errors",
+    ],
+    results: [
+      "Released a stable 1.0.0 content operations platform with a local operator workspace and complete CLI",
+      "Live-verified Facebook and Instagram scheduling through GoHighLevel, including read-back, idempotency, and controlled cleanup",
+      "Eliminated cross-scope revision drift by making strategy, copy, and visual direction separate versioned artifacts",
+      "Established human approval gates and integrity checks across copy, media, scheduling, backup, and recovery paths",
+    ],
+    links: {},
+    images: ["/projects/content-operations-system.png"],
+    highlight: true,
+  },
+  {
     slug: "automated-lead-intake-estimating-system",
     title: "Automated Lead Intake & Estimating System",
     industry: "Home Services",

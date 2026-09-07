@@ -371,7 +371,7 @@ export default function HomePage() {
             <SectionIntro
               eyebrow="Selected work"
               title="Systems built around the real bottleneck."
-              copy="A few recent builds across lead operations, research, and AI-assisted decision workflows."
+              copy="Recent builds across content operations, lead workflows, and AI-assisted business systems."
             />
 
             <div className="grid gap-5 lg:grid-cols-2">
@@ -393,7 +393,11 @@ export default function HomePage() {
                             alt={`${project.title} workflow preview`}
                             width={1200}
                             height={849}
-                            className="aspect-[16/10] h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.015]"
+                            className={`aspect-[16/10] h-full w-full transition-transform duration-500 group-hover:scale-[1.015] ${
+                              project.slug === "ai-content-operations-system"
+                                ? "bg-logo-tile object-contain"
+                                : "object-cover object-top"
+                            }`}
                           />
                         </div>
                       ) : (
