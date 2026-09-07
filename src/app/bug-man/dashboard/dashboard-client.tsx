@@ -29,7 +29,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { contact } from "@/data/contact";
 import { cn } from "@/lib/utils";
-import { BugMark } from "./bug-mark";
+import { BugMark } from "../bug-mark";
 
 type View = "start" | "access" | "plan";
 type Approval = "approved" | "hold" | null;
