@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import type { UIMessage } from "ai";
+import { getToolName, isToolUIPart, type UIMessage } from "ai";
 import { Projects } from "@/components/tools/Projects";
 import { Skills } from "@/components/tools/Skills";
 import { Resume } from "@/components/tools/Resume";
@@ -13,8 +13,6 @@ import { BusinessAnalysis } from "@/components/tools/BusinessAnalysis";
 import { Contract } from "@/components/tools/Contract";
 import { PrepSheet } from "@/components/tools/PrepSheet";
 import { ToolSkeleton } from "@/components/tools/tool-skeleton";
-
-type ToolPart = { type: string; state: string; toolName: string; output?: unknown };
 
 const toolSkeletonLabels: Record<string, string> = {
   getProjects: "Pulling up my projects…",
@@ -67,18 +65,21 @@ interface ToolRendererProps {
 }
 
 export function ToolRenderer({ part }: ToolRendererProps) {
-  const p = part as unknown as ToolPart;
-  if (!p.type.startsWith("tool-")) return null;
+  if (!isToolUIPart(part)) return null;
 
-  // Output available
-  if (p.state === "output-available" && p.output) {
-    return renderToolOutput(p.toolName, p.output);
+  // Static tool parts carry their name only in the part type ("tool-getProjects");
+  // there is no toolName field on them, so read it through the SDK helper.
+  const toolName = getToolName(part);
+
+  if (part.state === "output-available" && part.output) {
+    return renderToolOutput(toolName, part.output);
   }
 
-  // Loading / other states → show skeleton
-  if (p.state !== "output-denied") {
-    return <ToolSkeleton label={toolSkeletonLabels[p.toolName] ?? "Loading…"} />;
+  // A failed or denied call gets no card; the model's reply explains it.
+  // Without this, an errored tool would sit on a loading skeleton forever.
+  if (part.state === "output-error" || part.state === "output-denied") {
+    return null;
   }
 
-  return null;
+  return <ToolSkeleton label={toolSkeletonLabels[toolName] ?? "Loading…"} />;
 }

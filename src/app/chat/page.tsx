@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { DefaultChatTransport, getToolName, isToolUIPart, type UIMessage } from "ai";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
@@ -96,10 +96,7 @@ function extractProcessDescription(currentText: string, previousTexts: string[])
 
 function hasSharePrepSheetTool(messages: UIMessage[]) {
   return messages.some((message) =>
-    message.parts?.some((part) => {
-      if (!part.type.startsWith("tool-")) return false;
-      return "toolName" in part && part.toolName === "sharePrepSheet";
-    }),
+    message.parts?.some((part) => isToolUIPart(part) && getToolName(part) === "sharePrepSheet"),
   );
 }
 

@@ -113,7 +113,7 @@ function deliveryStatusLine(
   if (!clientEmail) {
     return "Here's your contract proposal — if you'd like the PDF emailed to you, just share your email.";
   }
-  return `Your contract summary is above — the email didn't go through on my end just now, so I'll personally follow up at ${clientEmail} shortly.`;
+  return `Your contract summary is ready — the email didn't go through on my end just now, so I'll personally follow up at ${clientEmail} shortly.`;
 }
 
 /** Records a scope field the model left out as explicitly outside the project. */
