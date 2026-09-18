@@ -160,7 +160,7 @@ export const projects: Project[] = [
       "Results automatically organized in Google Sheets",
     ],
     links: {},
-    images: [],
+    images: ["/projects/str-lead-research-agent.webp"],
     highlight: true,
   },
   {
@@ -297,7 +297,7 @@ export const projects: Project[] = [
       "Consistent, personalized follow-ups at scale",
     ],
     links: {},
-    images: [],
+    images: ["/projects/ai-lead-qualifications.png"],
     highlight: true,
   },
 ];
