@@ -18,6 +18,8 @@ export interface Project {
   };
   images: string[];
   highlight?: boolean;
+  /** Résumé bullets; only projects listed in resume.featuredProjects use them. */
+  resumeBullets?: string[];
 }
 
 export const projects: Project[] = [
@@ -74,6 +76,11 @@ export const projects: Project[] = [
     links: {},
     images: ["/projects/content-operations-system.png"],
     highlight: true,
+    resumeBullets: [
+      "Released v1.0.0 of a Python content operations platform (full CLI plus a local operator UI) that moves a strategy and topic bank through scoped AI copy and visual roles, human approval, and scheduled Facebook and Instagram publishing via GoHighLevel.",
+      "Kept deterministic code in charge of state and side effects: AI roles work behind strict schemas, and drafts and media are immutable, SHA-256-verified versions, so a narrow revision can't silently change approved work.",
+      "Made remote publishing idempotent and recoverable: live-verified scheduling with read-back and cleanup, integrity checks, and a tested backup and restore path, covered with pytest.",
+    ],
   },
   {
     slug: "automated-lead-intake-estimating-system",
@@ -140,7 +147,7 @@ export const projects: Project[] = [
       "Built a website-powered lead research agent: users enter location and business type through a web form, the system searches the internet for matching businesses, collects relevant data, and automatically saves everything to Google Sheets. An n8n workflow triggers for data enrichment and processing.",
     architecture:
       "Website (user input: location + business type) → Internet Search (data collection) → Google Sheets (save results) → n8n (enrichment & processing)",
-    tech: ["n8n", "Google Sheets API", "Web Scraping", "Python", "Web Form"],
+    tech: ["Python", "Claude API", "Flask", "SQLite", "SSE", "Google Sheets API", "n8n", "Web Scraping"],
     year: 2026,
     keyFeatures: [
       "Web interface for location and business type input",
@@ -162,6 +169,11 @@ export const projects: Project[] = [
     links: {},
     images: ["/projects/str-lead-research-agent.webp"],
     highlight: true,
+    resumeBullets: [
+      "Capstone of a self-directed 30-day Claude sprint: orchestrator, search, and enrichment agents coordinated through Claude tool use, at about $0.007 per run on Claude Haiku.",
+      "Enrichment pulls emails, phones, and social links with four fallback strategies (mailto/tel links, regex, HTML-entity decoding, contact-page fallback), dedupes into SQLite, and syncs to Google Sheets.",
+      "Flask front end streams every agent step live over Server-Sent Events, with input sanitization and XSS protection.",
+    ],
   },
   {
     slug: "ai-email-triage",
@@ -230,6 +242,10 @@ export const projects: Project[] = [
     links: {},
     images: [],
     highlight: true,
+    resumeBullets: [
+      "Orchestrator agent breaks tasks into subtasks and delegates them to specialized sub-agents with tool use, writing structured output to Google Sheets and SQLite.",
+      "Summarizes between agents to stop token bloat across multi-step runs, and caps every tool-use loop at three iterations to bound API cost.",
+    ],
   },
   {
     slug: "mcp-server-sqlite",
