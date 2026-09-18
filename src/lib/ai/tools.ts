@@ -98,6 +98,29 @@ export const getAvailability = tool({
   }),
 });
 
+/**
+ * The one sentence MinMin says after a contract call. It is decided here from
+ * the real delivery result, because the model picking between canned lines
+ * reported a failed send as "Done, I've emailed it" in testing.
+ */
+function deliveryStatusLine(
+  delivery: import("../contract-delivery").DeliveryResult,
+  clientEmail: string | undefined,
+): string {
+  if (delivery.sent && delivery.sentTo) {
+    return `Done — I've emailed the contract PDF to ${delivery.sentTo}. Check your inbox, and the spam folder just in case.`;
+  }
+  if (!clientEmail) {
+    return "Here's your contract proposal — if you'd like the PDF emailed to you, just share your email.";
+  }
+  return `Your contract summary is above — the email didn't go through on my end just now, so I'll personally follow up at ${clientEmail} shortly.`;
+}
+
+/** Records a scope field the model left out as explicitly outside the project. */
+function orNotInScope(value: string | undefined): string {
+  return value?.trim() || "Not in scope";
+}
+
 export const generateContract = tool({
   description:
     "Generates a contract proposal PDF with rate card and confirmed tool costs only after qualification is complete. " +
@@ -108,8 +131,8 @@ export const generateContract = tool({
     "discovery does not imply the visitor wants a contract yet. " +
     "Do NOT call this on a visitor's first description of a new problem, even if they ask about price in " +
     "the same message — scope it first. Do NOT call this in the same turn as asking scoping questions the " +
-    "visitor hasn't answered yet. If pricing intent exists but qualification is incomplete, this tool returns " +
-    "a missing-info card instead of a formal quote. Once pricing intent AND qualified scope both exist, call this immediately.",
+    "visitor hasn't answered yet. Any scope field that isn't part of the project can simply be left out — it is recorded as not in scope. " +
+    "If featureBreakdown is missing, this tool returns a missing-info card instead of a formal quote. Once pricing intent AND qualified scope both exist, call this immediately.",
   inputSchema: z.object({
     clientName: z
       .string()
@@ -142,31 +165,31 @@ export const generateContract = tool({
     smsProvider: z
       .string()
       .optional()
-      .describe("The SMS provider available or preferred. If texting isn't part of this project, pass 'none' yourself — don't ask the visitor."),
+      .describe("The SMS provider available or preferred. Leave this out if texting isn't part of the project."),
     emailProvider: z
       .string()
       .optional()
-      .describe("The email provider available or preferred. If sending email isn't part of this project, pass 'none' yourself — don't ask the visitor."),
+      .describe("The email provider available or preferred. Leave this out if sending email isn't part of the project."),
     bookingSystem: z
       .string()
       .optional()
-      .describe("The appointment-booking system available or preferred. If booking isn't part of this project, pass 'none' yourself — don't ask the visitor."),
+      .describe("The appointment-booking system available or preferred. Leave this out if booking isn't part of the project."),
     followUpPlan: z
       .string()
       .optional()
-      .describe("How many follow-up messages, which channels, and the basic timing/rules. Pass 'none' if the project has no follow-up sequence."),
+      .describe("How many follow-up messages, which channels, and the basic timing/rules. Leave this out if the project has no follow-up sequence."),
     stopCondition: z
       .string()
       .optional()
-      .describe("When leads stop receiving follow-ups, e.g. after reply, booking, opt-out, or manual status change. Pass 'none' if the project has no follow-up sequence."),
+      .describe("When leads stop receiving follow-ups, e.g. after reply, booking, opt-out, or manual status change. Leave this out if the project has no follow-up sequence."),
     internalNotifications: z
       .string()
       .optional()
-      .describe("Who should receive internal notifications and through which channel. Pass 'none' if the visitor hasn't asked for notifications."),
+      .describe("Who should receive internal notifications and through which channel. Leave this out if the visitor hasn't asked for notifications."),
     monthlyLeadVolume: z
       .string()
       .optional()
-      .describe("Expected monthly lead volume or a rough range. Only needed when something in scope is usage-priced, such as SMS; otherwise pass 'not needed for pricing'."),
+      .describe("Expected monthly lead volume or a rough range. Only needed when something in scope is usage-priced, such as SMS; leave it out otherwise."),
     includedServices: z
       .string()
       .optional()
@@ -221,39 +244,25 @@ export const generateContract = tool({
     projectComplexity,
     clientType,
   }) => {
-    // Each scope item carries the one question that fills it, so the card only
-    // asks about what is actually missing. Components outside the project are
-    // answered by the model with "none" rather than put to the visitor.
-    const requiredScope = [
-      { label: "Current CRM or lead database", value: existingCrm, question: "Which CRM or lead database do you use today?" },
-      { label: "Website or form platform", value: websitePlatform, question: "Which website or form platform do the leads come from?" },
-      { label: "SMS provider or SMS scope", value: smsProvider, question: "Which SMS provider do you use for texting leads?" },
-      { label: "Email provider or email scope", value: emailProvider, question: "Which email provider should messages go out through?" },
-      { label: "Appointment-booking system", value: bookingSystem, question: "Which booking system should this connect to?" },
-      { label: "Follow-up channels, message count, and timing", value: followUpPlan, question: "How many follow-up messages, on which channels, and how far apart?" },
-      { label: "Stop condition after reply, booking, opt-out, or status change", value: stopCondition, question: "When should follow-ups stop: on reply, on booking, or on opt-out?" },
-      { label: "Internal notification recipients and channel", value: internalNotifications, question: "Who on your team should be notified, and where?" },
-      { label: "Expected monthly lead volume", value: monthlyLeadVolume, question: "Roughly how many leads a month do you expect?" },
-      { label: "Included/excluded reporting, AI qualification, maintenance, testing, and revisions", value: includedServices, question: "Should reporting, ongoing maintenance, or extra revision rounds be included?" },
-    ];
-    const missingScope = requiredScope.filter((item) => !item.value?.trim());
-    const missingFields = missingScope.map((item) => item.label);
-
-    if (missingFields.length > 0 || !featureBreakdown?.length) {
+    // Scope fields describe the project, and one left out means that
+    // component isn't part of it. The model reliably omits fields that don't
+    // apply rather than writing "none" into them, so an omitted field must not
+    // block the proposal. What stops an invented total is the feature-by-feature
+    // breakdown, which stays required.
+    if (!featureBreakdown?.length) {
       return {
         contractQualification: {
           status: "needs_info" as const,
           message:
-            "Preliminary only. A final scope, tool list, timeline, and price will follow once the details below are confirmed.",
-          missingFields: featureBreakdown?.length
-            ? missingFields
-            : [...missingFields, "Feature-by-feature deliverables and hour breakdown"],
-          questions: missingScope.map((item) => item.question),
+            "Preliminary only. A final scope, timeline, and price will follow once the deliverables are broken down.",
+          missingFields: ["Feature-by-feature deliverables and hour breakdown"],
+          questions: [],
         },
+        // Nothing was generated or sent, so there is no recipient to report.
         delivery: {
           sent: false,
           method: "none" as const,
-          sentTo: clientEmail ?? null,
+          sentTo: null,
           pdfUrl: null,
         },
       };
@@ -301,16 +310,16 @@ export const generateContract = tool({
       totalCost,
       featureBreakdown,
       scopeAssumptions: {
-        existingCrm,
-        websitePlatform,
-        smsProvider,
-        emailProvider,
-        bookingSystem,
-        followUpPlan,
-        stopCondition,
-        internalNotifications,
-        monthlyLeadVolume,
-        includedServices,
+        existingCrm: orNotInScope(existingCrm),
+        websitePlatform: orNotInScope(websitePlatform),
+        smsProvider: orNotInScope(smsProvider),
+        emailProvider: orNotInScope(emailProvider),
+        bookingSystem: orNotInScope(bookingSystem),
+        followUpPlan: orNotInScope(followUpPlan),
+        stopCondition: orNotInScope(stopCondition),
+        internalNotifications: orNotInScope(internalNotifications),
+        monthlyLeadVolume: orNotInScope(monthlyLeadVolume),
+        includedServices: orNotInScope(includedServices),
       },
       pricingFactors: {
         complexity: projectComplexity ?? "moderate",
@@ -349,10 +358,12 @@ export const generateContract = tool({
         delivery = await deliverContract(contract, pdfBuffer);
       } catch (err) {
         console.error("[generateContract] delivery failed:", err);
+        const { notifyDeliveryFailure } = await import("../contract-delivery");
+        notifyDeliveryFailure(contract);
       }
     }
 
-    return { contract, delivery };
+    return { contract, delivery: { ...delivery, statusLine: deliveryStatusLine(delivery, clientEmail) } };
   },
 });
 

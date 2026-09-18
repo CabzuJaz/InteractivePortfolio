@@ -219,7 +219,7 @@ async function sendEmailViaGHL(
 }
 
 /** Fire-and-forget: owner email + Discord ping so Jazzmin knows a proposal went out. */
-function notifyOwner(contract: ContractForDelivery, method: string): void {
+function notifyOwner(contract: ContractForDelivery, method: string, delivered = true): void {
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
     const resend = new Resend(apiKey);
@@ -227,8 +227,14 @@ function notifyOwner(contract: ContractForDelivery, method: string): void {
       .send({
         from: "Jazzmin <onboarding@resend.dev>",
         to: OWNER_EMAIL,
-        subject: `📄 Contract auto-sent to ${contract.clientName} — $${contract.totalCost.toLocaleString()}`,
-        html: `<div style="font-family:system-ui,sans-serif"><p><strong>${escapeHtml(contract.clientName)}</strong> (${escapeHtml(contract.clientEmail ?? "no email")}) was sent a contract proposal via ${method}.</p><p>Total: <strong>$${contract.totalCost.toLocaleString()}</strong> · ${escapeHtml(contract.projectDescription)}</p></div>`,
+        subject: delivered
+          ? `📄 Contract auto-sent to ${contract.clientName} — $${contract.totalCost.toLocaleString()}`
+          : `⚠️ Contract email failed for ${contract.clientName}, follow up manually`,
+        html: `<div style="font-family:system-ui,sans-serif"><p><strong>${escapeHtml(contract.clientName)}</strong> (${escapeHtml(contract.clientEmail ?? "no email")}) ${
+          delivered
+            ? `was sent a contract proposal via ${method}.`
+            : "asked for a contract proposal, but every delivery method failed. MinMin told them you would follow up personally, so send it to them directly."
+        }</p><p>Total: <strong>$${contract.totalCost.toLocaleString()}</strong> · ${escapeHtml(contract.projectDescription)}</p></div>`,
       })
       .catch((err) => console.error("[contract-delivery] owner email failed:", err));
   }
@@ -241,8 +247,8 @@ function notifyOwner(contract: ContractForDelivery, method: string): void {
       body: JSON.stringify({
         embeds: [
           {
-            title: "📄 Contract Auto-Sent from Chat",
-            color: 16776960,
+            title: delivered ? "📄 Contract Auto-Sent from Chat" : "⚠️ Contract Email Failed, Follow Up Manually",
+            color: delivered ? 16776960 : 15158332,
             fields: [
               { name: "Client", value: contract.clientName, inline: true },
               { name: "Email", value: contract.clientEmail ?? "—", inline: true },
@@ -319,5 +325,14 @@ export async function deliverContract(
     }
   }
 
+  notifyOwner(contract, "none", false);
   return { sent: false, method: "none", sentTo: email, pdfUrl };
+}
+
+/**
+ * Alerts the owner when a contract could not be delivered at all. MinMin tells
+ * the visitor a personal follow-up is coming, so the owner has to hear about it.
+ */
+export function notifyDeliveryFailure(contract: ContractForDelivery): void {
+  notifyOwner(contract, "none", false);
 }

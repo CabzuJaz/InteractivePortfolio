@@ -58,6 +58,8 @@ interface DeliveryData {
   method: "ghl-email" | "resend" | "none";
   sentTo: string | null;
   pdfUrl: string | null;
+  /** The sentence MinMin says after the call; spoken in chat, not rendered here. */
+  statusLine?: string;
 }
 
 interface ContractProps {
@@ -116,16 +118,18 @@ export function Contract({ contract, delivery, contractQualification }: Contract
               </ul>
             </div>
 
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Questions To Confirm
-              </p>
-              <ol className="list-inside list-decimal space-y-1.5 text-sm text-muted-foreground">
-                {contractQualification.questions.map((question) => (
-                  <li key={question}>{question}</li>
-                ))}
-              </ol>
-            </div>
+            {contractQualification.questions.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Questions To Confirm
+                </p>
+                <ol className="list-inside list-decimal space-y-1.5 text-sm text-muted-foreground">
+                  {contractQualification.questions.map((question) => (
+                    <li key={question}>{question}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
