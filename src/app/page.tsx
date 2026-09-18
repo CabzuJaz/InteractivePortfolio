@@ -609,7 +609,7 @@ export default function HomePage() {
               <div className="rounded-[1.5rem] border border-border bg-highlight p-6 text-highlight-foreground">
                 <MapPin className="h-5 w-5" />
                 <p className="mt-5 text-lg font-bold">Based in {persona.location}</p>
-                <p className="mt-2 text-sm leading-6 text-highlight-foreground/70">Available for remote collaboration and project-based work.</p>
+                <p className="mt-2 text-sm leading-6 text-highlight-foreground/70">{contact.availability}. Comfortable overlapping with US time zones.</p>
               </div>
             </motion.aside>
           </div>
