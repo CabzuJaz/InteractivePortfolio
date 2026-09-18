@@ -206,7 +206,7 @@ export function ContractPDFDocument({ contract }: { contract: ContractData }) {
             <Text style={styles.date}>{new Date().toLocaleDateString()}</Text>
             {contract.pricingFactors && (
               <Text style={styles.subtitle}>
-                {contract.pricingFactors.selectedRate} ({contract.pricingFactors.complexity})
+                {contract.pricingFactors.selectedRate}
               </Text>
             )}
           </View>

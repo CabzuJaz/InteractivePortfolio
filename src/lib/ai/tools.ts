@@ -1,4 +1,4 @@
-import { tool, generateText } from "ai";
+import { tool, generateText, type ModelMessage } from "ai";
 import { z } from "zod";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
@@ -131,6 +131,33 @@ function deliveryStatusLine(
   return `Your contract summary is ready — the email didn't go through on my end just now, so I'll personally follow up at ${clientEmail} shortly.`;
 }
 
+/**
+ * The most recent hours estimate MinMin gave the visitor in chat, as a range.
+ * A contract outside it quotes the lead one number and bills another, which
+ * happened in testing: "about 5–10 hours" in chat, a 15-hour contract.
+ */
+function lastQuotedHours(messages: ModelMessage[]): { min: number; max: number } | null {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== "assistant") continue;
+    const text =
+      typeof message.content === "string"
+        ? message.content
+        : message.content.map((part) => (part.type === "text" ? part.text : "")).join(" ");
+
+    const range = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(?:–|—|-|to)\s*(\d+(?:\.\d+)?)\s*hours?/gi)].at(-1);
+    if (range) return { min: Number(range[1]), max: Number(range[2]) };
+
+    const single = [...text.matchAll(/(?:about|around|roughly|approximately|~)\s*(\d+(?:\.\d+)?)\s*hours?/gi)].at(-1);
+    if (single) {
+      // "About N hours" is read as N give or take a quarter.
+      const n = Number(single[1]);
+      return { min: Math.floor(n * 0.75), max: Math.ceil(n * 1.25) };
+    }
+  }
+  return null;
+}
+
 /** Records a scope field the model left out as explicitly outside the project. */
 function orNotInScope(value: string | undefined): string {
   return value?.trim() || "Not in scope";
@@ -258,7 +285,7 @@ export const generateContract = tool({
     confirmedToolCosts,
     projectComplexity,
     clientType,
-  }) => {
+  }, { messages }) => {
     // Scope fields describe the project, and one left out means that
     // component isn't part of it. The model reliably omits fields that don't
     // apply rather than writing "none" into them, so an omitted field must not
@@ -302,6 +329,20 @@ export const generateContract = tool({
     }
 
     const hours = featureBreakdown.reduce((sum, item) => sum + item.hours, 0);
+
+    // Hold the contract to the hours already promised in chat. Returning no
+    // contract here renders nothing; the model rebuilds the breakdown inside
+    // the quote, or tells the visitor why the scope now needs more.
+    const quoted = lastQuotedHours(messages);
+    if (quoted && (hours < quoted.min || hours > quoted.max)) {
+      return {
+        estimateMismatch: {
+          quotedHours: `${quoted.min}–${quoted.max}`,
+          breakdownHours: hours,
+        },
+      };
+    }
+
     const laborCost = hourlyRate * hours;
 
     const toolSubscriptions = confirmedToolCosts ?? [];
