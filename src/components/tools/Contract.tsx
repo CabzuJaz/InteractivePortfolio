@@ -170,6 +170,8 @@ export function Contract({ contract, delivery, contractQualification }: Contract
           clientName: contract.clientName,
           clientEmail: contract.clientEmail,
           totalCost: contract.totalCost,
+          hourlyRate: contract.hourlyRate,
+          hours: contract.hours,
           pdfBase64: base64,
         }),
       });

@@ -110,7 +110,7 @@ async function uploadToGHL(
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { clientName, clientEmail, totalCost, pdfBase64 } = body;
+    const { clientName, clientEmail, totalCost, hourlyRate, hours, pdfBase64 } = body;
 
     if (!clientName || !pdfBase64) {
       return new Response(
@@ -169,7 +169,11 @@ export async function POST(req: Request) {
                 <p>Thanks for your interest in working together! Please find the contract proposal attached.</p>
                 <table style="width:100%;border-collapse:collapse;margin:16px 0">
                   <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Total Project Cost</td><td style="padding:8px;border-bottom:1px solid #eee;font-weight:600;color:#06b6d4">$${totalCost.toLocaleString()}</td></tr>
-                  <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Rate</td><td style="padding:8px;border-bottom:1px solid #eee">$10/hour</td></tr>
+                  ${
+                    typeof hourlyRate === "number"
+                      ? `<tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Rate</td><td style="padding:8px;border-bottom:1px solid #eee">$${hourlyRate}/hour${typeof hours === "number" ? ` · ${hours}h estimated` : ""}</td></tr>`
+                      : ""
+                  }
                 </table>
                 <p style="color:#374151">If you have questions or want to discuss the scope, reply to this email or book a call:</p>
                 <p style="margin:16px 0"><a href="https://calendly.com/jazzmincabizares/15-minutes-discovery-call" style="display:inline-block;background:#06b6d4;color:white;padding:10px 24px;border-radius:999px;text-decoration:none;font-weight:600">Book a Discovery Call</a></p>
