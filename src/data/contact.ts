@@ -8,6 +8,7 @@ export const contact = {
   email: "jazzmincabizares@gmail.com",
   whatsapp: "https://wa.me/639389036717",
   availability: "Open to full-time remote roles with US and international teams",
+  schedule: "Flexible hours, mornings preferred (Philippine time, UTC+8)",
   calendly: "https://calendly.com/jazzmincabizares/15-minutes-discovery-call",
   socials: [
     {
