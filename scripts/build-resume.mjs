@@ -106,7 +106,9 @@ function buildHtml() {
     ...resume.certificates.map(
       (cert) => `<li><strong>${esc(cert.name)}</strong>, ${esc(cert.issuer)} (${esc(cert.date)})</li>`,
     ),
-    ...resume.learning.map((item) => `<li><strong>${esc(item.name)}</strong>. ${esc(item.detail)}</li>`),
+    ...resume.learning.map(
+      (item) => `<li><strong>${esc(item.name)}</strong> (${esc(item.date)}). ${esc(item.detail)}</li>`,
+    ),
   ].join("");
 
   return `<!doctype html>
@@ -151,7 +153,7 @@ function buildHtml() {
       <a href="mailto:${esc(contact.email)}">${esc(contact.email)}</a> · ${esc(formatPhone(persona.phone))} (WhatsApp) · ${esc(persona.location)}<br>
       <a href="https://www.${SITE}">${SITE}</a> · <a href="${esc(github)}">${esc(bareUrl(github))}</a> · <a href="${esc(linkedin)}">${esc(bareUrl(linkedin))}</a>
     </p>
-    <p class="availability">${esc(contact.availability)}.</p>
+    <p class="availability">${esc(contact.availability)}. ${esc(contact.schedule)}.</p>
   </header>
 
   <section><h2>Summary</h2><p>${esc(resume.summary)}</p></section>

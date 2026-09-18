@@ -109,6 +109,7 @@ export const getAvailability = tool({
       "Self-directed learner who completed a 30-day AI Engineering sprint",
     ],
     availability: contact.availability,
+    schedule: contact.schedule,
     location: "Cavite, Philippines — available for remote",
   }),
 });

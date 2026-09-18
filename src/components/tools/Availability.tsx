@@ -9,10 +9,11 @@ interface AvailabilityProps {
   lookingFor: string[];
   whyHireMe: string[];
   availability: string;
+  schedule: string;
   location: string;
 }
 
-export function Availability({ status, lookingFor, whyHireMe, availability, location }: AvailabilityProps) {
+export function Availability({ status, lookingFor, whyHireMe, availability, schedule, location }: AvailabilityProps) {
   return (
     <div className="w-full max-w-lg">
       <motion.div
@@ -68,6 +69,7 @@ export function Availability({ status, lookingFor, whyHireMe, availability, loca
             Availability
           </p>
           <p className="text-sm">{availability}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{schedule}</p>
         </div>
       </motion.div>
     </div>

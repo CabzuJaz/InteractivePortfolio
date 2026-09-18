@@ -38,6 +38,7 @@ export interface Certificate {
 
 export interface Learning {
   name: string;
+  date: string;
   detail: string;
 }
 
@@ -124,6 +125,7 @@ export const resume = {
   learning: [
     {
       name: "30-Day Claude AI Engineering Sprint",
+      date: "2026",
       detail:
         "Self-directed: 30 AI projects in 30 days covering Claude API tool use, MCP servers, multi-agent pipelines, and n8n integrations.",
     },
