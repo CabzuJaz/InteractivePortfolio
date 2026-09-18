@@ -10,12 +10,12 @@ import {
   CheckCircle,
   Calculator,
   Download,
-  Send,
   Check,
   Loader2,
   AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CONTRACT_HOURS_PER_WEEK, formatContractTimeline } from "@/lib/contract-timeline";
 
 interface ToolSubscription {
   name: string;
@@ -32,7 +32,6 @@ interface FeatureBreakdownItem {
 interface PricingFactors {
   complexity: string;
   clientType: string;
-  rateRange: string;
   selectedRate: string;
 }
 
@@ -75,8 +74,6 @@ interface ContractProps {
 
 export function Contract({ contract, delivery, contractQualification }: ContractProps) {
   const [downloading, setDownloading] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
 
   if (contractQualification?.status === "needs_info") {
     return (
@@ -156,40 +153,6 @@ export function Contract({ contract, delivery, contractQualification }: Contract
     }
   };
 
-  const handleSend = async () => {
-    setSending(true);
-    try {
-      const { generateContractPDF } = await import("./ContractPDF");
-      const blob = await generateContractPDF(contract);
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      });
-
-      const res = await fetch("/api/send-contract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientName: contract.clientName,
-          clientEmail: contract.clientEmail,
-          totalCost: contract.totalCost,
-          hourlyRate: contract.hourlyRate,
-          hours: contract.hours,
-          pdfBase64: base64,
-        }),
-      });
-
-      if (res.ok) {
-        setSent(true);
-      }
-    } catch (err) {
-      console.error("Send failed:", err);
-    } finally {
-      setSending(false);
-    }
-  };
-
   return (
     <div className="w-full max-w-lg">
       <motion.div
@@ -240,9 +203,6 @@ export function Contract({ contract, delivery, contractQualification }: Contract
                 </Badge>
                 <Badge variant="secondary" className="text-xs">
                   {contract.pricingFactors.clientType}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  Range: {contract.pricingFactors.rateRange}
                 </Badge>
               </div>
             )}
@@ -337,8 +297,8 @@ export function Contract({ contract, delivery, contractQualification }: Contract
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>
-              Estimated timeline: {contract.projectDurationMonths} month
-              {contract.projectDurationMonths > 1 ? "s" : ""} (~80 hrs/month)
+              Estimated timeline: about {formatContractTimeline(contract.hours)} (~
+              {CONTRACT_HOURS_PER_WEEK} hrs/week)
             </span>
           </div>
 
@@ -385,27 +345,6 @@ export function Contract({ contract, delivery, contractQualification }: Contract
               )}
               Download PDF
             </button>
-            {!delivery?.sent && (
-              <button
-                onClick={handleSend}
-                disabled={sending || sent}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-full glass text-sm font-medium hover:bg-primary/10 transition-colors disabled:opacity-50"
-              >
-                {sent ? (
-                  <>
-                    <Check className="w-4 h-4 text-green-500" />
-                    Sent
-                  </>
-                ) : sending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    Send to Client
-                  </>
-                )}
-              </button>
-            )}
           </div>
         </div>
       </motion.div>

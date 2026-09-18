@@ -11,6 +11,7 @@ import {
   StyleSheet,
   pdf,
 } from "@react-pdf/renderer";
+import { formatContractTimeline } from "@/lib/contract-timeline";
 
 // Colors
 const CYAN = "#06b6d4";
@@ -181,7 +182,6 @@ interface ContractData {
   pricingFactors?: {
     complexity: string;
     clientType: string;
-    rateRange: string;
     selectedRate: string;
   };
   terms: string[];
@@ -232,9 +232,9 @@ export function ContractPDFDocument({ contract }: { contract: ContractData }) {
             </View>
             <View style={styles.gridItem}>
               <Text style={styles.bigValue}>
-                {contract.projectDurationMonths}mo
+                {formatContractTimeline(contract.hours)}
               </Text>
-              <Text style={styles.gridLabel}>duration</Text>
+              <Text style={styles.gridLabel}>estimated timeline</Text>
             </View>
           </View>
         </View>
