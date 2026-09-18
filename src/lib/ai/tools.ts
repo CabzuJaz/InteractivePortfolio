@@ -142,35 +142,35 @@ export const generateContract = tool({
     smsProvider: z
       .string()
       .optional()
-      .describe("The SMS provider available or preferred. Use 'none' only if SMS is out of scope."),
+      .describe("The SMS provider available or preferred. If texting isn't part of this project, pass 'none' yourself — don't ask the visitor."),
     emailProvider: z
       .string()
       .optional()
-      .describe("The email provider available or preferred. Use 'none' only if email is out of scope."),
+      .describe("The email provider available or preferred. If sending email isn't part of this project, pass 'none' yourself — don't ask the visitor."),
     bookingSystem: z
       .string()
       .optional()
-      .describe("The appointment-booking system available or preferred. Use 'none' only if booking is out of scope."),
+      .describe("The appointment-booking system available or preferred. If booking isn't part of this project, pass 'none' yourself — don't ask the visitor."),
     followUpPlan: z
       .string()
       .optional()
-      .describe("How many follow-up messages, which channels, and the basic timing/rules."),
+      .describe("How many follow-up messages, which channels, and the basic timing/rules. Pass 'none' if the project has no follow-up sequence."),
     stopCondition: z
       .string()
       .optional()
-      .describe("When leads stop receiving follow-ups, e.g. after reply, booking, opt-out, or manual status change."),
+      .describe("When leads stop receiving follow-ups, e.g. after reply, booking, opt-out, or manual status change. Pass 'none' if the project has no follow-up sequence."),
     internalNotifications: z
       .string()
       .optional()
-      .describe("Who should receive internal notifications and through which channel."),
+      .describe("Who should receive internal notifications and through which channel. Pass 'none' if the visitor hasn't asked for notifications."),
     monthlyLeadVolume: z
       .string()
       .optional()
-      .describe("Expected monthly lead volume or a rough range."),
+      .describe("Expected monthly lead volume or a rough range. Only needed when something in scope is usage-priced, such as SMS; otherwise pass 'not needed for pricing'."),
     includedServices: z
       .string()
       .optional()
-      .describe("Whether reporting, AI qualification, ongoing maintenance, revisions, and testing are included or excluded."),
+      .describe("Whether reporting, AI qualification, ongoing maintenance, revisions, and testing are included or excluded. Default: testing of the delivered build included; maintenance, reporting, and extra revisions excluded unless the visitor asked for them."),
     featureBreakdown: z
       .array(
         z.object({
@@ -221,41 +221,34 @@ export const generateContract = tool({
     projectComplexity,
     clientType,
   }) => {
+    // Each scope item carries the one question that fills it, so the card only
+    // asks about what is actually missing. Components outside the project are
+    // answered by the model with "none" rather than put to the visitor.
     const requiredScope = [
-      { label: "Current CRM or lead database", value: existingCrm },
-      { label: "Website or form platform", value: websitePlatform },
-      { label: "SMS provider or SMS scope", value: smsProvider },
-      { label: "Email provider or email scope", value: emailProvider },
-      { label: "Appointment-booking system", value: bookingSystem },
-      { label: "Follow-up channels, message count, and timing", value: followUpPlan },
-      { label: "Stop condition after reply, booking, opt-out, or status change", value: stopCondition },
-      { label: "Internal notification recipients and channel", value: internalNotifications },
-      { label: "Expected monthly lead volume", value: monthlyLeadVolume },
-      { label: "Included/excluded reporting, AI qualification, maintenance, testing, and revisions", value: includedServices },
+      { label: "Current CRM or lead database", value: existingCrm, question: "Which CRM or lead database do you use today?" },
+      { label: "Website or form platform", value: websitePlatform, question: "Which website or form platform do the leads come from?" },
+      { label: "SMS provider or SMS scope", value: smsProvider, question: "Which SMS provider do you use for texting leads?" },
+      { label: "Email provider or email scope", value: emailProvider, question: "Which email provider should messages go out through?" },
+      { label: "Appointment-booking system", value: bookingSystem, question: "Which booking system should this connect to?" },
+      { label: "Follow-up channels, message count, and timing", value: followUpPlan, question: "How many follow-up messages, on which channels, and how far apart?" },
+      { label: "Stop condition after reply, booking, opt-out, or status change", value: stopCondition, question: "When should follow-ups stop: on reply, on booking, or on opt-out?" },
+      { label: "Internal notification recipients and channel", value: internalNotifications, question: "Who on your team should be notified, and where?" },
+      { label: "Expected monthly lead volume", value: monthlyLeadVolume, question: "Roughly how many leads a month do you expect?" },
+      { label: "Included/excluded reporting, AI qualification, maintenance, testing, and revisions", value: includedServices, question: "Should reporting, ongoing maintenance, or extra revision rounds be included?" },
     ];
-    const missingFields = requiredScope
-      .filter((item) => !item.value?.trim())
-      .map((item) => item.label);
+    const missingScope = requiredScope.filter((item) => !item.value?.trim());
+    const missingFields = missingScope.map((item) => item.label);
 
     if (missingFields.length > 0 || !featureBreakdown?.length) {
       return {
         contractQualification: {
           status: "needs_info" as const,
           message:
-            "Preliminary estimate only: based on the current description, this project may require approximately 25-50 hours. A final scope, tool list, timeline, and price will be provided after confirming the details below.",
+            "Preliminary only. A final scope, tool list, timeline, and price will follow once the details below are confirmed.",
           missingFields: featureBreakdown?.length
             ? missingFields
             : [...missingFields, "Feature-by-feature deliverables and hour breakdown"],
-          questions: [
-            "What CRM and website platform do you currently use?",
-            "Which SMS and email providers are available?",
-            "Do you already have an appointment-booking system?",
-            "How many follow-up messages and channels are required?",
-            "Should leads stop receiving follow-ups when they reply or book?",
-            "Who should receive internal notifications?",
-            "What is the expected monthly lead volume?",
-            "Are reporting, AI qualification, ongoing maintenance, testing, and revisions included?",
-          ],
+          questions: missingScope.map((item) => item.question),
         },
         delivery: {
           sent: false,
