@@ -118,7 +118,7 @@ Currently emails only send to the owner's email (Resend free tier limitation).
 - [ ] Add domain: `buildwithjazz.com`
 - [ ] Add the 3 DNS records Resend provides (TXT, MX, CNAME)
 - [ ] Wait for verification (5-10 minutes)
-- [ ] Update `send-contract/route.ts` from address to `noreply@buildwithjazz.com`
+- [ ] Update both `from` addresses in `src/lib/contract-delivery.ts` to `noreply@buildwithjazz.com`
 - [ ] Test: send contract to a non-owner email
 
 ---

@@ -9,13 +9,28 @@ import { fun } from "@/data/fun";
 import { buildPrepSheetResult } from "@/lib/prep-sheet";
 import { getModel } from "./provider";
 
+const projectSlugs = projects.map((project) => project.slug) as [string, ...string[]];
+
 export const getProjects = tool({
   description:
     "Show my projects as interactive cards. Call this whenever the user asks about " +
     "projects, work, portfolio, what I have built, what I've shipped, STR Lead Research Agent, " +
-    "email triage, multi-agent orchestrator, MCP server, or anything I have worked on.",
-  inputSchema: z.object({}),
-  execute: async () => ({ projects }),
+    "email triage, multi-agent orchestrator, MCP server, or anything I have worked on. " +
+    "Pass slugs to show only specific projects — always do this when pointing to one build as proof " +
+    "that I've done something before, or when the visitor asks about a named project, so they see " +
+    "that card instead of every card. Leave slugs out only when they want to see my work in general. " +
+    "Projects: " +
+    projects.map((project) => `${project.slug} (${project.title})`).join("; ") +
+    ".",
+  inputSchema: z.object({
+    slugs: z
+      .array(z.enum(projectSlugs))
+      .optional()
+      .describe("Show only these projects. Omit to show all of them."),
+  }),
+  execute: async ({ slugs }) => ({
+    projects: slugs?.length ? projects.filter((project) => slugs.includes(project.slug)) : projects,
+  }),
 });
 
 export const getSkills = tool({
@@ -324,7 +339,6 @@ export const generateContract = tool({
       pricingFactors: {
         complexity: projectComplexity ?? "moderate",
         clientType: clientType ?? "small-business",
-        rateRange: "$10-15/hr",
         selectedRate: `$${hourlyRate}/hr`,
       },
       terms: [

@@ -64,7 +64,6 @@ Complete setup guide for the AI Portfolio with chat, GHL integration, n8n automa
 │  /api/dashboard → GHL CRUD + auth                        │
 │  /api/prep-intake → Form → GHL + WhatsApp + Discord      │
 │  /api/log-conversation → GHL + Discord logging           │
-│  /api/send-contract  → Email + PDF + GHL upload          │
 └─────────────────────────────────────────────────────────┘
          │              │              │
          ▼              ▼              ▼
@@ -415,13 +414,13 @@ Set `DISCORD_WEBHOOK_URL` in `.env` (format: `https://discord.com/api/webhooks/<
 
 ### Distribution
 
-When "Send to Client" is clicked:
-1. PDF generated client-side
-2. Sent to `/api/send-contract` as base64
-3. API sends emails via Resend (owner + client)
-4. Uploads PDF to GHL Media Library
-5. Adds note to GHL contact
-6. Sends Discord notification
+When a visitor confirms a proposal and gives an email, the `generateContract` tool builds the PDF
+server-side and `src/lib/contract-delivery.ts` delivers it — no client-side button is involved:
+1. Finds or creates the GHL contact and uploads the PDF to the GHL Media Library
+2. Adds a note, the contract fields, and the `proposal-sent` tag to the contact
+3. Emails the PDF through GHL, falling back to Resend
+4. Alerts the owner by email and Discord — on success, and on failure so the promised personal
+   follow-up actually happens
 
 ### Known Limitation: Resend Free Tier
 
@@ -429,7 +428,7 @@ When "Send to Client" is clicked:
 
 **Problem:** Resend free tier only allows sending to the owner's email address. Client emails are not delivered.
 
-**Remediation:** Verify a sending domain at [resend.com/domains](https://resend.com/domains), then update the `from` address in `send-contract/route.ts` to use the verified domain (e.g., `noreply@buildwithjazz.com`). See `MANUAL-ACTIONS.md` for steps.
+**Remediation:** Verify a sending domain at [resend.com/domains](https://resend.com/domains), then update the `from` address in `src/lib/contract-delivery.ts` to use the verified domain (e.g., `noreply@buildwithjazz.com`). See `MANUAL-ACTIONS.md` for steps.
 
 ### Issue: Blank PDF
 
@@ -741,8 +740,7 @@ src/
 │       ├── chat/route.ts     # AI chat endpoint
 │       ├── dashboard/        # Dashboard CRUD + auth
 │       ├── prep-intake/      # Prep sheet → GHL + WhatsApp
-│       ├── log-conversation/ # GHL + Discord logging
-│       └── send-contract/    # Email + PDF + GHL upload
+│       └── log-conversation/ # GHL + Discord logging
 ├── components/
 │   ├── chat/                 # Chat UI
 │   ├── dashboard/            # Dashboard UI
