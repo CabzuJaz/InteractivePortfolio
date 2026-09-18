@@ -70,6 +70,8 @@ interface ContractProps {
     missingFields: string[];
     questions: string[];
   };
+  /** For the model only: the breakdown missed the hours quoted in chat. Renders nothing. */
+  estimateMismatch?: { quotedHours: string; breakdownHours: number };
 }
 
 export function Contract({ contract, delivery, contractQualification }: ContractProps) {
@@ -196,16 +198,6 @@ export function Contract({ contract, delivery, contractQualification }: Contract
                 <p className="text-xs text-muted-foreground">estimated</p>
               </div>
             </div>
-            {contract.pricingFactors && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                <Badge variant="secondary" className="text-xs">
-                  {contract.pricingFactors.complexity} project
-                </Badge>
-                <Badge variant="secondary" className="text-xs">
-                  {contract.pricingFactors.clientType}
-                </Badge>
-              </div>
-            )}
           </div>
 
           {/* Tool Subscriptions */}
