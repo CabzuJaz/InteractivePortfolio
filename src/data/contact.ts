@@ -7,7 +7,7 @@ export interface Social {
 export const contact = {
   email: "jazzmincabizares@gmail.com",
   whatsapp: "https://wa.me/639389036717",
-  availability: "Open to remote work and project inquiries",
+  availability: "Open to full-time remote roles with US and international teams",
   calendly: "https://calendly.com/jazzmincabizares/15-minutes-discovery-call",
   socials: [
     {

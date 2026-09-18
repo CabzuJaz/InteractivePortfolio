@@ -93,7 +93,7 @@ export const getAvailability = tool({
       "Comfortable in both legacy enterprise systems and cutting-edge AI",
       "Self-directed learner who completed a 30-day AI Engineering sprint",
     ],
-    availability: "Open to remote work and project inquiries",
+    availability: contact.availability,
     location: "Cavite, Philippines — available for remote",
   }),
 });

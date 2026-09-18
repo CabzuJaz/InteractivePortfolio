@@ -7,7 +7,7 @@ export const persona = {
   role: "AI Automation Engineer | Backend Developer | AI Systems Builder",
   location: "Cavite, Philippines",
   phone: "+639389036717",
-  status: "Available for AI & Automation Projects",
+  status: "Open to full-time AI engineering roles — remote",
   tagline: "Hey, I'm MinMin",
   heroHeadline: "I build AI systems that turn repetitive work into reliable automation.",
   heroDescription:
