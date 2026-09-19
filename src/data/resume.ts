@@ -46,7 +46,7 @@ export const resume = {
   pdfUrl: "/resume.pdf",
   headline: "AI Automation Engineer & Backend Developer",
   summary:
-    "AI automation engineer with 3+ years in software engineering and automation, including 1+ year building AI systems. Designs and ships multi-agent pipelines, Claude tool-use integrations, n8n workflows, and Python, C#, and SQL backends, and builds in the parts that keep them reliable: idempotent retries, duplicate handling, audit trails, and human approval gates.",
+    "AI automation engineer with 3+ years in software engineering and automation, including 1+ year building AI systems, and a computer engineering background in electronics, microcontrollers, and networking. Designs and ships multi-agent pipelines, Claude tool-use integrations, n8n workflows, and Python, C#, and SQL backends, and builds in the parts that keep them reliable: idempotent retries, duplicate handling, audit trails, and human approval gates.",
   education: [
     {
       school: "Cavite State University",
@@ -54,6 +54,9 @@ export const resume = {
       field: "Computer Engineering",
       startYear: 2018,
       endYear: 2023,
+      highlights: [
+        "Foundation in electronic components, hardware integration, microcontrollers (Arduino, Raspberry Pi), and computer networking.",
+      ],
     },
   ] as Education[],
   experience: [

@@ -91,14 +91,16 @@ function buildHtml() {
   const skillRows = skills
     .map((category) => {
       const names = category.items.filter((skill) => (skill.level ?? 2) >= 2).map((skill) => esc(skill.name));
-      return `<div><dt>${esc(category.category)}</dt><dd>${names.join(", ")}</dd></div>`;
+      // A category of only familiar-level skills has nothing to list here.
+      return names.length ? `<div><dt>${esc(category.category)}</dt><dd>${names.join(", ")}</dd></div>` : "";
     })
     .join("");
 
   const education = resume.education
     .map(
       (school) =>
-        `<p><strong>${esc(school.degree)} in ${esc(school.field)}</strong>, ${esc(school.school)} (${school.startYear} – ${school.endYear})</p>`,
+        `<p><strong>${esc(school.degree)} in ${esc(school.field)}</strong>, ${esc(school.school)} (${school.startYear} – ${school.endYear})</p>` +
+        (school.highlights ?? []).map((line) => `<p class="edu-note">${esc(line)}</p>`).join(""),
     )
     .join("");
 
@@ -143,6 +145,7 @@ function buildHtml() {
   .skills div { display: flex; gap: 8pt; margin-bottom: 2pt; }
   dt { font-weight: 600; width: 1.3in; flex-shrink: 0; }
   ul.plain { margin-left: 11pt; }
+  .edu-note { color: var(--muted); font-size: 8.3pt; margin-top: 1pt; }
 </style>
 </head>
 <body>
