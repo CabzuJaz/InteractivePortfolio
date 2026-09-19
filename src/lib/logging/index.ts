@@ -43,31 +43,41 @@ export function extractConversation(messages: unknown[]): ConversationEntry[] {
   return entries;
 }
 
+/** What a later log call for the same conversation needs from an earlier one. */
+export interface LogRefs {
+  /** Signed reference to this conversation's Discord message; see sendToDiscord. */
+  discord?: string;
+}
+
 /**
- * Logs a conversation to GHL, Discord, and Google Sheets.
+ * Logs a conversation to GHL, Discord, and Google Sheets, updating each
+ * channel's existing record for `conversationId` instead of adding another.
+ * Returns the refs the browser should send with its next call.
  * Safe to call from client-side — all channels are optional and fail silently.
  */
 export async function logConversation(
   messages: unknown[],
-): Promise<void> {
+  conversationId: string,
+  refs: LogRefs = {},
+): Promise<LogRefs> {
   const conversations = extractConversation(messages);
 
   // Need at least one user message and one assistant response
   const hasUser = conversations.some((c) => c.role === "user");
   const hasAssistant = conversations.some((c) => c.role === "assistant");
-  if (!hasUser || !hasAssistant) return;
+  if (!hasUser || !hasAssistant) return refs;
 
-  // Send to GHL, Discord, and Google Sheets in parallel
-  await Promise.allSettled([
-    sendToGHL(conversations),
-    sendToDiscord(conversations),
-    sendToGoogleSheets(conversations),
-  ]).then((results) => {
-    results.forEach((r, i) => {
-      if (r.status === "rejected") {
-        const channels = ["GHL", "Discord", "Google Sheets"];
-        console.error(`[log-conversation] ${channels[i]} failed:`, r.reason);
-      }
-    });
+  const [ghl, discord, sheets] = await Promise.allSettled([
+    sendToGHL(conversations, conversationId),
+    sendToDiscord(conversations, conversationId, refs.discord),
+    sendToGoogleSheets(conversations, conversationId),
+  ]);
+  (["GHL", "Discord", "Google Sheets"] as const).forEach((channel, i) => {
+    const result = [ghl, discord, sheets][i];
+    if (result.status === "rejected") {
+      console.error(`[log-conversation] ${channel} failed:`, result.reason);
+    }
   });
+
+  return { discord: discord.status === "fulfilled" ? (discord.value ?? refs.discord) : refs.discord };
 }
