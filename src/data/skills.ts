@@ -8,6 +8,12 @@ export interface SkillCategory {
   items: Skill[];
 }
 
+export const skillLevelLabels = {
+  1: "Familiar",
+  2: "Proficient",
+  3: "Expert",
+} as const;
+
 export const skills: SkillCategory[] = [
   {
     category: "AI & Automation",

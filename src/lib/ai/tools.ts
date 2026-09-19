@@ -1,7 +1,7 @@
 import { tool, generateText, type ModelMessage } from "ai";
 import { z } from "zod";
 import { projects } from "@/data/projects";
-import { skills } from "@/data/skills";
+import { skillLevelLabels, skills } from "@/data/skills";
 import { resume } from "@/data/resume";
 import { contact } from "@/data/contact";
 import { persona } from "@/data/persona";
@@ -33,13 +33,38 @@ export const getProjects = tool({
   }),
 });
 
+const skillCategories = skills.map((group) => group.category) as [string, ...string[]];
+
 export const getSkills = tool({
   description:
-    "Show my skills organized by category. Call this whenever the user asks about " +
-    "skills, technologies, tech stack, what I know, what I'm good at, Claude API, Python, " +
-    "MCP, automation tools, or my proficiency levels.",
-  inputSchema: z.object({}),
-  execute: async () => ({ skills }),
+    "Show my skills organized by category, each with its level (Expert, Proficient, Familiar). " +
+    "Call this whenever the user asks about skills, technologies, tech stack, what I know, " +
+    "what I'm good at, Claude API, Python, MCP, automation tools, or my proficiency levels. " +
+    "Pass categories when the question is about one area or one tool — \"do you have hardware skills?\", " +
+    "\"do you know n8n?\" — so they see that section instead of every skill I have. Leave categories " +
+    "out only for a general look at my skills. Categories: " +
+    skills.map((group) => `${group.category} (${group.items.map((item) => item.name).join(", ")})`).join("; ") +
+    ".",
+  inputSchema: z.object({
+    categories: z
+      .array(z.enum(skillCategories))
+      .optional()
+      .describe("Show only these categories. Omit to show all of them."),
+  }),
+  execute: async ({ categories }) => {
+    const shown = categories?.length ? skills.filter((group) => categories.includes(group.category)) : skills;
+    // The level's name rides along with its number: given only "level: 1", the
+    // model guesses what it means, and a guess can oversell a skill.
+    return {
+      skills: shown.map((group) => ({
+        ...group,
+        items: group.items.map((item) => ({
+          ...item,
+          levelName: item.level ? skillLevelLabels[item.level] : undefined,
+        })),
+      })),
+    };
+  },
 });
 
 export const getResume = tool({

@@ -2,17 +2,11 @@
 
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import type { SkillCategory } from "@/data/skills";
+import { skillLevelLabels, type SkillCategory } from "@/data/skills";
 
 interface SkillsProps {
   skills: SkillCategory[];
 }
-
-const levelLabels: Record<number, string> = {
-  1: "Familiar",
-  2: "Proficient",
-  3: "Expert",
-};
 
 const levelColors: Record<number, string> = {
   1: "bg-muted text-muted-foreground",
@@ -26,6 +20,7 @@ const categoryIcons: Record<string, string> = {
   "APIs & Integrations": "🔌",
   "Backend & Data": "🗄️",
   Tools: "🛠️",
+  "Hardware & Systems": "🔧",
   Frontend: "🎨",
   Backend: "⚙️",
   "AI/ML": "🧠",
@@ -57,7 +52,7 @@ export function Skills({ skills }: SkillsProps) {
                 </Badge>
                 {skill.level && (
                   <span className="text-xs text-muted-foreground">
-                    {levelLabels[skill.level]}
+                    {skillLevelLabels[skill.level]}
                   </span>
                 )}
               </div>
