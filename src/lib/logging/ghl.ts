@@ -1,21 +1,13 @@
 /**
  * GoHighLevel (GHL) conversation logger.
- * Creates/updates a contact and adds the full conversation as a note.
+ * When the visitor has typed an email or phone number, finds or creates their
+ * contact and keeps one note per conversation holding the full transcript.
  * Requires GHL_LOCATION_ID and GHL_API_KEY env vars.
  */
 
 import type { ConversationEntry } from "../types";
 import { GHL_BASE, ghlHeaders } from "../ghl/client";
-
-// Common verbs/adjectives that are NOT names
-const NOT_NAMES = new Set([
-  "looking", "trying", "interested", "wondering", "thinking", "planning",
-  "hoping", "searching", "working", "building", "running", "helping",
-  "currently", "actually", "really", "very", "just", "also", "still",
-  "need", "want", "have", "been", "would", "could", "should", "might",
-  "here", "there", "what", "where", "when", "how", "this", "that",
-  "from", "with", "about", "into", "more", "some", "many", "each",
-]);
+import { findCompany, findName } from "./contact-info";
 
 /**
  * Attempts to extract contact info from the conversation.
@@ -40,37 +32,8 @@ function extractContactInfo(conversations: ConversationEntry[]) {
   const phoneDigits = phone?.replace(/\D/g, "") ?? "";
   const validPhone = phoneDigits.length >= 7 ? phone : undefined;
 
-  // Extract name — ONLY from explicit "my name is X" or "I'm FirstName LastName"
-  let firstName: string | undefined;
-  let lastName: string | undefined;
-
-  const explicitNameMatch = allText.match(
-    /(?:my name is|i'm|i am)\s+([A-Z][a-z]+)(\s+[A-Z][a-z]+)?/i,
-  );
-  if (explicitNameMatch) {
-    const candidate = explicitNameMatch[1];
-    if (!NOT_NAMES.has(candidate.toLowerCase())) {
-      firstName = candidate;
-      if (explicitNameMatch[2]) {
-        const last = explicitNameMatch[2].trim();
-        if (!NOT_NAMES.has(last.toLowerCase())) {
-          lastName = last;
-        }
-      }
-    }
-  }
-
-  // Extract company — ONLY from "from X" or "at X" followed by a capitalized word
-  let company: string | undefined;
-  const companyMatch = allText.match(
-    /(?:from|at)\s+([A-Z][\w]+(?:\s+(?:Inc|LLC|Corp|Ltd|Co|Group|Labs|Tech|Solutions|Services))?)/i,
-  );
-  if (companyMatch) {
-    const candidate = companyMatch[1].trim();
-    if (!NOT_NAMES.has(candidate.toLowerCase()) && candidate.length > 1) {
-      company = companyMatch[0].replace(/^(?:from|at)\s+/i, "").trim();
-    }
-  }
+  const { firstName, lastName } = findName(allText);
+  const company = findCompany(allText);
 
   return {
     email: emailMatch?.[0] ?? undefined,
@@ -81,11 +44,15 @@ function extractContactInfo(conversations: ConversationEntry[]) {
   };
 }
 
+const CHAT_TAG = "portfolio-chat-lead";
+
 /**
- * Creates or updates a contact in GHL and adds the conversation as a note.
+ * Finds or creates the visitor's contact, tags it, and writes this
+ * conversation's transcript into a single note that is rewritten each turn.
  */
 export async function sendToGHL(
   conversations: ConversationEntry[],
+  conversationId: string,
 ): Promise<void> {
   const locationId = process.env.GHL_LOCATION_ID;
   const apiKey = process.env.GHL_API_KEY;
@@ -102,25 +69,16 @@ export async function sendToGHL(
     return;
   }
 
-  // Create or update contact
-  const contactPayload: Record<string, unknown> = {
-    locationId,
-    source: "Portfolio Chat Widget",
-    tags: ["portfolio-chat-lead"],
-  };
-  if (info.firstName) contactPayload.firstName = info.firstName;
-  if (info.lastName) contactPayload.lastName = info.lastName;
-  if (info.email) contactPayload.email = info.email;
-  if (info.phone) contactPayload.phone = info.phone;
-  if (info.company) contactPayload.companyName = info.company;
-
   let contactId: string | undefined;
+  let created = false;
 
   try {
-    // Try to find existing contact by email
-    if (info.email) {
+    // Search by email, or by phone when that's all the visitor gave, so a
+    // phone-only visitor doesn't get a new contact on every turn.
+    const query = info.email ?? info.phone;
+    if (query) {
       const searchRes = await fetch(
-        `${baseUrl}/contacts/?locationId=${locationId}&query=${encodeURIComponent(info.email)}&limit=1`,
+        `${baseUrl}/contacts/?locationId=${locationId}&query=${encodeURIComponent(query)}&limit=1`,
         { headers },
       );
       if (searchRes.ok) {
@@ -129,18 +87,18 @@ export async function sendToGHL(
       }
     }
 
-    if (contactId) {
-      // Update existing contact
-      const updateRes = await fetch(`${baseUrl}/contacts/${contactId}`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(contactPayload),
-      });
-      if (!updateRes.ok) {
-        console.error("[ghl] Contact update failed:", updateRes.status, await updateRes.text());
-      }
-    } else {
-      // Create new contact
+    if (!contactId) {
+      const contactPayload: Record<string, unknown> = {
+        locationId,
+        source: "Portfolio Chat Widget",
+        tags: [CHAT_TAG],
+      };
+      if (info.firstName) contactPayload.firstName = info.firstName;
+      if (info.lastName) contactPayload.lastName = info.lastName;
+      if (info.email) contactPayload.email = info.email;
+      if (info.phone) contactPayload.phone = info.phone;
+      if (info.company) contactPayload.companyName = info.company;
+
       const createRes = await fetch(`${baseUrl}/contacts/`, {
         method: "POST",
         headers,
@@ -149,13 +107,14 @@ export async function sendToGHL(
       if (createRes.ok) {
         const createData = await createRes.json();
         contactId = createData.contact?.id;
+        created = true;
         console.log("[ghl] Contact created:", contactId);
       } else {
         console.error("[ghl] Contact creation failed:", createRes.status, await createRes.text());
       }
     }
   } catch (err) {
-    console.error("[ghl] Contact creation failed:", err);
+    console.error("[ghl] Contact lookup failed:", err);
     return;
   }
 
@@ -164,7 +123,25 @@ export async function sendToGHL(
     return;
   }
 
-  // Build conversation transcript for the note
+  // An existing contact's details are left exactly as they are; chat text is
+  // a poor source for overwriting a CRM record. The tag goes through Add Tags
+  // because the update endpoint's `tags` field replaces every tag the contact
+  // has (per HighLevel's spec), which would strip tags like proposal-sent.
+  if (!created) {
+    try {
+      const tagRes = await fetch(`${baseUrl}/contacts/${contactId}/tags`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ tags: [CHAT_TAG] }),
+      });
+      if (!tagRes.ok) {
+        console.error("[ghl] Adding tag failed:", tagRes.status, await tagRes.text());
+      }
+    } catch (err) {
+      console.error("[ghl] Adding tag failed:", err);
+    }
+  }
+
   const transcript = conversations
     .map(
       (c) =>
@@ -172,11 +149,14 @@ export async function sendToGHL(
     )
     .join("\n\n");
 
+  // The marker is how a later turn finds this conversation's note to rewrite.
+  const marker = `Conversation ID: ${conversationId}`;
   const userMessages = conversations.filter((c) => c.role === "user");
   const noteBody = [
     `💬 **Portfolio Chat Conversation**`,
     `📅 ${new Date().toLocaleString()}`,
     `📊 ${conversations.length} messages (${userMessages.length} from client)`,
+    `🔖 ${marker}`,
     ``,
     `---`,
     ``,
@@ -184,17 +164,23 @@ export async function sendToGHL(
   ].join("\n");
 
   try {
-    const noteRes = await fetch(`${baseUrl}/contacts/${contactId}/notes`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ body: noteBody }),
-    });
+    let noteId: string | undefined;
+    const listRes = await fetch(`${baseUrl}/contacts/${contactId}/notes`, { headers });
+    if (listRes.ok) {
+      const { notes } = (await listRes.json()) as { notes?: { id: string; body?: string }[] };
+      noteId = notes?.find((note) => note.body?.includes(marker))?.id;
+    }
+
+    const noteRes = await fetch(
+      noteId ? `${baseUrl}/contacts/${contactId}/notes/${noteId}` : `${baseUrl}/contacts/${contactId}/notes`,
+      { method: noteId ? "PUT" : "POST", headers, body: JSON.stringify({ body: noteBody }) },
+    );
     if (noteRes.ok) {
-      console.log("[ghl] Note added to contact:", contactId);
+      console.log(`[ghl] Note ${noteId ? "updated" : "added"} on contact:`, contactId);
     } else {
-      console.error("[ghl] Note creation failed:", noteRes.status, await noteRes.text());
+      console.error("[ghl] Note write failed:", noteRes.status, await noteRes.text());
     }
   } catch (err) {
-    console.error("[ghl] Note creation failed:", err);
+    console.error("[ghl] Note write failed:", err);
   }
 }

@@ -159,6 +159,17 @@ function ChatContent() {
     }
   }, []);
   const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Identifies this chat to the logger so Discord, GHL, and Sheets update one
+  // record per conversation instead of adding one per turn.
+  const [conversationId] = useState(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  );
+  const logRefsRef = useRef<{ discord?: string }>({});
+  // Log calls run one after another, so a turn never starts before the
+  // previous one has returned the refs it needs.
+  const logQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const { messages, sendMessage, regenerate, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -177,17 +188,26 @@ function ChatContent() {
 
     if (logTimerRef.current) clearTimeout(logTimerRef.current);
     logTimerRef.current = setTimeout(() => {
-      fetch("/api/log-conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }),
-      }).catch(() => {}); // fire-and-forget
+      logQueueRef.current = logQueueRef.current.then(async () => {
+        try {
+          const res = await fetch("/api/log-conversation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages, conversationId, refs: logRefsRef.current }),
+          });
+          if (!res.ok) return;
+          const data = (await res.json()) as { refs?: { discord?: string } };
+          if (data.refs) logRefsRef.current = data.refs;
+        } catch {
+          // Logging never interrupts the chat.
+        }
+      });
     }, 5000);
 
     return () => {
       if (logTimerRef.current) clearTimeout(logTimerRef.current);
     };
-  }, [messages]);
+  }, [messages, conversationId]);
 
   const isError = status === "error";
   const isLoading = status === "submitted" || status === "streaming";
