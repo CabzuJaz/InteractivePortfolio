@@ -510,7 +510,11 @@ export default function HomePage() {
                   A practical stack for AI workflows, business systems, APIs, and maintainable backends.
                 </p>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {skills.map((category) => (
+                  {/* Familiar-level skills stay in the chat, where the card labels them. */}
+                  {skills
+                    .map((category) => ({ ...category, items: category.items.filter((skill) => (skill.level ?? 2) >= 2) }))
+                    .filter((category) => category.items.length > 0)
+                    .map((category) => (
                     <div key={category.category}>
                       <h3 className="text-sm font-semibold">{category.category}</h3>
                       <div className="mt-3 flex flex-wrap gap-1.5">

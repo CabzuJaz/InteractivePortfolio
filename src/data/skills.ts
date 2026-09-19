@@ -82,4 +82,15 @@ export const skills: SkillCategory[] = [
       { name: "Elementor", level: 1 },
     ],
   },
+  {
+    // Computer engineering foundation, not practiced day to day since school.
+    category: "Hardware & Systems",
+    items: [
+      { name: "Arduino", level: 1 },
+      { name: "Raspberry Pi", level: 1 },
+      { name: "Electronic Components", level: 1 },
+      { name: "Hardware Integration", level: 1 },
+      { name: "Computer Networking", level: 1 },
+    ],
+  },
 ];
