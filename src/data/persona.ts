@@ -46,6 +46,16 @@ export const persona = {
   ],
   values: ["ship fast", "build systems that scale", "automate everything possible"],
   noGo: ["politics", "other people's private info", "salary details"],
+  // Personal life I keep out of the chat. Hobbies, where I'm based, and my
+  // education are fine — those come from the tools.
+  privateTopics: [
+    "relationships and marital status",
+    "family and children",
+    "age",
+    "religion",
+    "health",
+    "home address",
+  ],
   highlights: [
     "3+ years in software engineering & automation",
     "1+ year specializing in AI systems and multi-agent pipelines",
