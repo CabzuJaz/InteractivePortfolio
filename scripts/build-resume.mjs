@@ -27,12 +27,6 @@ const esc = (value) =>
 const bareUrl = (url) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 const span = (start, end) => (start === end ? start : `${start} – ${end}`);
 
-/** "+639389036717" → "+63 938 903 6717"; other formats pass through untouched. */
-function formatPhone(phone) {
-  const ph = phone.match(/^\+63(\d{3})(\d{3})(\d{4})$/);
-  return ph ? `+63 ${ph[1]} ${ph[2]} ${ph[3]}` : phone;
-}
-
 const bySlug = new Map(projects.map((project) => [project.slug, project]));
 function pickProjects(slugs) {
   return slugs.map((slug) => {
@@ -153,7 +147,7 @@ function buildHtml() {
     <h1>${esc(persona.name)}</h1>
     <p class="headline">${esc(resume.headline)}</p>
     <p class="contact">
-      <a href="mailto:${esc(contact.email)}">${esc(contact.email)}</a> · ${esc(formatPhone(persona.phone))} (WhatsApp) · ${esc(persona.location)}<br>
+      <a href="mailto:${esc(contact.email)}">${esc(contact.email)}</a> · ${esc(persona.location)}<br>
       <a href="https://www.${SITE}">${SITE}</a> · <a href="${esc(github)}">${esc(bareUrl(github))}</a> · <a href="${esc(linkedin)}">${esc(bareUrl(linkedin))}</a>
     </p>
     <p class="availability">${esc(contact.availability)}. ${esc(contact.schedule)}.</p>

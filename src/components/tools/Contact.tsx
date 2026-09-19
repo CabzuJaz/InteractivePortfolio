@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, Phone, Copy, Check, Calendar } from "lucide-react";
+import { Mail, Copy, Check, Calendar } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +11,6 @@ import type { Social } from "@/data/contact";
 interface ContactProps {
   contact: {
     email: string;
-    whatsapp?: string;
     availability?: string;
     calendly?: string;
     socials: Social[];
@@ -58,23 +57,6 @@ export function Contact({ contact }: ContactProps) {
             )}
           </Button>
         </div>
-
-        {contact.whatsapp && (
-          <a
-            href={contact.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Phone className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">WhatsApp</p>
-              <p className="font-medium">Message me</p>
-            </div>
-          </a>
-        )}
 
         {contact.availability && (
           <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-0">
