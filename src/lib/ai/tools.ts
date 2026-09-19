@@ -106,8 +106,9 @@ export const getMe = tool({
 export const getFun = tool({
   description:
     "Show my hobbies, fun facts, and personal interests. Call this whenever the user asks about " +
-    "hobbies, fun, interests, personal life, what I do for fun, fun facts, AI engineering sprint, " +
-    "banking systems, legacy systems, or anything casual about me.",
+    "hobbies, fun, interests, what I do for fun, fun facts, AI engineering sprint, " +
+    "banking systems, legacy systems, or anything casual about me. The card shows every hobby and " +
+    "fact in full, so the reply is one short sentence that picks one of them — never a retelling.",
   inputSchema: z.object({}),
   execute: async () => ({ fun }),
 });
