@@ -491,7 +491,7 @@ if (adminKey !== process.env.DASHBOARD_ADMIN_KEY) {
 ### URL Pattern
 
 ```
-https://www.buildwithjazz.com/prep?client=larry-bmpc&name=Larry&email=larry@example.com
+https://www.buildwithjazz.com/prep?client=acme-co&name=Alex&email=alex@example.com
 ```
 
 ### Features

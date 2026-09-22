@@ -8,7 +8,9 @@ Runtime portfolio data lives in `src/data/projects.ts`. This document mirrors ke
 - Tools: n8n, WordPress, WPForms, GorillaDesk CRM, Google Sheets API, Google Maps geocoding, Twilio SMS, Gmail API, Elementor, jq
 - Image: `/projects/lead-intake-estimating-system.png` (deliberately client-neutral filename — the
   public URL is visible to anyone, so it must not carry the client's initials)
-- Working folder: `~/PROJECTS/BMPC-n8n-Lead/BMPC-project` (`02-docs/` is the doc set)
+- Working folder: this client's n8n lead project under `~/PROJECTS/` (`02-docs/` is the doc
+  set). The folder name carries the client's initials, so it isn't written out here — this
+  file is in a public repository.
 
 Designed and built a single lead pipeline for a US-based home-services company, replacing scattered tools with five coordinated n8n workflows covering intake, estimating, notification, and override auditing.
 
