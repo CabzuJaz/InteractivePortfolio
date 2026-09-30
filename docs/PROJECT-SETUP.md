@@ -87,7 +87,7 @@ Complete setup guide for the AI Portfolio with chat, GHL integration, n8n automa
 | Fallback | Groq (llama-3.3-70b) | Backup model |
 | CRM | GoHighLevel | Contact management |
 | Automation | n8n (Render) | Workflow automation |
-| Email | Resend | Transactional email |
+| Email | GoHighLevel | Client email, sent by GHL |
 | PDF | @react-pdf/renderer | Contract generation |
 | Notifications | Discord Webhooks | Real-time alerts |
 
@@ -111,8 +111,6 @@ GHL_API_KEY=pit-...
 # Discord
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
 
-# Email
-RESEND_API_KEY=re_...
 
 # Dashboard Auth
 DASHBOARD_ADMIN_KEY=your-secret-key
@@ -418,17 +416,17 @@ When a visitor confirms a proposal and gives an email, the `generateContract` to
 server-side and `src/lib/contract-delivery.ts` delivers it — no client-side button is involved:
 1. Finds or creates the GHL contact and uploads the PDF to the GHL Media Library
 2. Adds a note, the contract fields, and the `proposal-sent` tag to the contact
-3. Emails the PDF through GHL, falling back to Resend
-4. Alerts the owner by email and Discord — on success, and on failure so the promised personal
+3. Emails the PDF through GHL, with the hosted PDF attached
+4. Alerts the owner on Discord — on success, and on failure so the promised personal
    follow-up actually happens
 
-### Known Limitation: Resend Free Tier
+### Email is sent by GoHighLevel
 
-**Status:** Unresolved — owner-only sending is the current state.
-
-**Problem:** Resend free tier only allows sending to the owner's email address. Client emails are not delivered.
-
-**Remediation:** Verify a sending domain at [resend.com/domains](https://resend.com/domains), then update the `from` address in `src/lib/contract-delivery.ts` to use the verified domain (e.g., `noreply@buildwithjazz.com`). See `MANUAL-ACTIONS.md` for steps.
+Resend was removed in September 2026 — its key had leaked, and its free tier only ever
+delivered to the owner's own address, so client emails never arrived. GHL sends every client
+email now: contracts through the conversations API, and the prep-sheet copy through the
+workflow that watches for the `prep-sheet-submitted` tag. There is no third-party fallback;
+if GHL cannot send, the tool result says so and Discord alerts the owner.
 
 ### Issue: Blank PDF
 
@@ -659,7 +657,6 @@ if (nameMatch && !NOT_NAMES.has(nameMatch[1].toLowerCase())) {
 | Render | Jazzmin Sicat-Cabizares | render.com dashboard | GitHub SSO |
 | n8n | Jazzmin Sicat-Cabizares | eightn-render.onrender.com | n8n account credentials |
 | Discord | Jazzmin Sicat-Cabizares | Discord app | Discord account (2FA enabled) |
-| Resend | Jazzmin Sicat-Cabizares | resend.com | GitHub SSO |
 | MiMo | Jazzmin Sicat-Cabizares | MiMo platform | API key rotation |
 | Groq | Jazzmin Sicat-Cabizares | console.groq.com | API key rotation |
 

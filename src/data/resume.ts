@@ -73,7 +73,7 @@ export const resume = {
         "Integrate GoHighLevel CRM through its workflows and API for lead capture, contract generation, and client project dashboards; build n8n pipelines for client onboarding, payment tracking, and multi-channel notifications.",
         "Built this portfolio's AI assistant (Next.js, Vercel AI SDK, Claude): streamed tool-calling chat that renders project and résumé cards, scopes automation requests, and generates contract PDFs delivered through the GoHighLevel API.",
       ],
-      tech: ["GoHighLevel", "n8n", "Claude API", "GHL Workflows", "GHL API", "Discord Webhooks", "Resend", "Next.js"],
+      tech: ["GoHighLevel", "n8n", "Claude API", "GHL Workflows", "GHL API", "Discord Webhooks", "Next.js"],
     },
     {
       company: "Xytron Int. Inc.",

@@ -5,20 +5,20 @@
  * Primary route: GoHighLevel — upsert contact, upload PDF to the media
  * library, store it in custom fields, tag `proposal-sent`, and send the
  * email through GHL's conversations API with the hosted PDF attached.
- * Fallback: Resend with the PDF as a base64 attachment.
+ * There is no third-party email fallback: if GHL cannot send it, the result
+ * says so and the owner is pinged on Discord to follow up by hand.
  *
  * Every step is fail-soft: a delivery failure never breaks the tool call —
  * the returned DeliveryResult tells the model what actually happened so it
  * never claims an email was sent when it wasn't.
  */
-import { Resend } from "resend";
+import { contact } from "@/data/contact";
 import {
   GHL_BASE,
   GHL_CONVERSATIONS_VERSION,
   ghlHeaders,
 } from "@/lib/ghl/client";
 
-const OWNER_EMAIL = "jazzmincabizares@gmail.com";
 const FETCH_TIMEOUT_MS = 8000;
 
 export interface ContractForDelivery {
@@ -32,7 +32,7 @@ export interface ContractForDelivery {
 
 export interface DeliveryResult {
   sent: boolean;
-  method: "ghl-email" | "resend" | "none";
+  method: "ghl-email" | "none";
   sentTo: string | null;
   pdfUrl: string | null;
 }
@@ -179,11 +179,11 @@ function buildClientEmailHtml(contract: ContractForDelivery): string {
         <tr><td style="padding:8px;border-bottom:1px solid #eee;color:#6b7280">Rate</td><td style="padding:8px;border-bottom:1px solid #eee">$${contract.hourlyRate}/hour · ${contract.hours}h estimated</td></tr>
       </table>
       <p style="color:#374151">If you have questions or want to discuss the scope, reply to this email or book a call:</p>
-      <p style="margin:16px 0"><a href="https://calendly.com/jazzmincabizares/15-minutes-discovery-call" style="display:inline-block;background:#06b6d4;color:white;padding:10px 24px;border-radius:999px;text-decoration:none;font-weight:600">Book a Discovery Call</a></p>
+      <p style="margin:16px 0"><a href="${contact.calendly}" style="display:inline-block;background:#06b6d4;color:white;padding:10px 24px;border-radius:999px;text-decoration:none;font-weight:600">Book a Discovery Call</a></p>
       <p style="color:#374151">Looking forward to working with you!</p>
       <p style="color:#374151;font-weight:600">Jazzmin Sicat-Cabizares</p>
       <p style="color:#6b7280;font-size:13px">AI Automation Engineer</p>
-      <p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:12px">BuildWithJazz.com · ${OWNER_EMAIL}</p>
+      <p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:12px">BuildWithJazz.com · ${contact.email}</p>
     </div>
   `;
 }
@@ -218,27 +218,8 @@ async function sendEmailViaGHL(
   return res.ok;
 }
 
-/** Fire-and-forget: owner email + Discord ping so Jazzmin knows a proposal went out. */
+/** Fire-and-forget Discord ping so Jazzmin knows a proposal went out. */
 function notifyOwner(contract: ContractForDelivery, method: string, delivered = true): void {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (apiKey) {
-    const resend = new Resend(apiKey);
-    resend.emails
-      .send({
-        from: "Jazzmin <onboarding@resend.dev>",
-        to: OWNER_EMAIL,
-        subject: delivered
-          ? `📄 Contract auto-sent to ${contract.clientName} — $${contract.totalCost.toLocaleString()}`
-          : `⚠️ Contract email failed for ${contract.clientName}, follow up manually`,
-        html: `<div style="font-family:system-ui,sans-serif"><p><strong>${escapeHtml(contract.clientName)}</strong> (${escapeHtml(contract.clientEmail ?? "no email")}) ${
-          delivered
-            ? `was sent a contract proposal via ${method}.`
-            : "asked for a contract proposal, but every delivery method failed. MinMin told them you would follow up personally, so send it to them directly."
-        }</p><p>Total: <strong>$${contract.totalCost.toLocaleString()}</strong> · ${escapeHtml(contract.projectDescription)}</p></div>`,
-      })
-      .catch((err) => console.error("[contract-delivery] owner email failed:", err));
-  }
-
   const discordWebhook = process.env.DISCORD_WEBHOOK_URL;
   if (discordWebhook) {
     fetch(discordWebhook, {
@@ -265,7 +246,7 @@ function notifyOwner(contract: ContractForDelivery, method: string, delivered = 
 
 /**
  * Deliver the contract PDF to the client.
- * GHL first (hosted PDF + CRM trail + GHL-sent email), Resend as fallback.
+ * GHL does the sending: hosted PDF, CRM trail, and the email itself.
  */
 export async function deliverContract(
   contract: ContractForDelivery,
@@ -301,27 +282,6 @@ export async function deliverContract(
       } catch (err) {
         console.error("[contract-delivery] GHL email failed:", err);
       }
-    }
-  }
-
-  // Fallback: Resend with base64 attachment
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const { error } = await resend.emails.send({
-        from: "Jazzmin <onboarding@resend.dev>",
-        to: email,
-        subject: `Your Contract Proposal from Jazzmin — $${contract.totalCost.toLocaleString()}`,
-        html: buildClientEmailHtml(contract),
-        attachments: [{ filename, content: pdfBuffer.toString("base64") }],
-      });
-      if (!error) {
-        notifyOwner(contract, "Resend (fallback)");
-        return { sent: true, method: "resend", sentTo: email, pdfUrl };
-      }
-      console.error("[contract-delivery] Resend fallback failed:", error);
-    } catch (err) {
-      console.error("[contract-delivery] Resend fallback threw:", err);
     }
   }
 

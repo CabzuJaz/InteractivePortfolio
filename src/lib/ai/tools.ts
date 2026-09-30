@@ -421,8 +421,8 @@ export const generateContract = tool({
     };
 
     // Server-side delivery: generate the PDF here and route it via GHL
-    // (hosted PDF + CRM contact + proposal-sent tag + GHL-sent email, with
-    // Resend fallback) so nothing depends on client-side buttons.
+    // (hosted PDF + CRM contact + proposal-sent tag + GHL-sent email) so
+    // nothing depends on client-side buttons.
     let delivery: import("../contract-delivery").DeliveryResult = {
       sent: false,
       method: "none",

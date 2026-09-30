@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { GHL_BASE, ghlHeaders } from "@/lib/ghl/client";
 
-const OWNER_EMAIL = "jazzmincabizares@gmail.com";
 const GHL_HEADERS = ghlHeaders();
 
 interface PrepAnswer {
@@ -106,93 +104,6 @@ async function addTag(contactId: string, tag: string): Promise<void> {
 }
 
 
-function buildAnswersHtml(answers: PrepAnswer[]): string {
-  return answers
-    .map(
-      (a) => `
-      <tr>
-        <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280;font-weight:600;vertical-align:top;width:40%">
-          ${escapeHtml(a.label)}
-        </td>
-        <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#374151">
-          ${escapeHtml(a.value).replace(/\n/g, "<br>")}
-        </td>
-      </tr>`,
-    )
-    .join("");
-}
-
-async function sendEmailToOwner(payload: PrepPayload): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return;
-
-  const resend = new Resend(apiKey);
-
-  const html = `
-    <div style="font-family:system-ui,sans-serif;max-width:700px;margin:0 auto">
-      <h2 style="color:#06b6d4">📋 Prep Sheet Submitted</h2>
-      <table style="width:100%;border-collapse:collapse;margin:16px 0">
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Client</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:600">${escapeHtml(payload.clientName || "Unknown")}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Email</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:600">${escapeHtml(payload.clientEmail || "Not provided")}</td>
-        </tr>
-        ${payload.clientPhone ? `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Phone</td><td style="padding:8px 12px;border-bottom:1px solid #eee;font-weight:600">${escapeHtml(payload.clientPhone)}</td></tr>` : ""}
-        <tr>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee;color:#6b7280">Submitted</td>
-          <td style="padding:8px 12px;border-bottom:1px solid #eee">${new Date(payload.submittedAt).toLocaleString()}</td>
-        </tr>
-      </table>
-      <h3 style="color:#374151;margin-top:24px">Answers</h3>
-      <table style="width:100%;border-collapse:collapse;margin:16px 0">
-        ${buildAnswersHtml(payload.answers)}
-      </table>
-      <p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:12px">
-        Sent from BuildWithJazz.com — Prep Sheet
-      </p>
-    </div>
-  `;
-
-  await resend.emails.send({
-    from: "Jazzmin <onboarding@resend.dev>",
-    to: OWNER_EMAIL,
-    subject: `📋 Prep Sheet: ${payload.clientName || "Unknown Client"}`,
-    html,
-  }).catch((err) => console.error("[prep-intake] Owner email failed:", err));
-}
-
-async function sendEmailToClient(payload: PrepPayload): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey || !payload.clientEmail) return;
-
-  const resend = new Resend(apiKey);
-
-  const html = `
-    <div style="font-family:system-ui,sans-serif;max-width:700px;margin:0 auto">
-      <h2 style="color:#06b6d4">Your Lead Automation Prep Sheet</h2>
-      <p style="color:#374151">Hi ${escapeHtml(payload.clientName || "there")},</p>
-      <p style="color:#374151">Here's a copy of your answers. Jazzmin will review them and reach out with a recommendation soon.</p>
-      <table style="width:100%;border-collapse:collapse;margin:24px 0">
-        ${buildAnswersHtml(payload.answers)}
-      </table>
-      <p style="color:#374151">Questions? Reply to this email or reach out at <a href="mailto:${OWNER_EMAIL}" style="color:#06b6d4">${OWNER_EMAIL}</a>.</p>
-      <p style="color:#9ca3af;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:12px">
-        BuildWithJazz.com
-      </p>
-    </div>
-  `;
-
-  await resend.emails.send({
-    from: "Jazzmin <onboarding@resend.dev>",
-    to: payload.clientEmail,
-    subject: "Your prep sheet answers — Build with Jazz",
-    html,
-  }).catch((err) => console.error("[prep-intake] Client email failed:", err));
-}
-
 async function notifyDiscord(payload: PrepPayload): Promise<void> {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) return;
@@ -253,12 +164,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Email owner, email client copy, Discord notification — all fire-and-forget
-    Promise.allSettled([
-      sendEmailToOwner(body),
-      sendEmailToClient(body),
-      notifyDiscord(body),
-    ]).catch(() => {});
+    // Discord ping for the owner — fire-and-forget. The client's copy is sent
+    // by the GHL workflow that watches for the "prep-sheet-submitted" tag.
+    notifyDiscord(body).catch(() => {});
 
     return NextResponse.json({ ok: true });
   } catch (err) {

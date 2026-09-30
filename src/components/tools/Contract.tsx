@@ -54,7 +54,7 @@ interface ContractData {
 
 interface DeliveryData {
   sent: boolean;
-  method: "ghl-email" | "resend" | "none";
+  method: "ghl-email" | "none";
   sentTo: string | null;
   pdfUrl: string | null;
   /** The sentence MinMin says after the call; spoken in chat, not rendered here. */

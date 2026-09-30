@@ -6,6 +6,7 @@
 // CHROME_PATH if Chrome isn't at the macOS default location.
 
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -245,7 +246,10 @@ async function printToPdf(htmlPath) {
     return Buffer.from(data, "base64");
   } finally {
     chrome.kill();
-    await rm(profile, { recursive: true, force: true });
+    // Chrome keeps writing to its profile for a moment after the signal, so a
+    // removal that starts too early fails with ENOTEMPTY.
+    await Promise.race([once(chrome, "exit"), new Promise((resolve) => setTimeout(resolve, 3000))]);
+    await rm(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
   }
 }
 
