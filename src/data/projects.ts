@@ -409,6 +409,6 @@ export const projects: Project[] = [
       "Handles the three things that break this kind of pipeline: asynchronous renders, safety rejections, and format conversion before upload",
     ],
     links: {},
-    images: ["/projects/asmr-video-pipeline-diagram.png", "/projects/asmr-video-pipeline.png"],
+    images: ["/projects/asmr-video-pipeline.png", "/projects/asmr-video-pipeline-diagram.png"],
   },
 ];
