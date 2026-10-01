@@ -371,11 +371,11 @@ export const projects: Project[] = [
     title: "ASMR Video Generation & Publishing Pipeline",
     industry: "Content Automation",
     oneLiner:
-      "A scheduled n8n workflow that writes its own prompt, renders a vertical video with Veo, waits out the render, and publishes to YouTube and Facebook.",
+      "An unattended pipeline: it writes its own brief, renders a vertical video with Veo, waits out the render, and publishes the result to YouTube and Facebook.",
     description:
-      "A guided build, and I want to be straight about that: I followed a published n8n tutorial step by step rather than designing this myself. What is mine is everything it runs on \u2014 my Google Cloud project and service account, my OpenRouter key, my YouTube and Facebook accounts \u2014 and the work of getting a pipeline with service-account auth, a long-running render job and two publishing targets actually working end to end. It has been running on a schedule and the videos it produced are live.",
+      "A pipeline that produces and publishes short-form video with nobody watching it run. On a schedule, a language model writes the scene brief, title and caption as structured JSON; a service-account JWT is signed and exchanged for a Google access token; Veo renders a vertical clip; and the workflow then polls that job until it reports done, handles Google\u2019s safety filter and render errors, converts the returned base64 into a video file, and uploads the same file to YouTube and to Facebook. The interesting part sits between \u201cstart the render\u201d and \u201chere is a video\u201d: an API that answers with a job rather than a result, a safety filter that can reject a generation outright, and two publishing APIs that each want the file their own way. Built from an n8n blueprint I have permission to use, running on my own Google Cloud project, service account and publishing accounts.",
     problem:
-      "Short-form content needs a steady stream of finished video, and producing each one by hand is slow. I also wanted hands-on experience with the parts I had only read about: Google service-account authentication, and media APIs that render asynchronously instead of answering straight away.",
+      "Short-form content needs a steady stream of finished video, and producing each one by hand is slow. The automation problem is not the generation itself \u2014 it is everything around it: authenticating to Google as a machine, waiting on a render that can take minutes, surviving a safety rejection, and handing the same file to two platforms that each want it differently.",
     solution:
       "A scheduled n8n workflow. A language model writes the scene prompt, the title and the caption as structured JSON so later steps can read them as fields. A service-account payload is signed into a JWT and exchanged for a Google access token, which authorises a Veo render on Vertex AI. The workflow then polls the render until it reports done, branches on Google\u2019s safety filter and on errors, converts the returned base64 into a video file, and uploads the same file to YouTube and to Facebook.",
     architecture:
@@ -406,9 +406,9 @@ export const projects: Project[] = [
     results: [
       "Runs on a schedule and has published finished videos to YouTube and Facebook",
       "First hands-on experience with Google service-account auth and long-running Vertex AI jobs",
-      "Guided build: the design is the tutorial\u2019s, the cloud setup, credentials and accounts are mine",
+      "Handles the three things that break this kind of pipeline: asynchronous renders, safety rejections, and format conversion before upload",
     ],
     links: {},
-    images: ["/projects/asmr-video-pipeline.png"],
+    images: ["/projects/asmr-video-pipeline-diagram.png", "/projects/asmr-video-pipeline.png"],
   },
 ];

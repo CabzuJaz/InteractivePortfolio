@@ -75,11 +75,12 @@ filter and on errors → base64 is converted to a video file → uploaded to You
 
 ### Provenance (keep this accurate in public copy)
 
-This is a **guided build**: the workflow follows a published tutorial step by step. The design
-is not mine. What is mine is the infrastructure it runs on — Google Cloud project and service
-account, OpenRouter key, YouTube and Facebook accounts — and getting it working end to end.
-The public project entry says exactly this. Never describe it as my own design, and if an
-interviewer asks, the honest answer is already on the site.
+The workflow follows a published n8n blueprint that Jazzmin **has permission to use**. The
+public entry therefore leads with what the system does and names the blueprint in one line at
+the end, without apology. The design still is not hers: never write or let MinMin say she
+designed or invented it, and if an interviewer asks, the honest answer — blueprint used with
+permission, her cloud project, credentials, accounts and the work of making it run — is
+already on the site.
 
 ### Security (unresolved)
 
