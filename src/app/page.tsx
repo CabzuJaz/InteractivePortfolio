@@ -436,6 +436,18 @@ export default function HomePage() {
                         Ask about this build
                         <ArrowUpRight className="h-4 w-4" />
                       </button>
+
+                      {project.links.github && (
+                        <a
+                          href={project.links.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-3 inline-flex w-fit items-center gap-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
+                        >
+                          <Code2 className="h-4 w-4" />
+                          Read the code on GitHub
+                        </a>
+                      )}
                     </div>
                   </div>
                 </motion.article>

@@ -166,7 +166,7 @@ export const projects: Project[] = [
       "Users can find leads through a simple web form",
       "Results automatically organized in Google Sheets",
     ],
-    links: {},
+    links: { github: "https://github.com/CabzuJaz/claude-hello-world/tree/main/day23-str-lead-agent" },
     images: ["/projects/str-lead-research-agent.webp"],
     highlight: true,
     resumeBullets: [
@@ -277,7 +277,7 @@ export const projects: Project[] = [
       "Reusable across multiple projects",
       "Clean REST API for external integrations",
     ],
-    links: {},
+    links: { github: "https://github.com/CabzuJaz/claude-hello-world/tree/main/day13-mcp-sqlite" },
     images: [],
   },
   {
