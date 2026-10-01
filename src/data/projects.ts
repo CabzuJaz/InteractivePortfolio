@@ -316,4 +316,54 @@ export const projects: Project[] = [
     images: ["/projects/ai-lead-qualifications.png"],
     highlight: true,
   },
+  {
+    slug: "ai-portfolio-minmin-chat",
+    title: "AI Portfolio with MinMin Chat",
+    industry: "Personal Product",
+    oneLiner:
+      "This site: a chat that answers as me from my own data, and turns a qualified conversation into a contract PDF and a CRM record.",
+    description:
+      "Built the site you are reading as a working product rather than a page. MinMin answers in first person using only my data files, and routes each question to one of ten tools whose results render as interactive cards: projects, skills, r\u00e9sum\u00e9, availability, contact, a business analysis, a prep sheet, and a generated contract. Every conversation is logged once to the CRM and once to a spreadsheet, so a lead that starts in chat already exists as a contact, a note, and a full transcript before I read it.",
+    problem:
+      "A static portfolio answers the same three questions and stops. Anything specific \u2014 can you build this, what would it cost, have you shipped something like it \u2014 needed me awake and typing, and the enquiries that did arrive lived in my inbox with no record and no follow-up.",
+    solution:
+      "A Next.js app on the Vercel AI SDK where the model is a router and narrator, never a database: it picks a tool, the tool returns structured data from one source of truth, and a React component renders it. The decisions that must not be wrong live in tool code rather than prompt wording \u2014 the server writes the one sentence the model may say about a delivered contract, refuses a contract whose hour breakdown drifts from the estimate already given in chat, and signs each conversation\u2019s log reference so later turns update the same records instead of creating new ones.",
+    architecture:
+      "Visitor \u2192 Streamed Chat (Next.js) \u2192 Model + 10 Tools \u2192 Rich Cards \u2192 Server-Side Contract PDF \u2192 CRM Contact, Note & Hosted PDF \u2192 Spreadsheet Transcript",
+    tech: [
+      "Next.js 16",
+      "TypeScript",
+      "Vercel AI SDK",
+      "Claude API",
+      "Tailwind CSS v4",
+      "zod",
+      "GoHighLevel API",
+      "Google Sheets API",
+      "React PDF",
+    ],
+    year: 2026,
+    keyFeatures: [
+      "Ten AI tools whose results render as interactive cards instead of prose",
+      "Contract PDF generated, hosted, and emailed server-side through the CRM",
+      "Estimate guard: a contract that drifts from the hours quoted in chat is refused",
+      "One contact, one note, and one transcript row per conversation, updated in place",
+      "R\u00e9sum\u00e9 PDF generated from the same data files, so the site and the CV cannot disagree",
+      "Four-provider model fallback chain so the chat survives an outage",
+    ],
+    challenges: [
+      "A major AI SDK upgrade changed the shape of tool results, and every card silently stopped rendering while the text still streamed. Fixed by reading tool parts through the SDK\u2019s own helpers, and by testing in a real browser instead of only against the API.",
+      "Prompt-only rules failed often enough to matter: the model claimed an email had been sent when delivery had failed, and quoted hours it then contradicted in the contract. The fixes moved into tool code, which is deterministic.",
+      "Logging ran on every turn, so one conversation produced a pile of near-identical CRM notes. Each conversation now carries a signed reference, and later turns update the record they already created.",
+    ],
+    results: [
+      "Every chat arrives as one CRM contact, one note, and one readable transcript, with no copying by hand",
+      "A qualified conversation produces a contract PDF and sends it without me in the loop",
+      "The r\u00e9sum\u00e9 rebuilds from the same data in one command, so it never drifts from the site",
+    ],
+    links: {
+      live: "https://www.buildwithjazz.com",
+      github: "https://github.com/CabzuJaz/InteractivePortfolio",
+    },
+    images: ["/projects/ai-portfolio-minmin-chat.png"],
+  },
 ];
