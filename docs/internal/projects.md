@@ -58,3 +58,37 @@ notification + acknowledgement path is live-verified. Portfolio copy therefore c
 *capabilities delivered*, not measured business outcomes. Do not add metrics such as
 "reduced intake time by X%" until controlled testing and client release approval produce
 evidence.
+
+## ASMR Video Generation & Publishing Pipeline
+
+- Industry: Content Automation
+- Tools: n8n, Google Vertex AI (Veo), OpenRouter, Google Cloud service account + JWT, YouTube
+  Data API, Facebook Graph API
+- Image: `/projects/asmr-video-pipeline.png` (the n8n canvas, cropped to the nodes and split
+  into two rows; no project IDs or endpoints are legible in it)
+- Where it lives: my own n8n instance, Personal workspace, workflow "Jazz - ASMR video creator"
+
+Scheduled run → an LLM writes prompt, title and caption as structured JSON → a service-account
+payload is signed into a JWT and exchanged for a Google access token → Veo renders a 9:16 clip
+→ the workflow polls the long-running operation until done → branches on Google's safety
+filter and on errors → base64 is converted to a video file → uploaded to YouTube and Facebook.
+
+### Provenance (keep this accurate in public copy)
+
+This is a **guided build**: the workflow follows a published tutorial step by step. The design
+is not mine. What is mine is the infrastructure it runs on — Google Cloud project and service
+account, OpenRouter key, YouTube and Facebook accounts — and getting it working end to end.
+The public project entry says exactly this. Never describe it as my own design, and if an
+interviewer asks, the honest answer is already on the site.
+
+### Security (unresolved)
+
+The service-account identity is pasted into a **Code node** ("Secret Payload") inside the
+workflow rather than stored as an n8n credential. That means the credential travels inside
+every export of this workflow.
+
+- Move it into an n8n credential, and have the JWT node read from there.
+- Never paste or commit this workflow's JSON anywhere public; the export carries the service
+  account, credential IDs, and the Google Cloud project name.
+- If a full export containing `private_key` has ever left this machine, rotate that
+  service-account key in Google Cloud and delete the old one.

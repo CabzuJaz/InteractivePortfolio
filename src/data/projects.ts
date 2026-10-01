@@ -366,4 +366,49 @@ export const projects: Project[] = [
     },
     images: ["/projects/ai-portfolio-minmin-chat.png"],
   },
+  {
+    slug: "asmr-video-publishing-pipeline",
+    title: "ASMR Video Generation & Publishing Pipeline",
+    industry: "Content Automation",
+    oneLiner:
+      "A scheduled n8n workflow that writes its own prompt, renders a vertical video with Veo, waits out the render, and publishes to YouTube and Facebook.",
+    description:
+      "A guided build, and I want to be straight about that: I followed a published n8n tutorial step by step rather than designing this myself. What is mine is everything it runs on \u2014 my Google Cloud project and service account, my OpenRouter key, my YouTube and Facebook accounts \u2014 and the work of getting a pipeline with service-account auth, a long-running render job and two publishing targets actually working end to end. It has been running on a schedule and the videos it produced are live.",
+    problem:
+      "Short-form content needs a steady stream of finished video, and producing each one by hand is slow. I also wanted hands-on experience with the parts I had only read about: Google service-account authentication, and media APIs that render asynchronously instead of answering straight away.",
+    solution:
+      "A scheduled n8n workflow. A language model writes the scene prompt, the title and the caption as structured JSON so later steps can read them as fields. A service-account payload is signed into a JWT and exchanged for a Google access token, which authorises a Veo render on Vertex AI. The workflow then polls the render until it reports done, branches on Google\u2019s safety filter and on errors, converts the returned base64 into a video file, and uploads the same file to YouTube and to Facebook.",
+    architecture:
+      "Schedule \u2192 LLM Prompt + Structured JSON \u2192 Service-Account JWT \u2192 Google Access Token \u2192 Veo Render Job \u2192 Poll Until Done \u2192 Safety & Error Branches \u2192 Base64 to Video File \u2192 YouTube + Facebook",
+    tech: [
+      "n8n",
+      "Google Vertex AI (Veo)",
+      "OpenRouter",
+      "Google Cloud Service Accounts",
+      "JWT",
+      "YouTube Data API",
+      "Facebook Graph API",
+    ],
+    year: 2026,
+    keyFeatures: [
+      "Prompt, title and caption generated as structured JSON, so the upload steps read them as fields rather than parsing prose",
+      "Service-account payload signed into a JWT and exchanged for a Google access token inside the workflow",
+      "Polling loop that waits for the render to report done, instead of guessing a fixed delay",
+      "Safety-filter branch: a rejected generation goes back for a fresh prompt rather than ending the run",
+      "Error branch retries the render",
+      "One finished file publishes to both YouTube and Facebook",
+    ],
+    challenges: [
+      "The render is asynchronous: the job returns an operation name, and the workflow has to poll it until it reports done before anything can read the video.",
+      "Vertex returns the video as base64 inside JSON, so it has to be converted to a binary file before either platform will accept the upload.",
+      "Google\u2019s safety filter rejects some generations outright, so the run needs a branch that regenerates rather than failing.",
+    ],
+    results: [
+      "Runs on a schedule and has published finished videos to YouTube and Facebook",
+      "First hands-on experience with Google service-account auth and long-running Vertex AI jobs",
+      "Guided build: the design is the tutorial\u2019s, the cloud setup, credentials and accounts are mine",
+    ],
+    links: {},
+    images: ["/projects/asmr-video-pipeline.png"],
+  },
 ];
