@@ -411,4 +411,40 @@ export const projects: Project[] = [
     links: {},
     images: ["/projects/asmr-video-pipeline.png", "/projects/asmr-video-pipeline-diagram.png"],
   },
+  {
+    slug: "wedding-rsvp-ghl",
+    title: "Wedding RSVP Site & Guest Automation",
+    industry: "Events",
+    oneLiner:
+      "A one-page invitation where each RSVP becomes a CRM contact, a row the couple can read, and a notification \u2014 no inbox to sort.",
+    description:
+      "A demonstration build, with an invented couple, made to show what an event page looks like when the form is wired to something. The page is built in GoHighLevel: hero, countdown, ceremony and reception details with maps, dress code, gallery, FAQ, and a single RSVP form. Submitting it creates or matches a contact in the CRM, writes the reply to a sheet the couple can read without logging into anything, and fires a notification so a late reply is noticed the day it arrives. The design is deliberately one household per RSVP, because guest lists get counted, not read.",
+    problem:
+      "Wedding replies arrive by text, chat and word of mouth, and someone ends up keeping the real list in their head or in a notebook. The count is never current, nobody knows who still has not answered, and the people who need the number \u2014 caterer, venue \u2014 are asking for it.",
+    solution:
+      "One public page with one form, and a workflow behind it. Each submission becomes a CRM contact tagged as a guest, with the attending or declining answer, the party, and the message to the couple stored as fields rather than free text. The same submission appends to a sheet, so the running count and the outstanding list are always current without anyone opening the CRM. A notification goes out on each reply, which is what turns a page into something you can stop checking.",
+    architecture:
+      "Guest \u2192 GoHighLevel Page \u2192 RSVP Form \u2192 Workflow \u2192 CRM Contact + Tag \u2192 Sheet Row \u2192 Notification to the Couple",
+    tech: ["GoHighLevel", "GHL Workflows", "GHL Forms", "Google Sheets", "Automation"],
+    year: 2026,
+    keyFeatures: [
+      "One RSVP per household, so the form returns a count rather than a pile of replies",
+      "Each reply becomes a tagged CRM contact, with the answer stored as a field",
+      "Every submission appends to a sheet the couple can read without touching the CRM",
+      "Notification on each reply, so nothing waits in an inbox",
+      "Ceremony and reception details, dress code, countdown, gallery and FAQ on one page",
+    ],
+    challenges: [
+      "A guest list is counted, not read: the form had to produce a number that stays current, which is why the reply lands in a sheet as well as the CRM.",
+      "Attending and declining need to be one field with two values, not two tick boxes, or the count has to be reconstructed by hand later.",
+      "Built entirely in GoHighLevel rather than in code, so the constraint was what the page builder and workflow engine can do between them.",
+    ],
+    results: [
+      "A working demonstration: submitting the form produces a contact, a sheet row and a notification",
+      "Shows the GoHighLevel side of my work \u2014 page, form, workflow and CRM as one piece",
+      "Built with an invented couple, so it can be shown to anyone",
+    ],
+    links: {},
+    images: ["/projects/wedding-rsvp-ghl.webp"],
+  },
 ];
